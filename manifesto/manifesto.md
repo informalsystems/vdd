@@ -11,16 +11,16 @@ require a huge amount of manual work and understanding of the protocols. Part of
 the problem is that verification is often regarded as a task that happens "after
 the fact", that is, when the software is written.
 
-We are in the process of developing an approach where verification and software
-design and development go hand-in-hand. We start by informal (English)
-specifications that are the result of a collaboration of protocol designers,
-software engineers, and verification engineers. Informal specifications contain
-the information both to verify and to implement protocols. Then verification and
-implementation proceed in parallel and inform each others.
+We are developing an approach where verification and software
+design and development go hand-in-hand. Our goal is to improve software 
+engineering practices by relying on formal methods. Our approach focuses on
+fault-tolerant distributed systems. 
 
-We will discuss our ideas by using the Tendermint lite client as an example.
 
 ## Introduction
+
+- because fault-tolerance, we have to deal with time and faults
+
 
 ## Method at a glance: The Lite Client example
 
@@ -32,6 +32,25 @@ finalized. >>
 << Discuss what validation and verification efforts have been done/planned.
 
 ## Development Steps and Documents
+
+1. Idea:
+
+  - The problem that we would like to solve, the involved parties
+  - probably in a sequential view:
+    e.g., 
+        * the blockchain is a growing list, 
+        * a liteclient is just a node which gets an integer h as input. 
+        * The goal is to return the data that is stored at height h of the block chain
+  
+2. Protocol:
+
+  - first level of solution
+  - introduce the full-blown distribution: e.g.; 
+        * the blockchain is implemented by validators (full nodes)
+        * validators may be Byzantine
+        * there is a node running the lite client
+        * the lite client and the full nodes communicate by message passing
+        * asynchrony, time...
 
 - high level specs
 - low level spec (towards implementation)
