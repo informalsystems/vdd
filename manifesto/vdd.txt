@@ -1,0 +1,117 @@
+
+Previous approaches:
+
+TDD: Test-driven development (TDD) (Beck 2003; Astels 2003), is an evolutionary approach to
+development which combines test-first development where you write a test before you write
+just enough production code to fulfill that test and refactoring.
+References:
+
+- https://www.amazon.com/exec/obidos/ASIN/0321146530/ambysoftinc
+- https://www.amazon.com/exec/obidos/ASIN/0131016490/ambysoftinc
+- https://www.amazon.com/exec/obidos/ASIN/0135974445/ambysoftinc
+- https://www.amazon.com/exec/obidos/ASIN/1617290084/ambysoftinc
+
+
+BDD:
+
+Academia:
+
+- https://www.cs.vu.nl/~wanf/BOOKS/moddissys.pdf
+
+Related tools:
+
+- http://fitnesse.org/
+- https://relishapp.com/rspec
+- https://github.com/UBC-NSS/pgo/wiki/Modular-PlusCal
+
+
+TODO:
+
+- would be great if we could make a short survey how specifications of known
+fault-tolerant distributed systems are done. For example, we could look at
+Zookeeper or Raft as an example of consensus based coordination framework,
+distributed file systems (GFS), apache-spark or Map-Reduce as an example of
+distributed scheduler and execution framework, Kafka as a distributed broker and
+MongoDB, Elastic or something like that as distributed key-value store. We probably
+also want to look at some gossip or p2p system (Cademlia, Bittorent), and
+blockchain systems (Bitcoin). We probably want to start by looking at
+TLA+ examples first and see if can we generalise some rules out of those
+examples. This will probably be delivered in the form of blog post or maybe
+even a research paper.
+
+Examples:
+- https://github.com/apache/zookeeper/blob/master/zookeeper-docs/src/main/resources/markdown/zookeeperInternals.md
+- https://github.com/elastic/elasticsearch-formal-models
+- http://jepsen.io/analyses  // we might want to look at these reports to see what specification Kyle used.
+- http://tla.msr-inria.inria.fr/kuppe/2019conf/06%20-%20William%20Schultz%20-%20Strangeloop%20TLA+%20Conference%202019%20Talk.pdf
+- http://tla.msr-inria.inria.fr/kuppe/2019conf/02%20-%20Ivan%20Beschastnikh%20Finn%20Hackett%20-%20TLA+%20conf%202019%20PGo%20presentation.pdf
+- https://github.com/visualzhou/mongo-repl-tla/tree/5fd666da29e7cc088ea70c8d076c12818aba372e
+- https://news.ycombinator.com/item?id=9601770
+- https://github.com/tlaplus
+- https://github.com/tlaplus/Examples
+
+Goals:
+
+- Improve software engineering practices by relying on formal methods. We want to constrain us
+on fault-tolerant distributed systems.
+- In addition to software engineering best practices (TDD, BDD) we also want to consider
+what are best practises in writing specifications for distributed systems (both in industry
+and academia).
+- We might want to figure out how we are replacing existing concepts (and techniques)
+with TDD in VDD. For example, TDD (more precisely BDD) will start by writing
+acceptance test (specification or requirement). What would be the equivalent
+in VDD? Problem with VDD might be the fact that it is harder making incremental
+steps. Can we model one aspect of the system in isolation?
+- From ModularPascal presentation: Goal: isolate system definition from abstractions of its
+execution environment.
+
+- We might want to think about design/engineering flows and what are the ideal outputs
+formal tools should generate. For example:
+
+1. write high level specifications that involve participants, messages exchanged and message handlers.
+2. write invariants/properties that should hold. We probably also want to capture system assumptions. At this level we are
+probably looking at system, i.e., multi node model of the system. We want to illustrate this on examples we know (
+consensus, fast sync, lite client, fork accountability).
+Q: how the tool will help at this stage? It should verify design and generate counter examples in case
+something is wrong. What if this step is finished (no issue is found after iterations)?
+
+3. engineers think in terms of APIs, data structures and functions. Sometimes for complex modules
+they also think in terms of concurrent tasks and communication patterns between concurrent tasks.
+Very important aspect is error handling. At this level we think about single node perspective
+and interactions with the rest of the systems is modelled as environment. How we step into
+internal concurrency? Do we need first to look at single node perspective where
+we model single node behaviour and interaction with the environment first and then
+internal decomposition? Furthermore, how we connect various specs (by refinement?)?
+- What would be ideal output from the tool at this stage? we need to model APIs.
+After API is modelled we write behaviours (actions) and then check if invariants
+hold? Maybe this is the glue. Ideal output: counter-examples. This would be similar
+like failing tests in TDD.
+
+4. After we modelled single node perspective, i.e., APIs (external) and internal
+behaviour (actions) we want to align this perspective with the code. The code should
+implement similar logic and then we check if code is aligned with the spec by
+relying on counter-examples generated by the spec. Note that while the model is exhaustively
+model checked, the code will be tested only agains some counter-examples. How we can
+do full space (symbolic execution) on the code, the same way we are doing it
+on the model? Does this make sense at all? The output from the stage 3 should be
+understandable by the code at stage 4. This affects code architecture, which should
+be more event driven. What are the constraints here?
+
+5. For performance reasons we want to decompose logic into concurrent tasks. We want
+to ensure that by doing this we are not violating invariants (spec). Do we at this point need
+to start from step 1? We have now concurrent system of entities that exchange messages
+and some high level guarantees should hold? Then we might want to look at the perspective
+of each concurrent task and to model its behaviour and see if invariants hold. Furthermore,
+at the level of each task there might be additional invariants we want to add so
+corresponding test scenarios will be executed.
+
+TODO: It seems that it would be very hard to make this approach completely execution
+agnostic, i.e., we need to make some assumptions about component interactions. For example
+we might assume that every component is communicating with its environment using
+events, i.e., we assume event driven architecture. Does this mean we assume
+shared nothing architecture?
+
+Software evolution! How we make this process incremental, i.e., how to make a change
+to a spec at any level and how this would be reflected?
+
+Semantic versioning
