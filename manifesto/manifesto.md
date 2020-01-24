@@ -33,7 +33,9 @@ finalized. >>
 
 ## Development Steps and Documents
 
-1. Idea:
+### 1. Problem Statement:
+
+#### Points addressed
 
   - The problem that we would like to solve, the involved parties
   - probably in a sequential view:
@@ -42,28 +44,86 @@ finalized. >>
         * a liteclient is just a node which gets an integer h as input. 
         * The goal is to return the data that is stored at height h of the block chain
   
-2. Protocol:
+#### Expected Expertise
+
+  - lead: distributed algorithm designer
+  - input: 
+  - feedback:
+  
+  << this might be super abstract, and only make sense in combination with the Protocol in the beginning. >>
+  
+#### Artefacts
+
+  - Section 1 of high-level English spec.
+  - TLA+ Spec (in case we want to do TLA+ reductions)
+
+#### Verification, Validation, or Proof Obligation
+
+#### Versioning
+
+- v0.1 first draft
+- v0.2 After feedback from point 2
+
+<< figure that one out
+  
+### 2. Protocol Specification
+
+#### Points addressed
 
   - first level of solution
   - introduce the full-blown distribution: e.g.; 
-        * the blockchain is implemented by validators (full nodes)
+        * the blockchain is implemented by a set of validators and other full nodes
         * validators may be Byzantine
         * there is a node running the lite client
         * the lite client and the full nodes communicate by message passing
         * asynchrony, time...
+        
+  - refinement of problem statement: e.g.;
+        * in case of at most 1/3 faulty validators safety property A and liveness B
+        * in case of between 1/3 and 2/3 then safety property A' and liveness B'
+        * if the liteclient is connected to a correct full node and communication is
+           timely, then C and D
 
-- high level specs
-- low level spec (towards implementation)
-- TLA+
-- Rust
+#### Expected Expertise
 
-<< mapping specs to templates >>
+  - lead: distributed algorithm designer
+  - input: distributed systems engineers
+  - feedback:
+  
+#### Artefacts
 
-### Testing
+  - Section 2 of high-level English spec.
+  - TLA+ Spec (in case we want to do TLA+ reductions)
+#### Verification, Validation, or Proof Obligation
 
-### Verification
+#### Versioning
 
-<< Verification log/reporting/artifacts >>
+### 3. Implementation Specification
+
+API, Tests
+#### Points addressed
+#### Expected Expertise
+#### Artefacts
+#### Verification, Validation, or Proof Obligation
+#### Versioning
+
+
+### 4. Implementation 
+#### Points addressed
+#### Expected Expertise
+#### Artefacts
+#### Verification, Validation, or Proof Obligation
+#### Versioning
+
+
+### 5. Optimized Implementation
+#### Points addressed
+#### Expected Expertise
+#### Artefacts
+#### Verification, Validation, or Proof Obligation
+#### Versioning
+
+
 
 
 ## Lessons learned
