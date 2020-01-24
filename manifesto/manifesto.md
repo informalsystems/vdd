@@ -35,6 +35,8 @@ finalized. >>
 
 ### 1. Problem Statement:
 
+Abstract sequential specification. << needs more discussion >>
+
 #### Points addressed
 
   - The problem that we would like to solve, the involved parties
@@ -68,6 +70,9 @@ finalized. >>
 << figure that one out
 
 ### 2. Protocol Specification
+
+As we focus on fault-tolerant distributed systems, we have to specify protocols that run on unreliable/adversarial
+computers and networks, that refine the problem statement from above.
 
 #### Points addressed
 
@@ -106,6 +111,9 @@ finalized. >>
 
 ### 3. Implementation Specification
 
+At this level we think about the specification of the code. Code inherently runs on one computer, so we take the
+single node perspective here
+and interactions with the rest of the systems is modelled as environment.
 
 #### Points addressed
 
