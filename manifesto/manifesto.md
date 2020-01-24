@@ -12,9 +12,9 @@ the problem is that verification is often regarded as a task that happens "after
 the fact", that is, when the software is written.
 
 We are developing an approach where verification and software
-design and development go hand-in-hand. Our goal is to improve software 
+design and development go hand-in-hand. Our goal is to improve software
 engineering practices by relying on formal methods. Our approach focuses on
-fault-tolerant distributed systems. 
+fault-tolerant distributed systems.
 
 
 ## Introduction
@@ -39,19 +39,20 @@ finalized. >>
 
   - The problem that we would like to solve, the involved parties
   - probably in a sequential view:
-    e.g., 
-        * the blockchain is a growing list, 
-        * a liteclient is just a node which gets an integer h as input. 
+    e.g.,
+
+        * the blockchain is a growing list,
+        * a liteclient is just a node which gets an integer h as input.
         * The goal is to return the data that is stored at height h of the block chain
-  
+
 #### Expected Expertise
 
-  - lead: distributed algorithm designer
-  - input: 
-  - feedback:
-  
+- **lead:** distributed algorithm designer
+- **input/feedback:**
+
+
   << this might be super abstract, and only make sense in combination with the Protocol in the beginning. >>
-  
+
 #### Artefacts
 
   - Section 1 of high-level English spec.
@@ -65,20 +66,22 @@ finalized. >>
 - v0.2 After feedback from point 2
 
 << figure that one out
-  
+
 ### 2. Protocol Specification
 
 #### Points addressed
 
   - first level of solution
-  - introduce the full-blown distribution: e.g.; 
+  - introduce the full-blown distribution: e.g.;
+
         * the blockchain is implemented by a set of validators and other full nodes
         * validators may be Byzantine
         * there is a node running the lite client
         * the lite client and the full nodes communicate by message passing
         * asynchrony, time...
-        
+
   - refinement of problem statement: e.g.;
+
         * in case of at most 1/3 faulty validators safety property A and liveness B
         * in case of between 1/3 and 2/3 then safety property A' and liveness B'
         * if the liteclient is connected to a correct full node and communication is
@@ -86,31 +89,45 @@ finalized. >>
 
 #### Expected Expertise
 
-  - lead: distributed algorithm designer
-  - input: distributed systems engineers
-  - feedback:
-  
+  - **lead:** distributed algorithm designer
+  - **input/feedback:** distributed systems engineers
+
 #### Artefacts
 
   - Section 2 of high-level English spec.
   - TLA+ Spec (in case we want to do TLA+ reductions)
+  - refined Problem Statement
+
 #### Verification, Validation, or Proof Obligation
+
+  - Simulation relation. How we map events/executions in a faulty and distributed environment to the ideal specification from Point 1.
 
 #### Versioning
 
 ### 3. Implementation Specification
 
-API, Tests
+
 #### Points addressed
+
+ - API
+ - Error Handling
+ - Tests that abstract the environment
+
 #### Expected Expertise
+- **lead:** software engineer, adversarial engineer
+- **input/feedback:**
+
 #### Artefacts
 #### Verification, Validation, or Proof Obligation
 #### Versioning
 
 
-### 4. Implementation 
+### 4. Implementation
 #### Points addressed
 #### Expected Expertise
+- **lead:** software engineer
+- **input/feedback:**
+
 #### Artefacts
 #### Verification, Validation, or Proof Obligation
 #### Versioning
@@ -119,6 +136,9 @@ API, Tests
 ### 5. Optimized Implementation
 #### Points addressed
 #### Expected Expertise
+- **lead:** software engineer
+- **input/feedback:**
+
 #### Artefacts
 #### Verification, Validation, or Proof Obligation
 #### Versioning
