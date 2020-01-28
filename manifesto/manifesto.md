@@ -57,7 +57,7 @@ how this works together with other specs
 #### artifacts
 
   - Section 1 of high-level English spec.
-  - TLA+ Spec (in case we want to do TLA+ reductions)
+  - TLA+ Spec of temporal properties (in case we want to do TLA+ reductions)
 
 #### Verification, Validation, or Proof Obligation
 
@@ -71,14 +71,13 @@ computers and networks, that refine the problem statement from above.
 
 #### Points addressed
 
-  - first level of solution
-  - introduce the full-blown distribution: e.g.;
+  - environment << perhaps put this in a new point 2 >>
+      - the blockchain is implemented by a set of validators and other full nodes
+      - validators may be Byzantine
+      - message passing
+      - asynchrony, time...
 
-        - the blockchain is implemented by a set of validators and other full nodes
-        - validators may be Byzantine
-        - there is a node running the lite client
-        - the lite client and the full nodes communicate by message passing
-        - asynchrony, time...
+  - first level of solution
 
   - What does it mean for the distributed system to solve the abstract problem statement? refinement of problem statement: e.g.;
 
@@ -92,33 +91,42 @@ computers and networks, that refine the problem statement from above.
   - **lead:** distributed algorithm designer
   - **input/feedback:** distributed systems engineers
 
-#### artifacts
+#### Artifacts
 
   - Section 2 of high-level English spec.
-  - TLA+ Spec
+  - TLA+ Spec of the protocol
+  - TLA+ json
+  - TLA+ Spec of the temporal properties (the problem solved)
   - refined Problem Statement (adapt Section 1)
 
 #### Verification, Validation, or Proof Obligation
 
-- Simulation relation / reduction. How we map events/executions in a faulty and distributed environment to the ideal specification from Point 1.
+- Simulation relation / refinement. How we map events/executions in a faulty and distributed environment to the ideal specification from Point 1.
 - check refinement for small systems in Apalache or TLC?
 - check that the protocol satisfies the refined temporal logic specifications
-- TLA+ reductions
+- TLA+ reductions / refinement mappings
 
 
-### 3. Implementation Specification
+### 3. Single Node - API Specification
 
-At this level we think about the specification of the code. Code inherently runs on one computer, so we take the
+At this level we think about the specification of the code.
+Code inherently runs on one computer, so we take the
 single node perspective here
-and interactions with the rest of the systems is modelled as environment.
+and interactions with the rest of the systems is modeled as environment.
 
 #### Points addressed
 
 From a single point perspective, we capture
 
- - API
+ - API (signatures)
+ - Mapping from TLA+ states and transitions (protocol specification Point 2)
+   to the API (atomic propositions, input/output events).
+   Mapping the functions of the API to in-out events in TLA+ spec of protocol: TLA+ json to API json transformation
  - Data structures
  - Error Handling
+
+all this must be linked to the TLA+ protocol specs from above
+
  - Tests that abstract the environment
 
 #### Expected Expertise
@@ -127,18 +135,20 @@ From a single point perspective, we capture
 
 #### Artifacts
 
-- English Implementation Spec
+- English Implementation Spec << do we need that as a "text document"? wouldn't a code artifact be more suitable?>>
+
 - ADR?
 - API
 - Rust traits
-- tests
-- automatically generated counterexamples
-
+- API json
+- test driver: produces tests over Rust traits from API json
+- hand-written tests
 
 
 #### Verification, Validation, or Proof Obligation
 
-
+- generate tests with Apalache and TLC
+- check consistency of API << todo: think about suitable tool >>
 
 ### 4. Prototype Implementation
 
@@ -159,7 +169,7 @@ In this step we implement the first functional version of the software
 
 - Running the software against the Tests
 
-- Understand performance bottle necks
+- Understand performance bottlenecks
 
 
 ### 5. Implementation
@@ -167,16 +177,14 @@ In this step we implement the first functional version of the software
 For performance reasons we typically need to decompose the program logic into concurrent tasks. We have
 to ensure that by doing so, we maintain invariants  and temporal logic specifications in general.
 
-We might want to look at the perspective
-of each concurrent task and to model its behavior and see if invariants hold. Furthermore,
-at the level of each task there might be additional invariants we want to add so
-corresponding test scenarios will be executed.
 
 
 #### Points addressed
 
 - concurrency architecture of the implementation.
+- invariants and temporal formulas that express the correctness of the concurrency architecture (how it refines the simpler implementation from Point 4)
 - need to check whether Point 2 or Point 3 (Protocol Specification or Implementation Specification) needs to be reconsidered, e.g., if the concurrency requires more involved protocols within the single node perspective.
+
 
 #### Expected Expertise
 - **lead:** software engineer
@@ -184,13 +192,9 @@ corresponding test scenarios will be executed.
 
 #### artifacts
 
-
+- code
+- possibly new tests focussing on concurrency aspects
 
 #### Verification, Validation, or Proof Obligation
 
 - Running the software against the Tests
-
-
-
-
-## Lessons learned
