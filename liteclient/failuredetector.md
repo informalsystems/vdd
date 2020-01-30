@@ -35,7 +35,7 @@ The lite client maintains a simple address book (according to the ADR):
 
 Whenever a new header *h* is added to *State*, the failure detector should query the secondaries.
 
-If a header *h'* returned by the secondary *s* is equal to *h* we do nothing. **(Q1: or should we record it in case we find a problem when we get another header for this height from a different secondary??)** Otherwise, that is if *h'* is
+If a header *h'* returned by the secondary *s* is equal to *h* we do nothing. **(Q1: or should we record it, as this information might later be useful in case we find a problem when we get another header for this height from a different secondary??)** Otherwise, that is if *h'* is
 different from *h*, we have a fork. There are several cases to distinguish
 
    - **C1.** *h'* is malformed (fails basic validation): *s* is faulty
