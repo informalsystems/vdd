@@ -30,8 +30,9 @@ This process is a collaboration of researchers, verification engineers, and dist
 
 The whole process will be thoroughly documented by artifacts like English specifications, TLA+ specifications, and code artifacts including tests.
 
-### 1. Problem Statement:
+### 1. Problem Statement / Outside view:
 
+<< this part gives a very high level view
 
 Abstract sequential specification. << needs more discussion >>
 
@@ -56,12 +57,13 @@ how this works together with other specs
 
 #### artifacts
 
-  - Section 1 of high-level English spec.
+  - Part I of high-level English spec.
   - TLA+ Spec of temporal properties (in case we want to do TLA+ reductions)
 
 #### Verification, Validation, or Proof Obligation
 
 - perhaps composition with other specifications
+
 
 
 ### 2. Protocol Specification
@@ -93,7 +95,7 @@ computers and networks, that refine the problem statement from above.
 
 #### Artifacts
 
-  - Section 2 of high-level English spec.
+  - Part II of high-level English spec.
   - TLA+ Spec of the protocol
   - TLA+ json
   - TLA+ Spec of the temporal properties (the problem solved)
