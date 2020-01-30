@@ -66,7 +66,7 @@ how this works together with other specs
 
 
 
-### 2. Protocol Specification
+### 2. Protocol Specification / Protocol view:
 
 As we focus on fault-tolerant distributed systems, we have to specify protocols that run on unreliable/adversarial
 computers and networks, that refine the problem statement from above.
@@ -109,7 +109,7 @@ computers and networks, that refine the problem statement from above.
 - TLA+ reductions / refinement mappings
 
 
-### 3. Single Node - API Specification
+### 3. API Specification / Single Node View
 
 At this level we think about the specification of the code.
 Code inherently runs on one computer, so we take the
@@ -152,7 +152,7 @@ all this must be linked to the TLA+ protocol specs from above
 - generate tests with Apalache and TLC
 - check consistency of API << todo: think about suitable tool >>
 
-### 4. Prototype Implementation
+### 4. Prototype Implementation / Code View
 
 #### Points addressed
 
