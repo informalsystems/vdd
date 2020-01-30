@@ -4,8 +4,7 @@
 
 << Rough outline of what the component is doing and why. 2-3 paragraphs >>
 
-# Introduction
-
+# Part I - Outside view
 
 ## Context of this document
 
@@ -15,33 +14,25 @@ spec. Possible interactions, possible use cases, etc. >>
 should give the reader the understanding in what environment this component
 will be used.
 
+## Informal Problem statement
+
+for the general audience
 
 
-## Problem statement
-
-input/output
-
-how the system should react
-
-basic invariants
+## Sequential Problem statement
 
 
-## Assumptions/Incentives
+# Part II - Protocol view
+
+## Environment/Assumptions/Incentives
+
+<< Introduce distributed aspects >>
 
 << Timing and correctness assumptions. Possibly with justification that the
 assumptions make sense, e.g., it is in the interest of a full node to behave
 correctly >>
 
-# Details
-
-In this section we become more concrete, with basic data types,
-
-## Definitions
-
-some math that allows to write specifications and pseudo code solution below.
-Some variables, etc.
-
-## Specification
+## Problem Statement
 
 << safety specifications / invariants in English >>
 
@@ -51,6 +42,12 @@ reliable and timely, then something good happens eventually. >>
 
 should have clear formalization in temporal logic.
 
+## Definitions
+
+In this section we become more concrete, with basic data types,
+
+some math that allows to write specifications and pseudo code solution below.
+Some variables, etc.
 
 ## Solution
 
@@ -63,5 +60,6 @@ if details were omitted. >>
 
 ## Correctness arguments
 
-<< Proof sketches of why we beliave the solution satisfies the specifications.
+<< Proof sketches of why we believe the solution satisfies the specifications.
 Possibly giving inductive invariants that can be used to prove the specifications >>
+<<Link to Part I>>
