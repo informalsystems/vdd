@@ -11,16 +11,18 @@
 << mention other components and or specifications that are relevant for this
 spec. Possible interactions, possible use cases, etc. >>
 
-should give the reader the understanding in what environment this component
-will be used.
+<< should give the reader the understanding in what environment this component
+will be used. >>
 
 ## Informal Problem statement
 
-for the general audience
+<< for the general audience, that is, engineers who want to get an overview over what the component is doing
+from a bird's eye view. >>
 
 
 ## Sequential Problem statement
 
+<< should be English and precise. will be accompanied with a TLA spec.>>
 
 # Part II - Protocol view
 
