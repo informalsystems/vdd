@@ -200,3 +200,14 @@ to ensure that by doing so, we maintain invariants  and temporal logic specifica
 #### Verification, Validation, or Proof Obligation
 
 - Running the software against the Tests
+
+## Design Artifacts
+
+### Traceability
+
+<< we will need unique identifiers for requirements/specifications/rules in the algorithm >>
+
+
+### High Level English Spec
+
+

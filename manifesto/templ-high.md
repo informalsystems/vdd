@@ -11,16 +11,18 @@
 << mention other components and or specifications that are relevant for this
 spec. Possible interactions, possible use cases, etc. >>
 
-should give the reader the understanding in what environment this component
-will be used.
+<< should give the reader the understanding in what environment this component
+will be used. >>
 
 ## Informal Problem statement
 
-for the general audience
+<< for the general audience, that is, engineers who want to get an overview over what the component is doing
+from a bird's eye view. >>
 
 
 ## Sequential Problem statement
 
+<< should be English and precise. will be accompanied with a TLA spec.>>
 
 # Part II - Protocol view
 
@@ -32,6 +34,8 @@ for the general audience
 assumptions make sense, e.g., it is in the interest of a full node to behave
 correctly >>
 
+should have clear formalization in temporal logic.
+
 ## Problem Statement
 
 << safety specifications / invariants in English >>
@@ -42,12 +46,15 @@ reliable and timely, then something good happens eventually. >>
 
 should have clear formalization in temporal logic.
 
+<< How is the problem statement linked to the "Sequential Problem statement". 
+Simulation, implementation, etc. relations >>
+
 ## Definitions
 
-In this section we become more concrete, with basic data types,
+<< In this section we become more concrete, with basic (abstracted) data types >>
 
-some math that allows to write specifications and pseudo code solution below.
-Some variables, etc.
+<< some math that allows to write specifications and pseudo code solution below.
+Some variables, etc. >>
 
 ## Solution
 
@@ -60,6 +67,7 @@ if details were omitted. >>
 
 ## Correctness arguments
 
-<< Proof sketches of why we believe the solution satisfies the specifications.
-Possibly giving inductive invariants that can be used to prove the specifications >>
-<<Link to Part I>>
+<< Proof sketches of why we believe the solution satisfies the problem statement.
+Possibly giving inductive invariants that can be used to prove the specifications
+of the problem statement >>
+
