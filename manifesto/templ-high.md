@@ -2,72 +2,72 @@
 
 # << Name of Component >>
 
-<< Rough outline of what the component is doing and why. 2-3 paragraphs >>
+> Rough outline of what the component is doing and why. 2-3 paragraphs 
 
 # Part I - Outside view
 
 ## Context of this document
 
-<< mention other components and or specifications that are relevant for this
-spec. Possible interactions, possible use cases, etc. >>
+> mention other components and or specifications that are relevant for this
+spec. Possible interactions, possible use cases, etc. 
 
-<< should give the reader the understanding in what environment this component
-will be used. >>
+> should give the reader the understanding in what environment this component
+will be used. 
 
 ## Informal Problem statement
 
-<< for the general audience, that is, engineers who want to get an overview over what the component is doing
-from a bird's eye view. >>
+> for the general audience, that is, engineers who want to get an overview over what the component is doing
+from a bird's eye view. 
 
 
 ## Sequential Problem statement
 
-<< should be English and precise. will be accompanied with a TLA spec.>>
+> should be English and precise. will be accompanied with a TLA spec.
 
 # Part II - Protocol view
 
 ## Environment/Assumptions/Incentives
 
-<< Introduce distributed aspects >>
+> Introduce distributed aspects 
 
-<< Timing and correctness assumptions. Possibly with justification that the
+> Timing and correctness assumptions. Possibly with justification that the
 assumptions make sense, e.g., it is in the interest of a full node to behave
-correctly >>
+correctly 
 
 should have clear formalization in temporal logic.
 
 ## Problem Statement
 
-<< safety specifications / invariants in English >>
+> safety specifications / invariants in English 
 
-<< liveness specifications in English. Possibly with timing/fairness requirements:
+> liveness specifications in English. Possibly with timing/fairness requirements:
 e.g., if the component is connected to a correct full node and communication is
-reliable and timely, then something good happens eventually. >>
+reliable and timely, then something good happens eventually. 
 
 should have clear formalization in temporal logic.
 
-<< How is the problem statement linked to the "Sequential Problem statement". 
-Simulation, implementation, etc. relations >>
+> How is the problem statement linked to the "Sequential Problem statement". 
+Simulation, implementation, etc. relations 
 
 ## Definitions
 
-<< In this section we become more concrete, with basic (abstracted) data types >>
+> In this section we become more concrete, with basic (abstracted) data types 
 
-<< some math that allows to write specifications and pseudo code solution below.
-Some variables, etc. >>
+> some math that allows to write specifications and pseudo code solution below.
+Some variables, etc. 
 
 ## Solution
 
-<< Basic data structures. Simplified, so that we can focus on the distributed
+> Basic data structures. Simplified, so that we can focus on the distributed
 algorithm here. If existing: link to Tendermint data structures, and mentioned
-if details were omitted. >>
+if details were omitted. 
 
-<< Pseudo code of the solution >>
+> Pseudo code of the solution 
 
 
 ## Correctness arguments
 
-<< Proof sketches of why we believe the solution satisfies the problem statement.
+> Proof sketches of why we believe the solution satisfies the problem statement.
 Possibly giving inductive invariants that can be used to prove the specifications
-of the problem statement >>
+of the problem statement 
 
