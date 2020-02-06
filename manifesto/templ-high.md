@@ -34,7 +34,7 @@ from a bird's eye view.
 assumptions make sense, e.g., it is in the interest of a full node to behave
 correctly 
 
-should have clear formalization in temporal logic.
+> should have clear formalization in temporal logic.
 
 ## Problem Statement
 

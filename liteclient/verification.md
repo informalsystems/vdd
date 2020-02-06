@@ -2,7 +2,7 @@
 
 # Core Verification
 
-<< Rough outline of what the component is doing and why. 2-3 paragraphs >>
+> Rough outline of what the component is doing and why. 2-3 paragraphs
 
 The lite client implements a read operation of a block (header) from the
 blockchain. It does so by communicating with full nodes. As full nodes
@@ -15,8 +15,8 @@ way.
 
 ## Context of this document
 
-<< mention other components and or specifications that are relevant for this
-spec. Possible interactions, possible use cases, etc. >>
+> mention other components and or specifications that are relevant for this
+spec. Possible interactions, possible use cases, etc.
 
 In this specification we specify the communication of the lite client with
 full nodes. As full nodes may be faulty, the lite client has to check whether
@@ -33,8 +33,8 @@ block is OK.
  are correct from the time a block is generated until the trusting period is
  passed.
 
-<< should give the reader the understanding in what environment this component
-will be used. >>
+> should give the reader the understanding in what environment this component
+will be used.
 
 ## Informal Problem statement
 
@@ -59,11 +59,11 @@ of height *h*.
 ## Environment/Assumptions/Incentives
 
 
-<< Introduce distributed aspects >>
+> Introduce distributed aspects
 
-<< Timing and correctness assumptions. Possibly with justification that the
+> Timing and correctness assumptions. Possibly with justification that the
 assumptions make sense, e.g., it is in the interest of a full node to behave
-correctly >>
+correctly
 
 Lite client verification communicates with a full node of a Tendermint block chain.
 
@@ -102,14 +102,14 @@ _Assumption_: "correct" is defined w.r.t. realtime (some Newtonian global notion
 
 ## Problem Statement
 
-<< safety specifications / invariants in English >>
+> safety specifications / invariants in English
 
 
-<< liveness specifications in English. Possibly with timing/fairness requirements:
+> liveness specifications in English. Possibly with timing/fairness requirements:
 e.g., if the component is connected to a correct full node and communication is
-reliable and timely, then something good happens eventually. >>
+reliable and timely, then something good happens eventually.
 
-<< should have clear formalization in temporal logic. >>
+> should have clear formalization in temporal logic.
 
 
 The lite client has a local data structure called TrustedState that contains headers.
@@ -143,15 +143,15 @@ Some variables, etc.
 
 ## Solution
 
-<< Basic data structures. Simplified, so that we can focus on the distributed
+> Basic data structures. Simplified, so that we can focus on the distributed
 algorithm here. If existing: link to Tendermint data structures, and mentioned
-if details were omitted. >>
+if details were omitted.
 
-<< Pseudo code of the solution >>
+> Pseudo code of the solution
 
 
 ## Correctness arguments
 
-<< Proof sketches of why we believe the solution satisfies the specifications.
-Possibly giving inductive invariants that can be used to prove the specifications >>
-<<Link to Part I>>
+> Proof sketches of why we believe the solution satisfies the specifications.
+Possibly giving inductive invariants that can be used to prove the specifications
+>Link to Part I
