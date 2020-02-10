@@ -319,6 +319,56 @@ If `VerifySingle` is successful, it returns _TrustedState_ to `VerifyBisection` 
 
 ### Details
 
+```go
+func VerifyBisection(untrustedHeight int64,
+                     trustedState TrustedState,
+                     trustThreshold float,
+                     trustingPeriod Duration,
+                     clockDrift Duration,
+                     now Time) (TrustedState, error) {
+
+    untrustedSh, error := Commit(untrustedHeight)
+    
+    ErrRequestFailed,ErrInvalidHeaderTime,ErrInvalidHeaderTime
+    
+    
+    untrustedHeader = untrustedSh.Header
+
+    error = verifySingle(
+             trustedState,
+             untrustedSh,
+             untrustedVs,
+             untrustedNextVs,
+             trustThreshold)
+
+    if fatalError(error) return (trustedState, error)
+
+    if error == nil {
+        // the untrusted header is now trusted.
+        newTrustedState = TrustedState(untrustedSh, untrustedNextVs)
+        return (newTrustedState, nil)
+    }
+
+    // at this point in time we need to do bisection
+    pivotHeight := ceil((trustedHeader.Height + untrustedHeight) / 2)
+
+    error, newTrustedState = VerifyBisection(pivotHeight,
+                                             trustedState,
+                                             trustThreshold,
+                                             trustingPeriod,
+                                             clockDrift,
+                                             now)
+    if error != nil return (newTrustedState, error)
+
+    return VerifyBisection(untrustedHeight,
+                           newTrustedState,
+                           trustThreshold,
+                           trustingPeriod,
+                           clockDrift,
+                           now)
+}
+```
+
 TODO (copy code of procedures from https://github.com/tendermint/spec/blob/master/spec/consensus/light-client/verification.md or shouldn't we?)
 
 ## Correctness arguments
