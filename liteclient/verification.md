@@ -327,10 +327,9 @@ func VerifyBisection(untrustedHeight int64,
                      clockDrift Duration,
                      now Time) (TrustedState, error) {
 
-    untrustedSh, error := Commit(untrustedHeight)
+    untrustedSh := Commit(untrustedHeight)
     
-    ErrRequestFailed,ErrInvalidHeaderTime,ErrInvalidHeaderTime
-    
+    Check for ErrRequestFailed,ErrInvalidHeaderTime,ErrInvalidHeaderTime
     
     untrustedHeader = untrustedSh.Header
 
