@@ -4,7 +4,7 @@
 
 A failure detector is a process that gets as input a header with some height *h*, connects to different Tendermint full nodes, requests the header of height *h* from them, and then cross-checks the headers and the input header.
 
-There are two forseeable use cases:
+There are two foreseeable use cases:
 
 1) strengthen the lite client: If a lite client accepts a header *hd* (after performing skipping or sequential verification), it can use the failure detector to probe the system for conflicting header and increase the trust in *hd*. Instead of communicating with a single full node, communicating with several full nodes shall increase the probability to be aware of a fork in case there is one.
 
