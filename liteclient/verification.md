@@ -327,26 +327,24 @@ func VerifyBisection(untrustedHeight int64,
                      clockDrift Duration,
                      now Time) (TrustedState, error) {
 
-    untrustedSh := Commit(untrustedHeight)
+    untrustedSh := synchronous RPC Commit(untrustedHeight)
     
     Check: ErrRequestFailed, ErrInvalidHeaderTime, ErrInvalidHeaderTime
     
-    error = verifySingle(
+    result = verifySingle(
              trustedState,
              untrustedSh,
              untrustedVs,
              untrustedNextVs,
              trustThreshold)
 
-    if error == nil {
+    if result == OK {
         // the untrusted header is now trusted.
         newTrustedState = TrustedState(untrustedSh, untrustedNextVs)
         return (newTrustedState, nil)
     }
-
-    if fatalError(error) return (trustedState, error)
-
-    // at this point in time we need to do bisection
+    else if result == InsufficientVotingPower {
+     // at this point in time we need to do bisection
     pivotHeight := ceil((trustedHeader.Height + untrustedHeight) / 2)
 
     error, newTrustedState = VerifyBisection(pivotHeight,
@@ -363,6 +361,12 @@ func VerifyBisection(untrustedHeight int64,
                            trustingPeriod,
                            clockDrift,
                            now)
+    }
+    else { 
+        return (trustedState, error) 
+    }
+
+   
 }
 ```
 
