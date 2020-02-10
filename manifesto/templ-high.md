@@ -36,7 +36,7 @@ correctly
 
 > should have clear formalization in temporal logic.
 
-## Problem Statement
+## Distributed Problem Statement
 
 > safety specifications / invariants in English 
 
