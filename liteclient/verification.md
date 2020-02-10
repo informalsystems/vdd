@@ -378,6 +378,11 @@ func VerifyBisection(untrustedHeight int64,
 ```
 
 TODO (copy code of procedures from https://github.com/tendermint/spec/blob/master/spec/consensus/light-client/verification.md or shouldn't we?)
+-> no, stay more abstract
+
+what does it mean that a header is OK. Defined as conditions not defined
+as code.
+
 
 ## Correctness arguments
 
