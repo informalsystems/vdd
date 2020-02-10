@@ -33,9 +33,13 @@ The lite client maintains a simple address book (according to the ADR):
 
 ### Informal Problem statement
 
-Whenever a new header *h* is added to *State*, the failure detector should query the secondaries.
+> I put tags to informal problem statements as there is no sequential secification.
 
-If a header *h'* returned by the secondary *s* is equal to *h* we do nothing. **(Q1: or should we record it, as this information might later be useful in case we find a problem when we get another header for this height from a different secondary??)** Otherwise, that is if *h'* is
+**[LCD-IP-Q]** Whenever a new header *h* is added to *State*, the failure detector should query the secondaries.
+
+**[LCD-IP-RespOK]** If a header *h'* returned by the secondary *s* is equal to *h* we do nothing. **(Q1: or should we record it, as this information might later be useful in case we find a problem when we get another header for this height from a different secondary??)**
+
+**[LCD-IP-RespBad]** Otherwise, that is if *h'* is
 different from *h*, we have a fork. There are several cases to distinguish
 
    - **C1.** *h'* is malformed (fails basic validation): *s* is faulty
@@ -88,9 +92,9 @@ Correct full nodes have the incentive to respond, because the failure detector m
 
 **Assumptions**
 
-- **A1.** At all times there is at least one correct full node among the primary and the secondary.
+**[LCD-A-CorrFull]** At all times there is at least one correct full node among the primary and the secondary.
 
-- **A2.** Communication between the failure detector and a correct full node is reliable and bounded in time.
+**[LCD-A-RelComm]** Communication between the failure detector and a correct full node is reliable and bounded in time.
 
 **Q6: Are we limiting ourselves to the scenario 1/3 n <= f <= 2/3 n**
 
@@ -98,9 +102,9 @@ Correct full nodes have the incentive to respond, because the failure detector m
 
 ## Problem statement
 
-**Safety 1.** If there is no fork at height *h*, and the primary and the secondaries are correct, then the failure detector should never output evidence for height *h*.
+**[LCD-VC-INV]** If there is no fork at height *h*, and the primary and the secondaries are correct, then the failure detector should never output evidence for height *h*.
 
-**Liveness 1.** If there is a fork (two correct full nodes decided on different blocks for the same height), and
+**[LCD-VC-LIFE-FORK]** If there is a fork (two correct full nodes decided on different blocks for the same height), and
 - the user of the lite client requests a header of a height *h* that is affected (within the trusting period), and
 - there are two correct full nodes *i* and *j* that are
     - on different branches, and
@@ -108,11 +112,11 @@ Correct full nodes have the incentive to respond, because the failure detector m
 
 then the failure detector eventually outputs evidence for height *h*.
 
-**Liveness 2.** If the bisection trusts a header at height *h* that deviates from the header on the chain (possibly because the primary is faulty), and there is a correct secondary,
+**[LCD-VC-LIFE-FLTPRIM]** If the bisection trusts a header at height *h* that deviates from the header on the chain (possibly because the primary is faulty), and there is a correct secondary,
 then the failure detector eventually outputs evidence for height *h*.
 
-**Liveness 3.** If the failure detector observes two conflicting headers for height *h*, it reports evidence for height *h*.
+**[LCD-VC-LIFE-CONFL]**  If the failure detector observes two conflicting headers for height *h*, it reports evidence for height *h*.
 
-**Remark.** Liveness 3 is more operational and talks about operational details of the failure detector. Perhaps it should better be addressed by something like to following requirement:
+*Remark:* Liveness 3 is more operational and talks about operational details of the failure detector. Perhaps it should better be addressed by something like to following requirement:
 
-**Requirement 1.** If the failure detector observes two conflicting headers for height *h*, it should try to verify both. If both are verified it should report evidence.
+**[LCD-REQ-REP]** If the failure detector observes two conflicting headers for height *h*, it should try to verify both. If both are verified it should report evidence.
