@@ -329,10 +329,8 @@ func VerifyBisection(untrustedHeight int64,
 
     untrustedSh := Commit(untrustedHeight)
     
-    Check for ErrRequestFailed,ErrInvalidHeaderTime,ErrInvalidHeaderTime
+    Check: ErrRequestFailed, ErrInvalidHeaderTime, ErrInvalidHeaderTime
     
-    untrustedHeader = untrustedSh.Header
-
     error = verifySingle(
              trustedState,
              untrustedSh,
@@ -340,13 +338,13 @@ func VerifyBisection(untrustedHeight int64,
              untrustedNextVs,
              trustThreshold)
 
-    if fatalError(error) return (trustedState, error)
-
     if error == nil {
         // the untrusted header is now trusted.
         newTrustedState = TrustedState(untrustedSh, untrustedNextVs)
         return (newTrustedState, nil)
     }
+
+    if fatalError(error) return (trustedState, error)
 
     // at this point in time we need to do bisection
     pivotHeight := ceil((trustedHeader.Height + untrustedHeight) / 2)
