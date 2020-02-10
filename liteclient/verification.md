@@ -96,6 +96,7 @@ Lite client verification communicates with a full node of a Tendermint block cha
 
 **[TFM-FaultyFull]** No assumption is made about the behavior of faulty full nodes; they may be Byzantine.
 
+**[TFM-Sign]** Signatures and hashes cannot be broken.
 
 ### Incentives
 
