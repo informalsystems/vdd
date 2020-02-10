@@ -21,7 +21,7 @@ height _h1_ and needs to read the block of height _h2_. Checking all headers of 
 then number of intermediate blocks that need to be checked, by exploiting the guarantees provided by the security model mentioned above.
 
 
-# Part I - Outside view
+# Part I - External View
 
 ## Context of this document
 
