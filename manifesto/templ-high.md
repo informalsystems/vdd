@@ -38,6 +38,12 @@ correctly
 
 ## Distributed Problem Statement
 
+### Design choices
+
+> input/output variables used to define the temporal properties. Most likely they come from an ADR
+
+### Temporal Properties
+
 > safety specifications / invariants in English 
 
 > liveness specifications in English. Possibly with timing/fairness requirements:
@@ -61,6 +67,12 @@ Some variables, etc.
 > Basic data structures. Simplified, so that we can focus on the distributed
 algorithm here. If existing: link to Tendermint data structures, and mentioned
 if details were omitted. 
+
+### Outline
+
+> Describe solution (in English), decomposition into functions, where communication to other components happens.
+
+### Details
 
 > Pseudo code of the solution 
 
