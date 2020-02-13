@@ -261,15 +261,17 @@ Configuration Parameters:
 ### Outline
 
 This is the signature of the function whose call is mentioned in
-[LCV-VC-Live].
-
-
+[LCV-VC-Live]. It implements the problem statement.
 
 ```go
-// implements the problem statement
 func VerifyHeaderAtHeight(untrustedHeight int64,
                           trustedState TrustedState,
                           ) (TrustedState, error))
+        expects: trustedState within trustingperiod from now
+        returns: the header of height untrustedHeight, when the
+                 header is consistent with the blockchain and
+                 primary is correct
+                 error, otherwise
 ```
 
 **[LCV-INTF]** _State_ is supposed to be maintained outside of this specification. When _VerifyHeaderAtHeight_ is called, _trustedState_ is in _State_. When _TrustedState_ is returned it is added to _State_.
@@ -280,8 +282,16 @@ relationship between `trustedState` and untrusted header at `untrustedHeight`.
 
 ```go
 func VerifyBisection(untrustedHeight int64,
+                     untrustedSh // fix
                      trustedState TrustedState,
                      now Time) (TrustedState, error)
+
+
+        // enumerate here all the checks in untrustedSh
+        returns: untrustedSh, when it is consistent with blockchain,
+                              untrustedSh.Time > now + clockDrift,
+                              and primary is correct
+                 error, otherwise
 ```
 
 To do so, `VerifyBisection` first downloads the header at height _untrustedHeight_ from the _primary_. Then it does some sanity checks, and then calls `VerifySingle`:
@@ -316,13 +326,47 @@ If `VerifySingle` is successful, it returns _TrustedState_ to `VerifyBisection` 
 ### Details
 
 ```go
-func VerifyBisection(untrustedHeight int64,
+func VerifyHeaderAtHeight(untrustedHeight int64,
+                          trustedState TrustedState,
+                          trustThreshold float,
+                          trustingPeriod Duration,
+                          clockDrift Duration) (TrustedState, error)) {
+
+    trustedHeader := trustedState.SignedHeader.Header
+
+    now := System.Time()
+    if !isWithinTrustedPeriod(trustedHeader, trustingPeriod, now) {
+        return (trustedState, ErrHeaderNotWithinTrustedPeriod)
+    }
+
+    untrustedSh := synchronous RPC Commit(untrustedHeight)
+    newTrustedState, err := VerifyBisection(untrustedHeight,
+                                            untrustedSh
+                                            trustedState,
+                                            now)
+
+    if err != nil return (trustedState, err)
+
+    now = System.Time()
+    if !isWithinTrustedPeriod(trustedHeader, trustingPeriod, now) {
+        return (trustedState, ErrHeaderNotWithinTrustedPeriod)
+    }
+
+    return (newTrustedState, err)
+}
+```
+
+
+```go
+func VerifyBisection(untrustedHeight int64, // to be replaced by Sh
+                     untrustedSh // fix
                      trustedState TrustedState,
                      now Time) (TrustedState, error) {
 
-    untrustedSh := synchronous RPC Commit(untrustedHeight)
-
-    Check: ErrRequestFailed, ErrInvalidHeaderTime, ErrInvalidHeaderTime
+    // Check: ErrRequestFailed, ErrInvalidHeaderTime,
+    // ErrInvalidHeaderTime:
+    // preconditions on Sh. If not met, implementation must deal //
+    // with it with error codes.
 
     result = verifySingle(
              trustedState,
@@ -350,7 +394,8 @@ func VerifyBisection(untrustedHeight int64,
                            now)
     }
     else {
-        return (trustedState, error)
+        // header bad. there was a fault. escalate!
+        // return (trustedState, error)
     }
 
 
