@@ -307,7 +307,7 @@ Fails: on error in RPC to primary or if postcondition is violated
 ```
 
 **Question:** Does Commit ensure that the returned header is of the
-correct height?
+correct height? Does Validators guarantee that?
 
 if `query_primary` returns without fault, `VerifyBisection` calls `VerifySingle`:
 
