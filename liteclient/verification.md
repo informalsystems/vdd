@@ -270,7 +270,7 @@ func VerifyHeaderAtHeight(untrustedHeight int64,
         expects: trustedState within trustingperiod from now
         returns: the header of height untrustedHeight, when the
                  header is consistent with the blockchain and
-                 primary is correct
+                 primary is correct (Commit and Validators do not produce errors)
                  error, otherwise
 ```
 
@@ -294,7 +294,24 @@ func VerifyBisection(untrustedHeight int64,
                  error, otherwise
 ```
 
-To do so, `VerifyBisection` first downloads the header at height _untrustedHeight_ from the _primary_. Then it does some sanity checks, and then calls `VerifySingle`:
+To do so, `VerifyBisection` first downloads the necessary information
+from the _primary_:
+
+```go
+func query_primary(untrustedHeight int64) (SignedHeader, Header, ValidatorSet, ValidatorSet)
+Nominal postcondition:
+    Returns: SignedHeader of height untrustedHeight
+             Header hd of height untrustedHeight
+             ValidatorSet of height untrustedHeight
+             ValidatorSet of height untrustedHeight
+    let hd be the second returnvalue
+             hd.Time < now + clockDrift
+Fails: on error in RPC or if postcondition is violated
+```
+**Question:** Does Commit ensure that the returned header is of the
+correct height?
+
+if `query_primary` returns without fault, `VerifyBisection` calls `VerifySingle`:
 
 
 ```go
@@ -339,7 +356,6 @@ func VerifyHeaderAtHeight(untrustedHeight int64,
         return (trustedState, ErrHeaderNotWithinTrustedPeriod)
     }
 
-    untrustedSh := synchronous RPC Commit(untrustedHeight)
     newTrustedState, err := VerifyBisection(untrustedHeight,
                                             untrustedSh
                                             trustedState,
@@ -357,9 +373,10 @@ func VerifyHeaderAtHeight(untrustedHeight int64,
 ```
 
 
+
+
 ```go
-func VerifyBisection(untrustedHeight int64, // to be replaced by Sh
-                     untrustedSh // fix
+func VerifyBisection(untrustedHeight int64,   
                      trustedState TrustedState,
                      now Time) (TrustedState, error) {
 
@@ -367,6 +384,11 @@ func VerifyBisection(untrustedHeight int64, // to be replaced by Sh
     // ErrInvalidHeaderTime:
     // preconditions on Sh. If not met, implementation must deal //
     // with it with error codes.
+
+    untrustedSh, untrustedHeader, untrustedVs, untrustedNextVs := query_primary(untrustedHeight)
+
+
+
 
     result = verifySingle(
              trustedState,
