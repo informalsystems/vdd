@@ -108,7 +108,11 @@ Formally,
 e.g., if the component is connected to a correct full node and communication is
 reliable and timely, then something good happens eventually.
 
-Each correct full node maintains a log.
+Each correct full node maintains a log. A log is a sequence of blocks.
+
+A block is a data structure described in
+https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md
+
 
 Each validator may propose transactions.
 
