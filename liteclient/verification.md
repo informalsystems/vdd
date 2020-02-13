@@ -285,13 +285,11 @@ func VerifyBisection(untrustedHeight int64,
                      untrustedSh // fix
                      trustedState TrustedState,
                      now Time) (TrustedState, error)
-
-
-        // enumerate here all the checks in untrustedSh
-        returns: untrustedSh, when it is consistent with blockchain,
-                              untrustedSh.Time > now + clockDrift,
-                              and primary is correct
-                 error, otherwise
+Nominal postcondition:
+    Returns: untrustedSh
+    untrustedSh is consistent with blockchain,
+    untrustedSh.Time > now + clockDrift,
+Fails: on error in RPC to primary or if postcondition is violated
 ```
 
 To do so, `VerifyBisection` first downloads the necessary information
@@ -303,11 +301,11 @@ Nominal postcondition:
     Returns: SignedHeader of height untrustedHeight
              Header hd of height untrustedHeight
              ValidatorSet of height untrustedHeight
-             ValidatorSet of height untrustedHeight
-    let hd be the second returnvalue
-             hd.Time < now + clockDrift
-Fails: on error in RPC or if postcondition is violated
+             ValidatorSet of height untrustedHeight + 1
+    hd.Time < now + clockDrift
+Fails: on error in RPC to primary or if postcondition is violated
 ```
+
 **Question:** Does Commit ensure that the returned header is of the
 correct height?
 
