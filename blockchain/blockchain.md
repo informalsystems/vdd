@@ -108,15 +108,26 @@ Formally,
 e.g., if the component is connected to a correct full node and communication is
 reliable and timely, then something good happens eventually.
 
-Each correct full node maintains a log.
+Each correct full node maintains a log. A log is a sequence of blocks.
 
-Each validator may propose transactions.
+A block is a data structure described in
+https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md
+
+
 
 **[TMBC-VC_AGR]** At all times, for any two correct full nodes _i_ and _j_, _i.log_ is a prefix of _j.log_ or _j.log_ is a prefix of _i.log_.
 
-**[TMBC-VC_VAL]** At all times, each log entry _b_ satisfies _Valid(b)_.
-
 **[TMBC-VC-PROG]** At all correct validators _i_ and all times _t_ there exists a time _t'_, such that  _|log_i(t)| < |log_i(t)|_.
+
+**[TMBC-VC_VAL]** Not clear. Application specific. We will need to fix that
+eventually. I guess for fastsync and liteclient we don't need it.
+(At all times, each log entry _b_ satisfies _Valid(b)_. not 
+  sure. _Valid_ may take the current state)
+(_Remark:_ Validity should make reference to the mempool, e.g., only messages from the
+  mempool + we will need a spec for the mempool. For now I leave it like that
+  as the liteclient and fastsync do not care about that.).
+
+
 
 > How is the problem statement linked to the "Sequential Problem statement".
 Simulation, implementation, etc. relations
