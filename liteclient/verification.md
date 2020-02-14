@@ -220,17 +220,18 @@ For the purpose of this light client specification, we assume that the
      Tendermint RPC: 
 
 ```go
-	// RPC to full node
-	// returns signed header: Header with Commit, for the given height
+    // RPC to full node
+    // returns signed header: Header with Commit, for the given height
     func Commit(height int64) (SignedHeader, error)
 ```
 
-- Expected postcondition correct full node:
-Returns the signed header of height height from the blockchain
-if communication is timely (no timeout)
-- Expected postcondition faulty full node: Returns arbitrary
-- Fails correct full node:  height < 0 or height does not exist on blockchain or timeout
-- Fails  faulty full node: arbitrary
+- Expected postcondition
+   * correct full node -> Returns the signed header of height height
+     from the blockchain if communication is timely (no timeout)
+   * faulty full node -> Returns arbitrary
+- Fails 
+   * correct full node ->  height < 0 or height does not exist on blockchain or timeout
+   * faulty full node -> arbitrary
 		
   
 
@@ -239,12 +240,15 @@ if communication is timely (no timeout)
     // returns validator set for the given height
     func Validators(height int64) (ValidatorSet, error)
 ```
-- Expected postcondition correct full node:
-Returns the Validator Set of height height from the blockchain
-if communication is timely (no timeout)
-- Expected postcondition faulty full node: Returns arbitrary
-- Fails correct full node:  height < 0 or height does not exist on blockchain or timeout
-- Fails  faulty full node: arbitrary
+- Expected postcondition
+   * correct full node -> Returns the  Validator Set of height height
+     from the blockchain if communication is timely (no timeout)
+   * faulty full node -> Returns arbitrary
+- Fails 
+   * correct full node ->  height < 0 or height does not exist on blockchain or timeout
+   * faulty full node -> arbitrary
+
+
 
 **[LCV-LuckyCase]** All runs where the primary is correct and no
 timeout occurs on `Commit` and `Validators`.
@@ -254,7 +258,7 @@ timeout occurs on `Commit` and `Validators`.
 
 
 
-Furthermore, we assume the following auxiliary functions:
+We assume the following auxiliary functions:
 ```go
     // returns true if the commit is for the header, ie. if it contains
     // the correct hash of the header; otherwise false
@@ -271,6 +275,11 @@ Furthermore, we assume the following auxiliary functions:
 
     // returns hash of the given validator set
     func hash(v2 ValidatorSet) []byte
+	
+    // returns nil if header and validator sets are consistent; otherwise returns error
+    func validateSignedHeaderAndVals(signedHeader SignedHeader, 
+                                     vs ValidatorSet, 
+                                     nextVs ValidatorSet) error
 ```
 
 
@@ -290,7 +299,7 @@ Configuration Parameters:
 - _clockDrift Duration_:
 
 
-### Outline
+### Solution
 
 This is the signature of the function whose call is mentioned in
 [LCV-VC-Live]. It implements the problem statement.
@@ -331,7 +340,8 @@ from the _primary_:
 ```go
 func query_primary(untrustedHeight int64) (SignedHeader, Header, ValidatorSet, ValidatorSet)
 ```
-- Expected postcondition: Returns, if no error in RPC to primary,
+- Expected postcondition: Returns the following data, 
+if there is no error in the RPC to the primary,
    * SignedHeader of height untrustedHeight
    * Header hd of height untrustedHeight
    * ValidatorSet of height untrustedHeight
@@ -340,31 +350,42 @@ func query_primary(untrustedHeight int64) (SignedHeader, Header, ValidatorSet, V
 	
 - Fails: on error in RPC to primary or if postcondition is violated
 
-_Remark_: Observe that the failing condition is _not_ [LCV-LuckyCase]
-in this case. A faulty primary might return arbitrary values.
+_Remark_: Observe that the  conditions here are  "error in RPC" but
+_not_ [LCV-LuckyCase]
+in this case. A faulty primary might return arbitrary values, without
+forcing the function to report an error.
 
 
-If `query_primary` returns without fault, `VerifyBisection` calls `VerifySingle`:
+If `query_primary` returns without error, `VerifyBisection` calls `VerifySingle`:
 
 
 ```go
-func VerifySingle(untrustedSh SignedHeader,
+func verifySingle(untrustedSh SignedHeader,
                   untrustedVs ValidatorSet,
                   untrustedNextVs ValidatorSet,
                   trustedState TrustedState,
-                  now Time) (TrustedState, error)
+                  now Time)  error
 ```
-
-The function `VerifySingle` attempts to validate the given untrusted header and the corresponding validator sets
-based on a given trusted state (the header with the largest height in _State_). It checks that the trusted state is still within its trusted period,
-and that the untrusted header is within assumed `clockDrift` bound of the passed time `now`.
-
-The remaining checks verify that the header is properly signed (by more than 2/3 of the voting power) by the right validators, and finally there are checks for two distinct cases:
-
- - if the headers are adjacent: check that the next validator hash in the _trustedState_ matches the validator hash of _untrustedSh_.
-
- - otherwise, the skipping case: check that the signers in _untrustedSh_ account for more than _max(1/3, trustLevel)_ of the voting power in the _trustedState_
- (this ensures that there is at least one correct validator in the set of signers)
+- Expected precondition:
+  * untrustedSh.Header.Time > now + clockDrift
+  * isWithinTrustedPeriod(trustedState.SignedHeader.Header,
+    trustingPeriod, now)
+  * trustedState.SignedHeader.Header.Height < untrustedHeader.Height	
+  * trustedState.SignedHeader.Header.Time < untrustedHeader.Time
+  * validateSignedHeaderAndVals(untrustedSh, untrustedVs,
+    untrustedNextVs)
+  * (untrustedHeader.Height =
+    trustedState.SignedHeader.Header.Height + 1) ->
+    ((trustedState.SignedHeader.Header.NextValidatorsHash =
+    untrustedHeader.ValidatorsHash) AND "more than 2/3 signed")
+- Expected postcondition: Returns 
+  * "success" if untrustedHeader.Height =
+              trustedState.SignedHeader.Header.Height + 1
+  * "success" if untrustedHeader.Height >
+              trustedState.SignedHeader.Header.Height + 1 and
+             "more than max(1/3,trustThreshold) of voting power in trusted signed untrusted"
+  * "could not verify" otherwise
+- Fails: if precondition is violated
 
 
 
@@ -373,95 +394,7 @@ based on the local (given) state.
 
 If `VerifySingle` is successful, it returns _TrustedState_ to `VerifyBisection` which in turn also returns _TrustedState_. Otherwise (and there is no fatal error), `VerifyBisection` computes a pivot height between _trustedState.height_ and _untrustedHeight_, and goes into recursion.
 
-### Details
 
-```go
-func VerifyHeaderAtHeight(untrustedHeight int64,
-                          trustedState TrustedState,
-                          trustThreshold float,
-                          trustingPeriod Duration,
-                          clockDrift Duration) (TrustedState, error)) {
-
-    trustedHeader := trustedState.SignedHeader.Header
-
-    now := System.Time()
-    if !isWithinTrustedPeriod(trustedHeader, trustingPeriod, now) {
-        return (trustedState, ErrHeaderNotWithinTrustedPeriod)
-    }
-
-    newTrustedState, err := VerifyBisection(untrustedHeight,
-                                            untrustedSh
-                                            trustedState,
-                                            now)
-
-    if err != nil return (trustedState, err)
-
-    now = System.Time()
-    if !isWithinTrustedPeriod(trustedHeader, trustingPeriod, now) {
-        return (trustedState, ErrHeaderNotWithinTrustedPeriod)
-    }
-
-    return (newTrustedState, err)
-}
-```
-
-
-
-
-```go
-func VerifyBisection(untrustedHeight int64,   
-                     trustedState TrustedState,
-                     now Time) (TrustedState, error) {
-
-    // Check: ErrRequestFailed, ErrInvalidHeaderTime,
-    // ErrInvalidHeaderTime:
-    // preconditions on Sh. If not met, implementation must deal //
-    // with it with error codes.
-
-    untrustedSh, untrustedHeader, untrustedVs, untrustedNextVs := query_primary(untrustedHeight)
-
-
-
-
-    result = verifySingle(
-             trustedState,
-             untrustedSh,
-             untrustedVs,
-             untrustedNextVs,
-             trustThreshold)
-
-    if result == OK {
-        // the untrusted header is now trusted.
-        newTrustedState = TrustedState(untrustedSh, untrustedNextVs)
-        return (newTrustedState, nil)
-    }
-    else if result == InsufficientVotingPower {
-     // at this point in time we need to do bisection
-    pivotHeight := ceil((trustedHeader.Height + untrustedHeight) / 2)
-
-    error, newTrustedState = VerifyBisection(pivotHeight,
-                                             trustedState,
-                                             now)
-    if error != nil return (newTrustedState, error)
-
-    return VerifyBisection(untrustedHeight,
-                           newTrustedState,
-                           now)
-    }
-    else {
-        // header bad. there was a fault. escalate!
-        // return (trustedState, error)
-    }
-
-
-}
-```
-
-TODO (copy code of procedures from https://github.com/tendermint/spec/blob/master/spec/consensus/light-client/verification.md or shouldn't we?)
--> no, stay more abstract
-
-what does it mean that a header is OK. Defined as conditions not defined
-as code.
 
 
 ## Correctness arguments
