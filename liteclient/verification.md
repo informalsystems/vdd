@@ -344,7 +344,7 @@ _Remark_: Observe that the failing condition is _not_ [LCV-LuckyCase]
 in this case. A faulty primary might return arbitrary values.
 
 
-Ff `query_primary` returns without fault, `VerifyBisection` calls `VerifySingle`:
+If `query_primary` returns without fault, `VerifyBisection` calls `VerifySingle`:
 
 
 ```go
