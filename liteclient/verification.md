@@ -1,5 +1,6 @@
 **VDD example for high-level English spec**
 
+
 **concentrates on form rather on content, for now**
 
 # Core Verification
@@ -210,17 +211,48 @@ In the following, only the details of the data structures needed for this specif
    }
  ```
 
-### Functions
+### Inter Process Communication
 
-For the purpose of this light client specification, we assume that the Tendermint Full Node
-exposes the following functions over Tendermint RPC:
+
+
+For the purpose of this light client specification, we assume that the
+     Tendermint Full Node exposes the following functions over
+     Tendermint RPC: 
+
 ```go
-    // returns signed header: Header with Commit, for the given height
+	// RPC to full node
+	// returns signed header: Header with Commit, for the given height
     func Commit(height int64) (SignedHeader, error)
+```
 
+- Expected postcondition correct full node:
+Returns the signed header of height height from the blockchain
+if communication is timely (no timeout)
+- Expected postcondition faulty full node: Returns arbitrary
+- Fails correct full node:  height < 0 or height does not exist on blockchain or timeout
+- Fails  faulty full node: arbitrary
+		
+  
+
+
+```go
     // returns validator set for the given height
     func Validators(height int64) (ValidatorSet, error)
 ```
+- Expected postcondition correct full node:
+Returns the Validator Set of height height from the blockchain
+if communication is timely (no timeout)
+- Expected postcondition faulty full node: Returns arbitrary
+- Fails correct full node:  height < 0 or height does not exist on blockchain or timeout
+- Fails  faulty full node: arbitrary
+
+**[LCV-LuckyCase]** All runs where the primary is correct and no
+timeout occurs on `Commit` and `Validators`.
+
+
+### Functions
+
+
 
 Furthermore, we assume the following auxiliary functions:
 ```go
@@ -267,12 +299,13 @@ This is the signature of the function whose call is mentioned in
 func VerifyHeaderAtHeight(untrustedHeight int64,
                           trustedState TrustedState,
                           ) (TrustedState, error))
-        expects: trustedState within trustingperiod from now
-        returns: the header of height untrustedHeight, when the
-                 header is consistent with the blockchain and
-                 primary is correct (Commit and Validators do not produce errors)
-                 error, otherwise
 ```
+- Expected precondition: trustedState within trustingperiod from now
+- Expected postcondition: Returns the header of height
+                 untrustedHeight of
+                 the blockchain under [LCV-LuckyCase]
+- Fails: if precondition is violated or if outside of [LCV-LuckyCase]
+
 
 **[LCV-INTF]** _State_ is supposed to be maintained outside of this specification. When _VerifyHeaderAtHeight_ is called, _trustedState_ is in _State_. When _TrustedState_ is returned it is added to _State_.
 
@@ -282,34 +315,36 @@ relationship between `trustedState` and untrusted header at `untrustedHeight`.
 
 ```go
 func VerifyBisection(untrustedHeight int64,
-                     untrustedSh // fix
                      trustedState TrustedState,
                      now Time) (TrustedState, error)
-Nominal postcondition:
-    Returns: untrustedSh
-    untrustedSh is consistent with blockchain,
-    untrustedSh.Time > now + clockDrift,
-Fails: on error in RPC to primary or if postcondition is violated
 ```
+- Expected precondition: trustedState.bfttime within trustingperiod from now
+- Expected postcondition:
+    Returns header hd of height untrustedHeight from blockchain if 
+    hd.Time > now + clockDrift under  [LCV-LuckyCase]
+- Fails: if precondition is violated  or if outside of [LCV-LuckyCase]
+ or _something about time is fishy_
 
 To do so, `VerifyBisection` first downloads the necessary information
 from the _primary_:
 
 ```go
 func query_primary(untrustedHeight int64) (SignedHeader, Header, ValidatorSet, ValidatorSet)
-Nominal postcondition:
-    Returns: SignedHeader of height untrustedHeight
-             Header hd of height untrustedHeight
-             ValidatorSet of height untrustedHeight
-             ValidatorSet of height untrustedHeight + 1
-    hd.Time < now + clockDrift
-Fails: on error in RPC to primary or if postcondition is violated
 ```
+- Expected postcondition: Returns, if no error in RPC to primary,
+   * SignedHeader of height untrustedHeight
+   * Header hd of height untrustedHeight
+   * ValidatorSet of height untrustedHeight
+   * ValidatorSet of height untrustedHeight + 1 
+- Expected postcondition:  hd.Time < now + clockDrift 
+	
+- Fails: on error in RPC to primary or if postcondition is violated
 
-**Question:** Does Commit ensure that the returned header is of the
-correct height? Does Validators guarantee that?
+_Remark_: Observe that the failing condition is _not_ [LCV-LuckyCase]
+in this case. A faulty primary might return arbitrary values.
 
-if `query_primary` returns without fault, `VerifyBisection` calls `VerifySingle`:
+
+Ff `query_primary` returns without fault, `VerifyBisection` calls `VerifySingle`:
 
 
 ```go
