@@ -254,7 +254,7 @@ For the purpose of this light client specification, we assume that the
 timeout occurs on `Commit` and `Validators`.
 
 
-### Functions
+### Auxiliary Functions (Local) 
 
 
 
@@ -299,9 +299,8 @@ Configuration Parameters:
 - _clockDrift Duration_:
 
 
-### Solution
 
-This is the signature of the function whose call is mentioned in
+We start with the function whose call is mentioned in
 [LCV-VC-Live]. It implements the problem statement.
 
 ```go
@@ -311,19 +310,21 @@ func VerifyHeaderAtHeight(untrustedHeight int64,
 ```
 - Expected precondition: trustedState within trustingperiod from _starttime_
 - Expected postcondition: Returns
-    * (header, OK): if
-                  header of height
-                 untrustedHeight and "header within trustingperiod
-                 from "endtime" of
-                 the blockchain under [LCV-LuckyCase]
-	* (header, EXPIRED): if
-                  header of height
-                 untrustedHeight and "header outside trustingperiod
-                 from _endtime_ of
-                 the blockchain under [LCV-LuckyCase]		 
+    * (header, OK):  under [LCV-LuckyCase] and
+                  header is of height
+                 untrustedHeightof
+                 the blockchain and header within trustingperiod
+                 from _endtime_ 
+	* (header, EXPIRED):  under [LCV-LuckyCase]	and
+                  header is of height
+                 untrustedHeight of
+                 the blockchain and header outside trustingperiod
+                 from _endtime_	 
 - Fails: if precondition is violated or if outside of [LCV-LuckyCase]
+  (unless outside of lucky case buy faulty primary sends correct
+  headers; depends on the definition of faulty)
 
-- starttime and endtime are the local system time right after
+- _starttime_ and _endtime_ are the local system time right after
   invocation and right before return, respectively.
 
 **[LCV-INTF]** _State_ is supposed to be maintained outside of this specification. When _VerifyHeaderAtHeight_ is called, _trustedState_ is in _State_. When _TrustedState_ is returned it is added to _State_.
