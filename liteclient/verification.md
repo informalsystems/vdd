@@ -309,12 +309,22 @@ func VerifyHeaderAtHeight(untrustedHeight int64,
                           trustedState TrustedState,
                           ) (TrustedState, error))
 ```
-- Expected precondition: trustedState within trustingperiod from now
-- Expected postcondition: Returns the header of height
-                 untrustedHeight of
+- Expected precondition: trustedState within trustingperiod from _starttime_
+- Expected postcondition: Returns
+    * (header, OK): if
+                  header of height
+                 untrustedHeight and "header within trustingperiod
+                 from "endtime" of
                  the blockchain under [LCV-LuckyCase]
+	* (header, EXPIRED): if
+                  header of height
+                 untrustedHeight and "header outside trustingperiod
+                 from _endtime_ of
+                 the blockchain under [LCV-LuckyCase]		 
 - Fails: if precondition is violated or if outside of [LCV-LuckyCase]
 
+- starttime and endtime are the local system time right after
+  invocation and right before return, respectively.
 
 **[LCV-INTF]** _State_ is supposed to be maintained outside of this specification. When _VerifyHeaderAtHeight_ is called, _trustedState_ is in _State_. When _TrustedState_ is returned it is added to _State_.
 
@@ -338,14 +348,14 @@ To do so, `VerifyBisection` first downloads the necessary information
 from the _primary_:
 
 ```go
-func query_primary(untrustedHeight int64) (SignedHeader, Header, ValidatorSet, ValidatorSet)
+func query_primary(untrustedHeight int64) (SignedHeader,  ValidatorSet, ValidatorSet)
 ```
+- Communicates with primary via RPCs `Commit`, and `Validators`
 - Expected postcondition: Returns the following data, 
 if there is no error in the RPC to the primary,
-   * SignedHeader of height untrustedHeight
-   * Header hd of height untrustedHeight
-   * ValidatorSet of height untrustedHeight
-   * ValidatorSet of height untrustedHeight + 1 
+   * SignedHeader of height untrustedHeight (called untrustedSh)
+   * ValidatorSet of height untrustedHeight (called untrustedVs)
+   * ValidatorSet of height untrustedHeight + 1 (called untrustedNextVs)
 - Expected postcondition:  hd.Time < now + clockDrift 
 	
 - Fails: on error in RPC to primary or if postcondition is violated
@@ -363,8 +373,7 @@ If `query_primary` returns without error, `VerifyBisection` calls `VerifySingle`
 func verifySingle(untrustedSh SignedHeader,
                   untrustedVs ValidatorSet,
                   untrustedNextVs ValidatorSet,
-                  trustedState TrustedState,
-                  now Time)  error
+                  trustedState TrustedState)  error
 ```
 - Expected precondition:
   * untrustedSh.Header.Time > now + clockDrift
@@ -390,7 +399,7 @@ func verifySingle(untrustedSh SignedHeader,
 
 
 *Remark:* This function is not making external (RPC) calls to the full node; the whole logic is
-based on the local (given) state.
+based on the local (given) state. Only `query_primary` makes external calls!
 
 If `VerifySingle` is successful, it returns _TrustedState_ to `VerifyBisection` which in turn also returns _TrustedState_. Otherwise (and there is no fatal error), `VerifyBisection` computes a pivot height between _trustedState.height_ and _untrustedHeight_, and goes into recursion.
 
