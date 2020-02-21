@@ -7,16 +7,14 @@
 A blockchain is a growing list of sets of transactions, denoted by _decision_. 
 If several processes in a distributed system have access to the blockchain, they can (1) provide transactions as input and (2) use the decision list to execute these transactions in order. 
 
-TODO: Replace log by decision list
-
-The log itself should be implemented in a reliable way, which introduces the need for fault-tolerance and distribution.
+The _decision_ list itself should be implemented in a reliable way, which introduces the need for fault-tolerance and distribution.
 The Tendermint protocols implement the blockchain over an unreliable (Byzantine) distributed system. 
-More precisely, a Tendermint system consists of many full nodes that each maintain a local copy of the (prefix of the current) log.
+More precisely, a Tendermint system consists of many full nodes that each maintain a local copy of the (prefix of the current) _decision_ list.
 
-In this specification, we are only concerned with the logs. 
+In this specification, we are only concerned with the _decision_ lists. 
 They are maintained at so-called _full nodes_, and are the result of the execution of the Tendermint consensus protocol (described in the ArXiv paper). 
 The Tendermint consensus implements a loop with iterator _h_ (height). 
-In each iteration, upon deciding on the transactions to be put into the log, a new log entry is created.
+In each iteration, upon deciding on the transactions to be put into the _decision_ list, a new _decision_ list entry is created.
 
 
 # Part I - Outside view
@@ -30,23 +28,9 @@ spec. Possible interactions, possible use cases, etc.
 will be used.
 
 This specification is central in the collection of Tendermint protocols. 
-The behavior of protocols like fastsync (**link**), or the lite client (**link**) will be defined with respect to this specification. 
-E.g., the lite client implements a read operation of the log entry of some height _h_. 
-It is thus crucial to understand what data is stored in this log entry, and what are the precise semantics of a read operation in a faulty environment.
-
-### List of relevant documents
-
-[[block]](https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#block) Definition of the block data structure
-
-[[blockchain]](https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#blockchain)
-
-[[fastsync]]() TODO
-
-[[lightclient]](https://github.com/interchainio/tendermint-rs/blob/e2cb9aca0b95430fca2eac154edddc9588038982/docs/architecture/adr-002-lite-client.md#adr-002-light-client)
-
-[[verifier]](https://github.com/informalsystems/VDD/blob/master/liteclient/verification.md#core-verification)
-
-
+The behavior of protocols like [fastsync], or the [light client][lightclient] will be defined with respect to this specification. 
+E.g., the light client implements a read operation of the _decision_ list entry of some height _h_. 
+It is thus crucial to understand what data is stored in this _decision_ list entry, and what are the precise semantics of a read operation in a faulty environment.
 
 
 ## Informal Problem statement
@@ -60,8 +44,9 @@ A blockchain provides a growing sequence of sets of transactions.
 
 > should be English and precise. will be accompanied with a TLA spec.
 
-**[TMBC-HEADER]** A set of blockchain transactions is stored in a data structure called _block_, which 
-contains a field called _header_ (TODO: link to temdermint spec blockchain). 
+#### **[TMBC-HEADER]**:
+A set of blockchain transactions is stored in a data structure called _block_, which 
+contains a field called _header_. (The data structure _block_ is defined [here][block]). 
 As the header contains hashes to the relevant fields of the block, for the purpose of this
 specification, we will assume that the blockchain is a list of headers, rather than a
 list of blocks. 
@@ -69,17 +54,13 @@ We also assume that every hash in the header identifies the data it hashes.
 Therefore, in this specification, we do not distinguish between hashes and the 
 data they represent.
 
-**[TMBC-SEQ]** The Tendermint blockchain is a list of headers. 
-
- - A header is a record of data (TODO: defined in blockchain).
-
+#### **[TMBC-SEQ]**:
+The Tendermint blockchain is a list of headers. 
+ - A header is a record of data (defined [here][header]).
  - Each header has an integer called a _height_.
-
  - Heights are strictly increasing.
-
  - If the blockchain contains a header of height _h_, then for all _h'<h_
 it contains a header of height _h'_.
-
  - During operation, new headers may be appended to the list one by one.
 
 # Part II - Protocol view
@@ -97,7 +78,7 @@ correctly
 ## Timing, nodes, and correctness assumptions
 
 In a Tendermint system, the nodes that choose to interact with each other collectively 
-implement the log in a distributed manner by executing a protocol. 
+implement the _decision_ list in a distributed manner by executing a protocol. 
 The Tendermint protocols should ensure that the participating nodes cannot benefit by 
 deviating from the expected behavior. 
 As a result, the nodes should be motivated (incentivized) to follow the protocol. 
@@ -107,53 +88,69 @@ If the nodes want to claim their atoms, they have to wait for a certain period o
 called the _unbonding period_. 
 The unbonding period is a configuration parameter of the system. 
 
-**[TMBC-TIME_PARAMS]** A Tendermint blockchain has the following configuration parameters:
+#### **[TMBC-TIME_PARAMS]**:
+A Tendermint blockchain has the following configuration parameters:
  - _unbondingPeriod_: a time duration.
  - _trustingPeriod_: a time duration smaller than _unbondingPeriod_.
 
-**[TMBC-NODES]** Tendermint full nodes (or just _full nodes_), execute a set of protocols, e.g., consensus, gossip, fast sync, etc. 
+#### **[TMBC-NODES]**:
+Tendermint full nodes (or just _full nodes_), execute a set of protocols, e.g., consensus, gossip, fast sync, etc. 
 When a full node actively participates in the distributed consensus, it is called a _validator node_.
 
-**[TMBC-CORRECT]**
+#### **[TMBC-CORRECT]**:
 We define a predicate _correct(n, t)_, where _n_ is a node and _t_ is a 
 time point. 
 The predicate _correct(n, t)_ is true if and only if the node _n_ follows all the protocols until time _t_.
 
+### Full node invariants
+
+#### **[TMBC-FaultyFull]**:
+No assumption is made about the behavior of faulty full nodes; they may be Byzantine.
+
+#### **[TMBC-Sign]**:
+Signatures and hashes cannot be broken.
+
 
 ## Blockchain data structure
 
-**[TMBC-VALIDATOR]** Given a full node, a _validator_ is a pair _(public key, voting power)_, where 
-  * _public key_ is the public key of the full node, 
-  * _voting power_ is an integer (representing the full node's voting power in a certain consensus instance).
+#### **[TMBC-VALIDATOR]**:
+Given a full node, a _validator_ is a pair _(public key, voting power)_, where 
+  - _public key_ is the public key of the full node, 
+  - _voting power_ is an integer (representing the full node's voting power in a certain consensus instance).
 
 Remark: We observed that the term _validator_ refers to both a data structure and a full node that participates in the distributed computation. Therefore, we introduce the notions _validator pair_ and _validator node_, respectively.
 
-**[TMBC-BLOCK]** Each block contains (among others) the following fields
- -  _Validators_: a set of validator pairs (as defined in **[TMBC-VALIDATOR]**), of the validator nodes that participated in the consensus instance which generated the block,
+#### **[TMBC-HEADER-FIELDS]**:
+Each header contains (among others) the following fields
+ -  _Validators_: a set of validator pairs (as defined in [**[TMBC-VALIDATOR]**](#**[TMBC-VALIDATOR]**:)), of the validator nodes that participated in the consensus instance which generated the block,
  - _NextValidators_: a set of validator pairs of the full nodes that participate in the consensus instance of the next block,
  - _bfttime_: the real-time at which the block is generated,
  - _LastCommit_: the set of signatures of the validators that committed the last block.
 
-**[TMBC-TIME]** The time _bfttime_ corresponds to the reading of the local clock of a validator (how this time is computed may change when the Tendermint consensus is modified). 
+#### **[TMBC-TIME]**:
+The time _bfttime_ corresponds to the reading of the local clock of a validator (how this time is computed may change when the Tendermint consensus is modified). 
 In this specification, we assume that all clocks are synchronized to real-time (and so is bfttime). 
 We can make this more precise eventually (incorporating clock drift, accuracy, precision, etc.). 
 Right now, we consider this assumption sufficient, as clock synchronization (under NTP) is in the order of milliseconds and _trustingPeriod_ is in the order of weeks.
 
 ### Blockchain data structure invariants
 
-**[TMBC-INV-SIGN]** The _LastCommit_ field of the block at height _h+1_ contains only signatures of 
+#### **[TMBC-INV-SIGN]**:
+The _LastCommit_ field of the block at height _h+1_ contains only signatures of 
 validators. The validators that signed have more than two-thirds of the voting power at height _h_.
 
-**[TMBC-INV-VALID]** The _NextValidator_ set of a block at height _h_ is equal to the _Validator_ set 
+#### **[TMBC-INV-VALID]**:
+The _NextValidator_ set of a block at height _h_ is equal to the _Validator_ set 
 of the block at height _h+1_.
  
 ## Failure model
 
-**[TMBC-FM-CONS]** 
+#### **[TMBC-FM-CONS]**: 
 There is a subset _C_ of validators in _NextValidators_ at height _h_ that holds more than 2/3 of the total voting power in _NextValidators_ at height _h_  such that every validator in _C_ follows the consensus protocol until consensus for height _h+1_ is terminated. (Consensus failure model)
 
 
-**[TMBC-FM-2THIRDS]** If a block _h_ is generated at time _bfttime_, then there is a subset _C_ of validators in _NextValidators_ at height _h_ that holds more than 2/3 of the total voting power in _NextValidators_ at height _h_  such that every validator in _C_ follows *all* protocols until _bfttime + trustingPeriod_. (Tendermint Failure Model)
+#### **[TMBC-FM-2THIRDS]**:
+If a block _h_ is generated at time _bfttime_, then there is a subset _C_ of validators in _NextValidators_ at height _h_ that holds more than 2/3 of the total voting power in _NextValidators_ at height _h_  such that every validator in _C_ follows *all* protocols until _bfttime + trustingPeriod_. (Tendermint Failure Model)
 
 Formally,
 \[
@@ -161,7 +158,8 @@ Formally,
 2/3 \sum*{(v,p) \in h.Header.NextV} p
 \]
 
-_Remark:_ The definition of correct [TMBC-Corr] refers to realtime, while it is used here with bfttime and trustingPeriod, which are "hardware times". Due to [TMBC-TIME], we do not make a distinction here. 
+_Remark:_ The definition of correct [**[TMBC-CORRECT]**](#**[TMBC-CORRECT]**:) refers to realtime, while it is used here with bfttime and trustingPeriod, which are "hardware times". 
+Due to [**[TMBC-TIME]**](#**[TMBC-TIME]**:), we do not make a distinction here. 
 
 
 
@@ -174,10 +172,10 @@ _Remark:_ The definition of correct [TMBC-Corr] refers to realtime, while it is 
 
 Each correct full node _p_ maintains its local copy of the Tendermint blockchain, denoted by _decision_p_. 
 
-A block is a data structure described in
-https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md
+A block is a data structure described [here](block).
 
-**[TMBC-D-VAL]** There is a predicate _Valid()_ defined over blocks.
+#### **[TMBC-D-VAL]**:
+There is a predicate _Valid()_ defined over blocks.
 (perhaps we do not need that now)
 
 ### Temporal Properties
@@ -194,26 +192,36 @@ reliable and timely, then something good happens eventually.
 
 ### Safety
 
-**[TMBC-VC_AGR]** It is always the case that, for any two correct full nodes _p_ and _q_, it holds that _decision_p_ is a prefix of _decision_q_ or _decision_q_ is a prefix of _decision_p_.
+#### **[TMBC-VC_AGR]**:
+It is always the case that, for any two correct full nodes _p_ and _q_, it holds that _decision_p_ is a prefix of _decision_q_ or _decision_q_ is a prefix of _decision_p_.
 
-**[TMBC-VC_VAL]** TODO: Not clear. 
+#### **[TMBC-VC_VAL]**:
+TODO: Not clear. 
 Application specific. 
 We will need to fix that eventually. 
-I guess for fastsync and liteclient we don't need it.
-(It is always the case that each log entry _b_ satisfies _Valid(b)_. not
+I guess for fastsync and light client we don't need it.
+(It is always the case that each _decision_ list entry _b_ satisfies _Valid(b)_. not
   sure. _Valid_ may take the current state)
 (_Remark:_ Validity should make reference to the mempool, e.g., only messages from the
   mempool + we will need a spec for the mempool. For now I leave it like that
-  as the liteclient and fastsync do not care about that.).
+  as the light client and fastsync do not care about that.).
 
 
 
 ### Liveness
-**[TMBC-VC-PROG]** For all correct full nodes _p_ and all times _t_ there exists a time _t'_, such that _|decision_p(t)| < |decision_p(t')|_.
+#### **[TMBC-VC-PROG]**: 
+For all correct full nodes _p_ and all times _t_ there exists a time _t'_, such that _|decision_p(t)| < |decision_p(t')|_.
 
 
 > How is the problem statement linked to the "Sequential Problem statement".
 Simulation, implementation, etc. relations
+
+### Solving the sequential specification
+TODO: How does the distributed specification map to the sequential one? The argument should arrive at:
+
+#### **[TMBC-CorrFull]**: 
+Every correct Tendermint full node locally stores a prefix of the current list of headers from [**[TMBC-SEQ]**](#**[TMBC-SEQ]**:).
+
 
 ## Definitions
 
@@ -246,3 +254,26 @@ if details were omitted.
 > Proof sketches of why we believe the solution satisfies the problem statement.
 Possibly giving inductive invariants that can be used to prove the specifications
 of the problem statement
+
+
+
+# References
+
+[[block]] Definition of the block data structure
+
+[[blockchain]] Tendermint Blockcahin specification
+
+[[header]] Definition of the header data structure
+
+[[lightclient]] Light Client ADR
+
+[[verifier]] Light Client Verification Specification
+
+
+[block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#block 
+[blockchain]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#blockchain
+[fastsync]: TODO
+[lightclient]: https://github.com/interchainio/tendermint-rs/blob/e2cb9aca0b95430fca2eac154edddc9588038982/docs/architecture/adr-002-lite-client.md#adr-002-light-client
+[verifier]: https://github.com/informalsystems/VDD/blob/master/liteclient/verification.md#core-verification
+[header]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#header
+

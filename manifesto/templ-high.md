@@ -74,7 +74,12 @@ if details were omitted.
 
 ### Details
 
-> Pseudo code of the solution 
+> Function signatures followed by pseudocode (optional) and a list of features (required):
+> - Implementation remarks (optional)
+>   - e.g. (local/remote) function called in the body of this function
+> - Expected precondition
+> - Expected postcondition
+> - Error condition
 
 
 ## Correctness arguments
@@ -83,3 +88,6 @@ if details were omitted.
 Possibly giving inductive invariants that can be used to prove the specifications
 of the problem statement 
 
+# References
+
+> links to other specifications/ADRs this document refers to
