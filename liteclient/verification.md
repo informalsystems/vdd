@@ -113,7 +113,7 @@ correct full nodes have the incentive to respond, because the failure detector o
 
 ### Assumptions
 
-**[LCV-A-Full]** The verifier communicates with a full node called _primary_. No assumption is made about the full node (it may be correct or faulty).
+**[LCV-A-Primary]** The verifier communicates with a full node called _primary_. No assumption is made about the full node (it may be correct or faulty).
 
 **[LCV-A-Comm]**  Communication between the lite client and a correct full node is reliable and bounded in time.
 
@@ -388,7 +388,7 @@ func verifySingle(untrustedSh SignedHeader,
   * trustedState.SignedHeader.Header.Time < untrustedHeader.Time
   * validateSignedHeaderAndVals(untrustedSh, untrustedVs,
     untrustedNextVs)
-  * (untrustedHeader.Height =
+  * **[TMBC-SIGN]** (untrustedHeader.Height =
     trustedState.SignedHeader.Header.Height + 1) ->
     ((trustedState.SignedHeader.Header.NextValidatorsHash =
     untrustedHeader.ValidatorsHash) AND "more than 2/3 signed")
