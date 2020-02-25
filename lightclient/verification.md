@@ -229,10 +229,10 @@ For the purpose of this light client specification, we assume that the
      Tendermint RPC:
 
 ```go
-func Commit(height int64) (SignedHeader, error)
+func Commit(addr Address, height int64) (SignedHeader, error)
 ```
 - Implementation remark
-   - RPC to full node _n_
+   - RPC to full node _n_ at address _addr_
 - Expected precodnition
   - header of `height` exists on blockchain
 - Expected postcondition
@@ -247,10 +247,10 @@ func Commit(height int64) (SignedHeader, error)
 
 
  ```go    
-func Validators(height int64) (ValidatorSet, error)
+func Validators(addr Address, height int64) (ValidatorSet, error)
 ```
 - Implementation remark
-   - RPC to full node _n_
+   - RPC to full node _n_ at address _addr_
 - Expected precodnition
   - header of `height` exists on blockchain
 - Expected postcondition
@@ -320,14 +320,16 @@ We start with the function `VerifyHeaderAtHeight` whose call is the one mentione
 [**[LCV-VC-Live]**](#**[LCV-VC-Live]**:). It implements the problem statement.
 
 #### **[LCV-TState]**: 
-`VerifyHeaderAtHeight` is called with trustedState which contains the header in _State_ with maximal height.
+`VerifyHeaderAtHeight` is called with trustedState which contains the
+header in _State_ with maximal height, and the address _addr_ of the
+primary.
 
 ---
 
 ```go
 func VerifyHeaderAtHeight(untrustedHeight int64,
                           trustedState TrustedState,
-			  primary Address
+			              addr Address
                           ) (TrustedState, error))
 ```
 - Expected precondition: trustedState within trustingperiod from _starttime_
@@ -361,11 +363,11 @@ relationship between `trustedState` and untrusted header at `untrustedHeight`.
 ```go
 func VerifyBisection(untrustedHeight int64,
                      trustedState TrustedState,
-		     primary Address
+		             addr Address
                      now Time
 		     ) (TrustedState, error) {
 
-  sh, vs1, vs2 := query_primary(untrustedHeight)
+  sh, vs1, vs2 := query_primary(addr,untrustedHeight)
   res := VerifySingle(sh, vs1, vs2, trustedState)
   if res == "success" {
     return sh
@@ -389,12 +391,13 @@ from the _primary_ using the following `query_primary`.
 ---
 
 ```go
-func query_primary(fn AddressmuntrustedHeight int64) 
+func query_primary(addr Address, untrustedHeight int64) 
                   (SignedHeader,  ValidatorSet, ValidatorSet)
 ```
-- Communicates with fn via RPCs `Commit`, and `Validators`
+- Communicates with full node at address _addr_
+   via RPCs `Commit`, and `Validators`
 - Expected postcondition: Returns the following data,
-if there is no error in the RPC to the primary,
+if there is no error in the RPC to the full node,
    * SignedHeader of height untrustedHeight (called untrustedSh)
    * ValidatorSet of height untrustedHeight (called untrustedVs)
    * ValidatorSet of height untrustedHeight + 1 (called untrustedNextVs)

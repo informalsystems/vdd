@@ -27,7 +27,8 @@ This specification, the failure detector, is a "second line of defense", in case
 
 The lite client maintains a simple address book (according to the ADR):
 - Fixed list of full nodes provided in the configuration upon initialization
-- Select one full as primary, select 3 as secondary
+- Select one full as primary, select 3 as secondary. These nodes
+  constitute the initial peer set.
 - The bisector communicates with the primary
 - The bisector gets headers from the primary, and stores them in *State*
 
@@ -35,15 +36,28 @@ The lite client maintains a simple address book (according to the ADR):
 
 > I put tags to informal problem statements as there is no sequential secification.
 
-**[LCD-IP-Q]** Whenever a new header *h* is added to *State*, the failure detector should query the secondaries.
+**[LCD-IP-Q]** Whenever the light client verifier adds a new pair
+_(p,h)_ containing the primary _p_ and a header _h_ to *State*, the
+failure detector should query the secondaries by calling `Commit` remotely. 
 
-**[LCD-IP-RespOK]** If a header *h'* returned by the secondary *s* is equal to *h* we do nothing. **(Q1: or should we record it, as this information might later be useful in case we find a problem when we get another header for this height from a different secondary??)**
+**[LCD-IP-RespOK]** If a header *h'* returned by the secondary *s* is
+equal to *h* we add _(s,h)_ to state.
 
-**[LCD-IP-RespBad]** Otherwise, that is if *h'* is
+
+
+_Remark:_ We use the procedure `Add_to_state(s,h)`.
+This information might later be useful in case we find a
+problem when we get another header for this height from a different secondary.
+
+**[LCD-IP-RespBad]** Otherwise, that is if *h'* returned by _s_ is
 different from *h*, we have a fork. There are several cases to distinguish
 
-   - **C1.** *h'* is malformed (fails basic validation): *s* is faulty
-   - **C2.** otherwise, the failure detector tries to verify *h'* by bisection
+   - **C1.** *h'* is malformed (fails basic validation): *s* is
+     faulty. We replace it in the peer set by a different full node by
+     calling `Remove_peer(s)`
+     (that has not been in the peer set before)
+   - **C2.** otherwise, the failure detector tries to verify *h'* by
+     doing bisection with secondary _s_ (`VerifyHeaderAtHeight`)
 
         - **C2F.** *h'* can be verified: there is a fork on the main blockchain
         - **C2L.** otherwise: ?
