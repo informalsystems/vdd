@@ -165,7 +165,7 @@ VerifyHeaderAtHeight
 ## Solution
 
 Shared data of the light client
-- peer set
+- peer set called _Secondaries_
 - primary
 
 
@@ -175,8 +175,8 @@ just been verified by the verifier. _trustedState_ should be the
 trusted state on which the verifier has based the addition
 
 ```go
-func FailureDetector(hd Header,trustedState TrustedState) (evidence)
-  for each s in Secondaries {
+func FailureDetector(hd Header,trustedState TrustedState) (evidence) {
+  for i, s range Secondaries {
     sh := Commit(s,hd.height)
 	if validateSignedHeaderAndVals(sh,...) fails
 	    // sh is malformed (fails basic validation): *s* is
@@ -206,6 +206,7 @@ func FailureDetector(hd Header,trustedState TrustedState) (evidence)
 	  }
 	}
   }
+}
 
 
 ```
