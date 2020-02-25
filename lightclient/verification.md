@@ -214,6 +214,8 @@ In the following, only the details of the data structures needed for this specif
         ValidatorSet   ValidatorSet
    }
  ```
+#### **[LCV-CORRECT-SIGNED-HEADER]**
+A signed header of height _h_ is correct, if the header coincides with the header at height _h_ on the blockchain, and if Commit equals to LastCommit of height _h+1_ (canonic commit), or if Commit contains signatures of validators of height _h_ that represent more than 2/3 of the voting power in _h_.
 
 ### Inter Process Communication
 
@@ -231,7 +233,7 @@ func Commit(height int64) (SignedHeader, error)
 - Expected precodnition
   - header of `height` exists on blockchain
 - Expected postcondition
-  - if _n_ is correct: Returns the signed header of height `height`
+  - if _n_ is correct: Returns a sound signed header of height `height`
   from the blockchain if communication is timely (no timeout)
   - if _n_ is faulty: Returns a signed header with arbitrary content
 - Error condition
