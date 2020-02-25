@@ -36,65 +36,41 @@ The lite client maintains a simple address book (according to the ADR):
 
 > I put tags to informal problem statements as there is no sequential secification.
 
-**[LCD-IP-Q]** Whenever the light client verifier adds a new pair
+#### **[LCD-IP-Q]** 
+
+Whenever the light client verifier adds a new pair
 _(p,h)_ containing the primary _p_ and a header _h_ to *State*, the
 failure detector should query the secondaries by calling `Commit` remotely. 
 
-**[LCD-IP-RespOK]** If a header *h'* returned by the secondary *s* is
+#### **[LCD-IP-RespOK]** 
+
+If a header *h'* returned by the secondary *s* is
 equal to *h* we add _(s,h)_ to state.
-
-
 
 _Remark:_ We use the procedure `Add_to_state(s,h)`.
 This information might later be useful in case we find a
 problem when we get another header for this height from a different secondary.
 
-**[LCD-IP-RespBad]** Otherwise, that is if *h'* returned by _s_ is
-different from *h*, we have a fork. There are several cases to distinguish
-
-   - **C1.** *h'* is malformed (fails basic validation): *s* is
-     faulty. We replace it in the peer set by a different full node by
-     calling `Remove_peer(s)`
-     (that has not been in the peer set before)
-   - **C2.** otherwise, the failure detector tries to verify *h'* by
-     doing bisection with secondary _s_ (`VerifyHeaderAtHeight`)
-
-        - **C2F.** *h'* can be verified: there is a fork on the main blockchain
-        - **C2L.** otherwise: ?
-
-**Q2: Which cases should we distinguish in C2L? e.g.:
-(1) timeout, (2) trusting period expired (do we consider it a fork if the signatures are fine, but the trusting period expired?), (3) lunatic attack.**  
-
-**Q3: Is C1 the only case where we can mark a secondary faulty?**
-
-**Q4: Should the failure detector analyze the headers, e.g., look for double signing? Or should it just report both headers.**
 
 
 
-**Q5: If there is a fork, what should the lite client as a whole do? Just issue a warning to the user?**
+#### **[LCD-IP-RespBad]** 
 
-We have the following additional requirements
+Otherwise, that is if *h'* returned by _s_ is
+different from *h*, we analyze the situation. If the failure detector
+can prove a fork on the main chain by bisecting with _s_, it panics: stops the
+light client and submits evidence. 
 
-- Any peers that errored should be marked bad
 
-- Update primary and secondaries as necessary (i.e. when any are marked bad)
+#### **[LCD-IP-PEERSET]** 
 
-- If there's a verified conflict, persist it, log the error, attempt to broadcast (if Tendermint supports it ...)
+Whenever the failure detector observes misbehavior of a full node from
+the peer set it should be replaced by a fresh full node. (A full node
+that has not been in the peer set before)
 
-**Q7: should this be part of this specification or should this be treated somewhere else?**
 
-### Evidence processing
 
-How the generated evidence is used, will be discussed in another document. One solution would be that the failure detector tries to get the evidence accepted on the main chain, which may work in practical scenarios, e.g., if there was no attack on the main chain (agreement of the validators is never violated), but there was an attack on a light client.
 
- In theory, however,
-given that the 1/3 assumption is necessarily violated to violate agreement, there are possible complications to submitting the evidence to the chain:
-
-- evidence might be censored (faulty validators have enough votes to prevent deciding on a block that contains the evidence)
-- the faulty processes block all progress. The chain comes to a halt.
-- the faulty processes actually generated a fork and both branches make progress (with different correct processes participating in different branches). In this case, none of the branches is "more correct" than the other one. We necessarily fall back to social consensus.
-
-Due to these complications, in the worst case we may need to fall back to social consensus. Also for this, the evidence of the fault detector will be crucial to figure out who misbehaved/what went wrong. In this sense, this specification can be studied independently of the actual fork accountability and punishment scheme.
 
 
 ## Assumptions/Incentives/Environment
@@ -134,3 +110,125 @@ then the failure detector eventually outputs evidence for height *h*.
 *Remark:* Liveness 3 is more operational and talks about operational details of the failure detector. Perhaps it should better be addressed by something like to following requirement:
 
 **[LCD-REQ-REP]** If the failure detector observes two conflicting headers for height *h*, it should try to verify both. If both are verified it should report evidence.
+
+
+## Definitions
+
+
+## Solution
+
+
+
+### Inter Process Communication
+
+
+
+For the purpose of this light client specification, we assume that the
+     Tendermint Full Node exposes the following functions over
+     Tendermint RPC:
+
+```go
+func Commit(addr Address, height int64) (SignedHeader, error)
+```
+- Implementation remark
+   - RPC to full node _n_ at address _addr_
+- Expected precodnition
+  - header of `height` exists on blockchain
+- Expected postcondition
+  - if _n_ is correct: Returns a sound signed header of height `height`
+  from the blockchain if communication is timely (no timeout)
+  - if _n_ is faulty: Returns a signed header with arbitrary content
+- Error condition
+   * if _n_ is correct: precondition violated or timeout
+   * if _n_ is faulty: arbitrary error
+
+----
+
+### Auxiliary Functions (Local)
+
+```go
+Replace_peer(addr Address)
+```
+... by a fresh full node
+
+
+```go
+Report_and_Stop(sh)
+```
+
+From the verifier
+
+```go
+VerifyHeaderAtHeight
+```
+
+## Solution
+
+Shared data of the light client
+- peer set
+- primary
+
+
+
+We start with the function `FailureDetector` with a header that has
+just been verified by the verifier. _trustedState_ should be the
+trusted state on which the verifier has based the addition
+
+```go
+func FailureDetector(hd Header,trustedState TrustedState) (evidence)
+  for each s in Secondaries {
+    sh := Commit(s,hd.height)
+	if validateSignedHeaderAndVals(sh,...) fails
+	    // sh is malformed (fails basic validation): *s* is
+        // faulty. We replace it in the peer set by a different full node
+	   Replace_peer(s)
+    else {
+	  // we try to verify sh by querying s
+	  result := VerifyHeaderAtHeight(sh.height, trusted state, s)
+	  if result = (sh,OK) {
+	    // there is a fork on the main blockchain. -> call panic
+	    // with all the evidence
+	      Report_and_Stop(sh)
+	  } else if  result = (sh,EXPIRED) {
+	    // there is a fork on the main
+	    // blockchain but trusting period expired. -> if still
+	    // within unbonding period call panic
+	     if within_unbonding(sh) {
+		   Report_and_Stop(sh)
+		 }
+		 else {
+		   // try with later trusted state?
+		   TODO
+		 }
+	  } else {
+	   //  _s_ might be faulty or unreachable
+	   Replace_peer(s)
+	  }
+	}
+  }
+
+
+```
+
+
+There are several cases to distinguish
+
+   - **C1.** *h'* is malformed (fails basic validation): *s* is
+     faulty. We replace it in the peer set by a different full node by
+     calling `Replace_peer(s)`
+     (that has not been in the peer set before)
+   - **C2.** otherwise, the failure detector tries to verify *h'* by
+     doing bisection with secondary _s_ (``-- or
+     an optimized version that does not download _h'_ again). We
+     distinguish the cases according to the return value of
+     `VerifyHeaderAtHeight`:
+	 
+        - **C2OK.** (h', OK): *h'* can be verified: 
+		      there is a fork on the main blockchain. -> call panic
+		      with all the evidence
+		- **C2EXP.** (h', EXPIRED) there is a fork on the main
+		      blockchain but trusting period expired. -> if still
+		      within unbonding period call panic
+		      with all the evidence. TODO: Otherwise?
+        - **C2L.** fails -> _s_ might be faulty or unreachable -> `Replace_peer(s)`
+
