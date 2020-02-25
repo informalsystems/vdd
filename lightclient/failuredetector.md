@@ -208,28 +208,6 @@ func FailureDetector(hd Header,trustedState TrustedState) (evidence) {
   }
 }
 
-
 ```
 
-
-There are several cases to distinguish
-
-   - **C1.** *h'* is malformed (fails basic validation): *s* is
-     faulty. We replace it in the peer set by a different full node by
-     calling `Replace_peer(s)`
-     (that has not been in the peer set before)
-   - **C2.** otherwise, the failure detector tries to verify *h'* by
-     doing bisection with secondary _s_ (``-- or
-     an optimized version that does not download _h'_ again). We
-     distinguish the cases according to the return value of
-     `VerifyHeaderAtHeight`:
-	 
-        - **C2OK.** (h', OK): *h'* can be verified: 
-		      there is a fork on the main blockchain. -> call panic
-		      with all the evidence
-		- **C2EXP.** (h', EXPIRED) there is a fork on the main
-		      blockchain but trusting period expired. -> if still
-		      within unbonding period call panic
-		      with all the evidence. TODO: Otherwise?
-        - **C2L.** fails -> _s_ might be faulty or unreachable -> `Replace_peer(s)`
-
+TODO: preconditions, postconditions, errors
