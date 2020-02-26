@@ -1,12 +1,20 @@
 *** This is the beginning of an unfinished draft. Don't continue reading! ***
 
-# Tendermint Full Node
+# Tendermint Full Node API
 
 > Rough outline of what the component is doing and why. 2-3 paragraphs 
 
+In several protocols (fast sync, light client verification, light
+client failure detector) the "other" communication partner is a full
+node. For this purpose, a full node exposes functions that can be
+called remotely, by RPC. This document collects these functions and
+provides their expected behavior with respect to the blockchain [[blockchain]].
+
+
 # Part I - Outside view
 
-A full node provides an API to query specific information from the blockchain.
+A full node provides an API to query specific information from the
+blockchain. 
 
 ## Context of this document
 
@@ -16,8 +24,13 @@ spec. Possible interactions, possible use cases, etc.
 > should give the reader the understanding in what environment this component
 will be used. 
 
-TODO: copy remotely exposed functions here, and the corresponding invariants,
-e.g., SignedHeaders returned by commit
+A full node follows Tendermint consensus [[blockchain]] and therefore
+has a local view of the current state of the blockchain. Process that
+do not have a complete view of the blockchain (e.g., light clients,
+recovering nodes, etc.) need to query full nodes. This specifications
+describes means how that can be done.
+
+
 
 ## Informal Problem statement
 
@@ -28,6 +41,49 @@ from a bird's eye view.
 ## Sequential Problem statement
 
 > should be English and precise. will be accompanied with a TLA spec.
+
+
+The Tendermint Full Node exposes the following functions over Tendermint RPC:
+
+```go
+func Commit(height int64) (SignedHeader, error)
+```
+- Implementation remark
+   - RPC to full node *n*
+- Expected precodnition
+  - header of `height` exists on blockchain
+- Expected postcondition
+  - if *n* is correct: Returns the signed header of height `height`
+  from the blockchain if communication is timely (no timeout)
+  - if *n* is faulty: Returns a signed header with arbitrary content
+- Error condition
+   * if *n* is correct: precondition violated or timeout
+   * if *n* is faulty: arbitrary error
+
+----
+
+
+ ```go    
+func Validators(height int64) (ValidatorSet, error)
+```
+- Implementation remark
+   - RPC to full node *n*
+- Expected precodnition
+  - header of `height` exists on blockchain
+- Expected postcondition
+  - if *n* is correct: Returns the validator set of height `height`
+  from the blockchain if communication is timely (no timeout)
+  - if *n* is faulty: Returns arbitrary validator set
+- Error condition
+  - if *n* is correct: precondition violated or timeout 
+  - if *n* is faulty: arbitrary error
+
+----
+
+#### **[FN-LuckyCase]**:
+The primary is correct and no timeout occurs on `Commit` and `Validators`.
+
+
 
 # Part II - Protocol view
 
@@ -67,50 +123,6 @@ Simulation, implementation, etc. relations
 > some math that allows to write specifications and pseudo code solution below.
 Some variables, etc. 
 
-### Inter Process Communication
-
-
-
-We assume that the Tendermint Full Node exposes the following functions over Tendermint RPC:
-
-```go
-func Commit(height int64) (SignedHeader, error)
-```
-- Implementation remark
-   - RPC to full node _n_
-- Expected precodnition
-  - header of `height` exists on blockchain
-- Expected postcondition
-  - if _n_ is correct: Returns the signed header of height `height`
-  from the blockchain if communication is timely (no timeout)
-  - if _n_ is faulty: Returns a signed header with arbitrary content
-- Error condition
-   * if _n_ is correct: precondition violated or timeout
-   * if _n_ is faulty: arbitrary error
-
-----
-
-
- ```go    
-func Validators(height int64) (ValidatorSet, error)
-```
-- Implementation remark
-   - RPC to full node _n_
-- Expected precodnition
-  - header of `height` exists on blockchain
-- Expected postcondition
-  - if _n_ is correct: Returns the validator set of height `height`
-  from the blockchain if communication is timely (no timeout)
-  - if _n_ is faulty: Returns arbitrary validator set
-- Error condition
-  - if _n_ is correct: precondition violated or timeout 
-  - if _n_ is faulty: arbitrary error
-
-----
-
-#### **[FN-LuckyCase]**:
-The primary is correct and no timeout occurs on `Commit` and `Validators`.
-
 
 ## Solution
 
@@ -141,3 +153,15 @@ of the problem statement
 # References
 
 > links to other specifications/ADRs this document refers to
+
+
+[[block]] Specification of the block data structure. 
+
+[[blockchain]] The specification of the Tendermint blockchain. Tags refering to 
+this specification are labeled [TMBC-*].
+
+
+[block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md
+
+[blockchain]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md
+
