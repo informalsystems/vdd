@@ -295,7 +295,7 @@ of the problem statement
 [header]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#header
 [fullnode]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md
 
-[TMBC-SEQ-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#**[TMBC-SEQ]**:
-[TMBC-VALIDATOR-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#**[TMBC-VALIDATOR]**:
-[TMBC-CORRECT-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#**[TMBC-CORRECT]**:
-[TMBC-TIME-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#**[TMBC-TIME]**:
+[TMBC-SEQ-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-seq
+[TMBC-VALIDATOR-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-validator
+[TMBC-CORRECT-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-correct
+[TMBC-TIME-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-time
