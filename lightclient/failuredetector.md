@@ -36,7 +36,14 @@ secondaries.
 
 ### Informal Problem statement
 
-> I put tags to informal problem statements as there is no sequential secification.
+> I put tags to informal problem statements as there is no sequential
+> secification. 
+
+The following requirements are operational in that describe how things
+should be done, rather than what should be done. They capture the intuition
+after the ADR had been written. However, they do not constitute
+temporal logic verification conditions. For those, see [LCD-VC*] below.
+
 
 #### **[LCD-IP-Q]**
 
@@ -52,7 +59,6 @@ equal to *h* we add _(s,h)_ to state.
 _Remark:_ We use the procedure `Add_to_state(s,h)`.
 This information might later be useful in case we find a
 problem when we get another header for this height from a different secondary.
-
 
 
 
@@ -84,17 +90,38 @@ Correct full nodes have the incentive to respond, because the failure detector m
 
 **Assumptions**
 
-**[LCD-A-CorrFull]** At all times there is at least one correct full node among the primary and the secondary.
+**[LCD-A-CorrFull]** At all times there is at least one correct full
+node among the primary and the secondary.
+
+_Remark:_ Perhaps [LCD-A-CorrFull] is not needed in the end because
+the verification conditions [LCD-VC-*] have preconditions on specific
+cases where primary and/or secondaries are faulty.
 
 **[LCD-A-RelComm]** Communication between the failure detector and a correct full node is reliable and bounded in time.
 
-**Q6: Are we limiting ourselves to the scenario 1/3 n <= f <= 2/3 n**
+
 
 
 
 ## Problem statement
 
-**[LCD-VC-INV]** If there is no fork at height *h*, and the primary and the secondaries are correct, then the failure detector should never output evidence for height *h*.
+The failure detector gets as input a header at height _h_ and should
+query the secondaries for their headers. Eventually, the failure
+detector should
+decide
+  - whether to report evidence for height _h_
+  - whether to stop operation at height _h_ 
+  
+It should satisfy the following temporal formulas  
+
+**[LCD-VC-INV]** If there is no fork at height *h*, and the primary
+and the secondaries are correct, then the failure detector should
+never output evidence for height *h* and should not stop at height _h_.
+
+**[LCD-VC-INV-DONT-STOP]** If there is no fork at height *h*, and
+ the primary is correct, then the failure detector should never stop
+ at height *h*.
+
 
 **[LCD-VC-LIFE-FORK]** If there is a fork (two correct full nodes decided on different blocks for the same height), and
 - the user of the lite client requests a header of a height *h* that is affected (within the trusting period), and
@@ -104,12 +131,12 @@ Correct full nodes have the incentive to respond, because the failure detector m
 
 then the failure detector eventually outputs evidence for height *h*.
 
-**[LCD-VC-LIFE-FLTPRIM]** If the bisection trusts a header at height *h* that deviates from the header on the chain (possibly because the primary is faulty), and there is a correct secondary,
-then the failure detector eventually outputs evidence for height *h*.
+**[LCD-VC-LIFE-FLTPRIM]** If there is no fork on the main chain and if
+the verification trusts a header at
+height *h* that deviates from the header on the chain (possibly
+because the primary is faulty), and there is a correct secondary, then
+the failure detector eventually outputs evidence for height *h*.
 
-**[LCD-VC-LIFE-CONFL]**  If the failure detector observes two conflicting headers for height *h*, it reports evidence for height *h*.
-
-*Remark:* Liveness 3 is more operational and talks about operational details of the failure detector. Perhaps it should better be addressed by something like to following requirement:
 
 **[LCD-REQ-REP]** If the failure detector observes two conflicting headers for height *h*, it should try to verify both. If both are verified it should report evidence.
 
@@ -240,6 +267,7 @@ func FailureDetector(hd Header,trustedState TrustedState)  {
 				// header matches. we do nothing
 			}	
 			else {
+			    // [LCD-REQ-REP]
 			    // header does not match. there is a situation.
 				// we try to verify sh by querying s
 				result := VerifyHeaderAtHeight(sh.height, trusted state, s)
@@ -277,3 +305,42 @@ func FailureDetector(hd Header,trustedState TrustedState)  {
 ```
 
 TODO: preconditions, postconditions, errors
+
+## Correctness arguments
+
+> Proof sketches of why we believe the solution satisfies the problem statement.
+Possibly giving inductive invariants that can be used to prove the specifications
+of the problem statement 
+
+#### Argument for [LCD-VC-INV]
+
+- In this case, `Commit` will always return the header from the blockchain
+- hd == sh will always be true. `FailureDetector` does nothing
+
+#### Argument for [LCD-VC-INV-DONT-STOP]
+
+- In this case, _hd_ is the one from the blockchain
+- As there is no fork, no faulty secondary can create a sequence of
+  headers that convince the failure detector. 
+  
+  TODO: the last point requires pointers to blockchain invariants, and
+  that if there is not fork, no sequence of proof can be generated
+
+
+
+#### Argument for [LCD-VC-LIFE-FORK]
+
+Can be proven under the assumption that TrustedState is choosen before
+the fork happened.
+
+
+#### Argument for [LCD-VC-LIFE-FLTPRIM]
+
+- When called on a correct secondary, `Commit` will return the header
+  from the blockchain
+-  hd == sh will evaluate to false. 
+- `VerifyHeaderAtHeight` will 
+
+# References
+
+> links to other specifications/ADRs this document refers to
