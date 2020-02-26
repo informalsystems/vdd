@@ -15,6 +15,10 @@ In this document we will focus in strengthening the lite client, and leave other
 This document refers to the lite client ADR [77d2651 on Dec 27, 2019]
 https://github.com/interchainio/tendermint-rs/blob/e2cb9aca0b95430fca2eac154edddc9588038982/docs/architecture/adr-002-lite-client.md
 
+light Client
+
+blockchain
+
 ## Context of this document
 
 The lite client verification specification [026fdde on Jan 23, 2019]
@@ -26,25 +30,26 @@ This specification, the failure detector, is a "second line of defense", in case
 
 
 The lite client maintains a simple address book (according to the ADR):
-- Fixed list of full nodes provided in the configuration upon initialization
+- Fixed list of full nodes provided in the configuration upon initialization _FullNodes_
 - Select one full as primary, select 3 as secondary. These nodes
-  constitute the initial peer set.
-- The bisector communicates with the primary
-- The bisector gets headers from the primary, and stores them in *State*
+  constitute the initial peer set _PeerSet_
+- A set of nodes that the lightclient suspects of being faulty _FaultyNodes_; it is initially empty
+- The verifier communicates with the primary
+- The verifier gets headers from the primary, and stores them in *State*
 
 ### Informal Problem statement
 
 > I put tags to informal problem statements as there is no sequential secification.
 
-#### **[LCD-IP-Q]** 
+#### **[LCD-IP-Q]**
 
 Whenever the light client verifier adds a new pair
 _(p,h)_ containing the primary _p_ and a header _h_ to *State*, the
-failure detector should query the secondaries by calling `Commit` remotely. 
+failure detector should query the secondaries by calling `Commit` remotely.
 
-#### **[LCD-IP-RespOK]** 
+#### **[LCD-IP-RespOK]**
 
-If a header *h'* returned by the secondary *s* is
+If a header *h'*, returned by the secondary *s*, is
 equal to *h* we add _(s,h)_ to state.
 
 _Remark:_ We use the procedure `Add_to_state(s,h)`.
@@ -54,15 +59,15 @@ problem when we get another header for this height from a different secondary.
 
 
 
-#### **[LCD-IP-RespBad]** 
+#### **[LCD-IP-RespBad]**
 
 Otherwise, that is if *h'* returned by _s_ is
 different from *h*, we analyze the situation. If the failure detector
 can prove a fork on the main chain by bisecting with _s_, it panics: stops the
-light client and submits evidence. 
+light client and submits evidence.
 
 
-#### **[LCD-IP-PEERSET]** 
+#### **[LCD-IP-PEERSET]**
 
 Whenever the failure detector observes misbehavior of a full node from
 the peer set it should be replaced by a fresh full node. (A full node
@@ -146,6 +151,11 @@ func Commit(addr Address, height int64) (SignedHeader, error)
 
 ### Auxiliary Functions (Local)
 
+
+```go
+Add_to_state(s,h)
+```
+
 ```go
 Replace_peer(addr Address)
 ```
@@ -156,7 +166,11 @@ Replace_peer(addr Address)
 Report_and_Stop(sh)
 ```
 
-From the verifier
+```go
+within_unbonding
+```
+
+#### From the verifier
 
 ```go
 VerifyHeaderAtHeight
@@ -188,8 +202,8 @@ func FailureDetector(hd Header,trustedState TrustedState) (evidence) {
 	  if result = (sh,OK) {
 	    // there is a fork on the main blockchain. -> call panic
 	    // with all the evidence
-	      Report_and_Stop(sh)
-	  } else if  result = (sh,EXPIRED) {
+	      Add_to_state(s,sh)
+	  } else if result = (sh,EXPIRED) {
 	    // there is a fork on the main
 	    // blockchain but trusting period expired. -> if still
 	    // within unbonding period call panic
