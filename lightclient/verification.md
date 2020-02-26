@@ -151,13 +151,13 @@ From time to time, a new instance of the verifier is called with a height _h_. E
   - the _primary_ is correct
   - _State_ contains a header whose age is less than the trusting period.
 
-_Remark_: The definitions imply that if _primary_ is faulty a header may or may not be added to _State_. In any case, [**[LCV-VC-Inv]**](#**[LCV-VC-Inv]**:) must hold.
+_Remark_: These definitions imply that if _primary_ is faulty, a header may or may not be added to _State_. In any case, [**[LCV-VC-Inv]**](#lcv-vc-inv) must hold.
 
-_Remark_: The invariant [**[LCV-VC-Inv]**](#**[LCV-VC-Inv]**:) and the liveness requirement [**[LCV-VC-Live]**](#**[LCV-VC-Live]**:)
+_Remark_: The invariant [**[LCV-VC-Inv]**](#lcv-vc-inv) and the liveness requirement [**[LCV-VC-Live]**](#lcv-vc-live)
 allow that headers are added to _State_ whose height was not passed
 to the verifier (e.g., intermediate headers used in bisection; see below).
 
-_Remark_: In liveness [**[LCV-VC-Live]**](#**[LCV-VC-Live]**:) we use "eventually", while in practice
+_Remark_: In liveness [**[LCV-VC-Live]**](#lcv-vc-live) we use "eventually", while in practice
 the header _hd_ should be added to _State_ before the _trustingPeriod_ expires, starting from _hd.bfttime_.
 
 ### Solving the sequential specification
@@ -165,14 +165,14 @@ the header _hd_ should be added to _State_ before the _trustingPeriod_ expires, 
 This specification provides a partial solution to the sequential specification.
 The _Verifier_ solves the invariant of the sequential part
 
-[**[LCV-VC-Inv]**](#**[LCV-VC-Inv]**:) => [**[LCV-Seq-Inv]**](#**[LCV-Seq-Inv]**:)
+[**[LCV-VC-Inv]**](#lcv-vc-inv) => [**[LCV-Seq-Inv]**](#lcv-seq-inv)
 
 In the case the primary is correct, and there is a recent header in _State_, the verifier satisfies the liveness requirements.
 
 /\ "correct primary"  \
 /\ \E TrustedState in State. TrustedState.SignedHeader.Header.Time > now - _trustingPeriod_ \
-/\ [**[LCV-A-Comm]**](#**[LCV-A-Comm]**:) /\ [**[TMBC-CorrFull]**][TMBC-CorrFull-link] /\ [**[LCV-VC-Live]**](#**[LCV-VC-Live]**:)  \
-       => [**[LCV-Seq-Live]**](#**[LCV-Seq-Live]**)
+/\ [**[LCV-A-Comm]**](#lcv-a-comm) /\ [**[TMBC-CorrFull]**][TMBC-CorrFull-link] /\ [**[LCV-VC-Live]**](#lcv-vc-live)  \
+       => [**[LCV-Seq-Live]**](#lcv-seq-live)
 
 
 ## Definitions
@@ -183,7 +183,9 @@ Some variables, etc.
 
 ### Data structures
 
-(TODO: Should the data structures be defined here? Or in blockchain.md?)
+(TODO: Should the data structures be defined here? Or in blockchain.md?) \
+TODO: High level explanations of data structures? \
+TODO: _State_ is missing?
 
 In the following, only the details of the data structures needed for this specification are given.
 
@@ -218,7 +220,9 @@ In the following, only the details of the data structures needed for this specif
    }
  ```
 #### **[LCV-CORRECT-SIGNED-HEADER]**
-A signed header of height _h_ is correct, if the header coincides with the header at height _h_ on the blockchain, and if Commit equals to LastCommit of height _h+1_ (canonic commit), or if Commit contains signatures of validators of height _h_ that represent more than 2/3 of the voting power in _h_.
+A signed header _sh_ of height _h_ is correct, if it coincides with the header at height _h_ on the blockchain, and:
+ - if the `Commit` of _sh_ equals to the `LastCommit` of height _h+1_ (canonic commit), or
+ - if the `Commit` of _sh_ contains signatures of validators of height _h_ that represent more than two-thirds of the voting power at height _h_.
 
 
 ---
@@ -226,18 +230,21 @@ A signed header of height _h_ is correct, if the header coincides with the heade
 ### Auxiliary Functions (Local)
 
 
-TODO 
+TODO: should this be here? \
 We assume the following auxiliary functions:
 ```go
-func validateSignedHeaderAndVals(signedHeader SignedHeader, 
+func validateSignedHeaderAndVals(sh SignedHeader, 
                                  vs ValidatorSet,
                                  nextVs ValidatorSet) error
 ```
  - Implementation remark
    - Local auxiliary function
 - Expected precondition
+   - The signed header `sh` and the validator sets `vs, nextVs` are consistent
 - Expected postcondition
+   - Returns `nil` if the precondition holds
 - Error condition
+   - precondition violated  
 
  ---
 
@@ -256,50 +263,67 @@ The light client verifier has the following configuration parameters:
 
 
 
-We start with the function `VerifyHeaderAtHeight` whose call is the one mentioned in
-[**[LCV-VC-Live]**](LCV-VC-Live-link). It implements the problem statement.
-The function `VerifyHeaderAtHeight` checks timestamps, and in case these preliminary checks go through, calls bisection: The function `VerifyBisection` implements
+We start by presenting the function `VerifyHeaderAtHeight`. 
+This function implements the problem statement and is used in
+[**[LCV-VC-Live]**](#lcv-vc-live). 
+
+The function `VerifyHeaderAtHeight` checks timestamps, and in case these preliminary checks go through, it calls bisection, by calling the function `VerifyBisection`.
+The function `VerifyBisection` implements
 the recursive logic for checking whether it is possible to build a trust
 relationship between `trustedState` and untrusted header at `untrustedHeight`.
 
-#### **[LCV-TState]**: 
-`VerifyHeaderAtHeight` is called with trustedState which contains the
-header in _State_ with maximal height, and the address _addr_ of the
-primary.
-
 ---
+TODO: tag needed?  #### **[LCV-TState]**: 
+
+`VerifyHeaderAtHeight` is called with `trustedState`, whose header is the header that 
+has maximal height in _State_, and the address _addr_ of the primary.
+
+
 
 ```go
 func VerifyHeaderAtHeight(untrustedHeight int64,
                           trustedState TrustedState,
-			              addr Address
-                          ) (TrustedState, error))
+			              addr Address) (TrustedState, error)
 ```
-- Expected precondition: trustedState within trustingperiod from _starttime_
-- Expected postcondition: Returns
-    * (header, OK):  under [LCV-LuckyCase] and
-                  header is of height
-                 untrustedHeightof
-                 the blockchain and header within trustingperiod
-                 from _endtime_
-	* (header, EXPIRED):  under [LCV-LuckyCase]	and
-                  header is of height
-                 untrustedHeight of
-                 the blockchain and header outside trustingperiod
-                 from _endtime_	 
-- Error: if precondition is violated or if outside of [LCV-LuckyCase]
+- Implementation remark
+  - _startTime_ and _endTime_ are the local system time right after
+  invocation of `VerifyHeaderAtHeight` and right before the function returns, respectively.
+- Expected precondition
+  - The header of `trustedState` is within _trustingPeriod_ from _startTime_
+- Expected postcondition: 
+  - Returns `(header, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
+  if `header` is the header at height `untrustedHeight` of the blockchain and if `header` was generated within _trustingPeriod_ from _endTime_
+  - Returns `(header, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link),
+  if `header` is the header at height `untrustedHeight` of the blockchain and if `header` was generated outside of _trustingPeriod_ from _endTime_	 
+- Error conditions
+  - precondition violated 
+  - [**[FN-LuckyCase]**](FN-LuckyCase-link) does not hold
   (unless outside of lucky case but faulty primary sends correct
-  headers; depends on the definition of faulty)
+  headers; depends on the definition of faulty)  (TODO: unclear?)
 
-- _starttime_ and _endtime_ are the local system time right after
-  invocation and right before return, respectively.
+
 
 #### **[LCV-INTF]**:
-_State_ is supposed to be maintained outside of this specification. When _VerifyHeaderAtHeight_ is called, _trustedState_ is in _State_. When _TrustedState_ is returned it is added to _State_.
+_State_ is supposed to be maintained outside of this specification. When 
+`VerifyHeaderAtHeight` is called, _trustedState_ is in _State_. When _TrustedState_ is 
+returned it is added to _State_.
+(TODO: unclear?)
 
 
 
 ---
+`VerifyBisection` is used to get a header of height `untrustedHeight` from the 
+blockchain. 
+To do so, `VerifyBisection` first downloads the necessary information
+from the _primary_, by calling `query_primary`.
+This information includes a signed header `sh`, and two validator sets `vs, nextVs`.
+The result of `query_primary` is passed as input, together with the `trustedState`,
+to the function `VerifySingle`.
+Based on the result of `VerifySingle`, either the signed header `sh` is returned, 
+or a new signed header is computed recursively. (TODO: fix)
+
+We give the pseudocode of `VerifyBisection` below, as well as the specifications
+of the functions called by it.
 
 ```go
 func VerifyBisection(untrustedHeight int64,
@@ -308,26 +332,27 @@ func VerifyBisection(untrustedHeight int64,
                      now Time
 		     ) (TrustedState, error) {
 
-  sh, vs1, vs2 := query_primary(addr,untrustedHeight)
-  res := VerifySingle(sh, vs1, vs2, trustedState)
+  sh, vs, nextVs := query_primary(addr,untrustedHeight)
+  res := VerifySingle(sh, vs, nextVs, trustedState)
   if res == "success" {
-    return sh
+    return sh // TODO: should this be trustedState? or TrustedState(sh, vs)?
   } else if res == "could not verify" {
     compute pivot
     newTrustedState := VerifyBisection(pivot, trustedState, now)
     return VerifyBisection(untrustedHeight, newTrustedState, now)
   }
-                     }
+}
 ```
-- Expected precondition: trustedState.bfttime within trustingperiod from now
-- Expected postcondition:
-    Returns header hd of height untrustedHeight from blockchain if
-    hd.Time > now + clockDrift under  [LCV-LuckyCase]
-- Error: if precondition is violated  or if outside of [LCV-LuckyCase]
+- Expected precondition
+  - `trustedState.bfttime` is within _trustingPeriod_ from `now`
+  (TODO: there is no bfttime in trustedstate, or header. is this referring to `trustedState.SignedHeader.Header.Time`?)
+- Expected postcondition
+  - Returns header hd of height untrustedHeight from blockchain if
+    `hd.Time > now + clockDrift` under [**[FN-LuckyCase]**](FN-LuckyCase-link)
+    (TODO: the signature says that it returns `TrustedState`)
+- Error conditions 
+  - if precondition is violated  or if outside of [**[FN-LuckyCase]**](FN-LuckyCase-link)
  or _something about time is fishy_ (**TODO:** Check with Zarko)
-
-To do so, `VerifyBisection` first downloads the necessary information
-from the _primary_ using the following `query_primary`.
 
 ---
 
@@ -335,22 +360,22 @@ from the _primary_ using the following `query_primary`.
 func query_primary(addr Address, untrustedHeight int64) 
                   (SignedHeader,  ValidatorSet, ValidatorSet)
 ```
-- Communicates with full node at address _addr_
-   via RPCs `Commit`, and `Validators`
-- Expected postcondition: Returns the following data,
-if there is no error in the RPC to the full node,
-   * SignedHeader of height untrustedHeight (called untrustedSh)
-   * ValidatorSet of height untrustedHeight (called untrustedVs)
-   * ValidatorSet of height untrustedHeight + 1 (called untrustedNextVs)
-- Expected postcondition:  hd.Time < now + clockDrift
+-  Implementation remark
+   - Used to communicate with a full node _n_ at address _addr_ via RPCs `Commit` and `Validators` (TODO: unclear?)
+- Expected precondition
+  -  `hd.Time < now + clockDrift`
+- Expected postcondition: 
+  - If _n_ is correct and there is no error in the RPC to _n_: Returns the following data: a `SignedHeader` of height `untrustedHeight`, a `ValidatorSet` of height `untrustedHeight`, and a `ValidatorSet` of height `untrustedHeight + 1` 
+  - If _n_ is faulty or there is an error in the RPC to _n_: (TODO: is an arbitrary triple (sh, vs, nextVs) returned?)
+- Error conditions
+  - precondition violated
+  - error in RPC to _n_
 
-- Error: on error in RPC to primary or if postcondition is violated
-
-_Remark_: Observe that the  conditions here are  "error in RPC" but
-_not_ [LCV-LuckyCase]
-in this case. A faulty primary might return arbitrary values, without
+_Remark_: Observe that the error conditions includes "error in RPC to _n_" but
+_not_ [**[FN-LuckyCase]**](FN-LuckyCase-link).
+A faulty primary might return arbitrary values, without
 forcing the function to report an error.
-
+TODO: should this be added to the error condition of every function?
 
 If `query_primary` returns without error, `VerifyBisection` calls `VerifySingle`.
 
@@ -416,6 +441,8 @@ Possibly giving inductive invariants that can be used to prove the specification
 
 [[failuredetector]] The specification of the light client failure detector.
 
+[[fullnode]] Specification of the full node API
+
 [[lightclient]] The light client ADR [77d2651 on Dec 27, 2019].
 
 
@@ -435,3 +462,7 @@ Possibly giving inductive invariants that can be used to prove the specification
 
 [lightclient]: https://github.com/interchainio/tendermint-rs/blob/e2cb9aca0b95430fca2eac154edddc9588038982/docs/architecture/adr-002-lite-client.md
 [failuredetector]: https://github.com/informalsystems/VDD/blob/master/liteclient/failuredetector.md
+[fullnode]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md
+
+[FN-LuckyCase-link]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md#fn-luckycase
+
