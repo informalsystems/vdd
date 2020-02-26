@@ -29,13 +29,10 @@ This specification, the failure detector, is a "second line of defense", in case
 
 
 
-The lite client maintains a simple address book (according to the ADR):
-- Fixed list of full nodes provided in the configuration upon initialization _FullNodes_
-- Select one full as primary, select 3 as secondary. These nodes
-  constitute the initial peer set _PeerSet_
-- A set of nodes that the lightclient suspects of being faulty _FaultyNodes_; it is initially empty
-- The verifier communicates with the primary
-- The verifier gets headers from the primary, and stores them in *State*
+The lite client maintains a simple address book (according to the ADR)
+containing addresses of full nodes that it can pick as primary and
+secondaries.
+
 
 ### Informal Problem statement
 
@@ -119,6 +116,17 @@ then the failure detector eventually outputs evidence for height *h*.
 
 ## Definitions
 
+- Fixed set of full nodes provided in the configuration upon 
+     initialization. Initially this set is partitioned into
+    -  one full node that is the _primary_ (singleton set), 
+	-  a set _Secondaries_ (of fixed size, e.g., 3)
+	-  a set _FullNodes_
+- A set of nodes that the lightclient suspects of being faulty _FaultyNodes_; it is initially empty
+- The verifier communicates with the primary (see verifier
+ spec). Whenever the verifier successfully verifies a header _h_ from the primary _p_, it stores
+ _(p,h)_
+ in *State*
+
 
 ## Solution
 
@@ -135,6 +143,7 @@ For the purpose of this light client specification, we assume that the
 ```go
 func Commit(addr Address, height int64) (SignedHeader, error)
 ```
+
 - Implementation remark
    - RPC to full node _n_ at address _addr_
 - Expected precodnition
@@ -153,22 +162,48 @@ func Commit(addr Address, height int64) (SignedHeader, error)
 
 
 ```go
-Add_to_state(s,h)
+Add_to_state(addr Address, sh SignedHeader)
 ```
+- Expected postcondition
+   - The pair _(addr,sh)_ is added to _State_
+
+
 
 ```go
-Replace_peer(addr Address)
+still_punishable(sh SignedHeader) (Boolean)
 ```
-... by a fresh full node
+- Comment: it might make sense to check whether unbonding period is
+  still running although trusting period is over
+- Expected postcondition
+    - returns true if misbehavior related to _sh_ can still be
+      punished. Can be approximated by _sh.bfttime + unbondingperiod > now_
+	  
 
+
+```go
+Replace_Secondary(addr Address)
+```
+- Expected precondition
+    - _FullNodes_ is nonempty
+- Expected postcondition
+    - addr is moved from _Secondaries_ to _FaultyNodes_
+    - an address _a_ is moved from _FullNodes_ to _Secondaries_
+- Error condition
+    - if precondition is violated
 
 ```go
 Report_and_Stop(sh)
 ```
+- Comment:
+    - This function communicates the existence of a fork to the outside
+	- It creates the evidence from its local information: 
+	       - all headers of height _sh.height_
+		   - possibly all the other pairs (f,h) from _State_ from full 
+		     nodes _f_ that where used to find the fork (the primary,
+		     all involved secondaries)
+	- It submits this evidence
+	- It flags the light client to stop
 
-```go
-within_unbonding
-```
 
 #### From the verifier
 
@@ -184,42 +219,59 @@ Shared data of the light client
 
 
 
-We start with the function `FailureDetector` with a header that has
-just been verified by the verifier. _trustedState_ should be the
-trusted state on which the verifier has based the addition
+The problem is solved by calling  the function `FailureDetector` with a header that has
+just been verified by the verifier as a parameter. _trustedState_
+should be "a possibly old"
+trusted state to increase the likelihood of detecting a fork.
 
 ```go
-func FailureDetector(hd Header,trustedState TrustedState) (evidence) {
-  for i, s range Secondaries {
-    sh := Commit(s,hd.height)
-	if validateSignedHeaderAndVals(sh,...) fails
-	    // sh is malformed (fails basic validation): *s* is
-        // faulty. We replace it in the peer set by a different full node
-	   Replace_peer(s)
-    else {
-	  // we try to verify sh by querying s
-	  result := VerifyHeaderAtHeight(sh.height, trusted state, s)
-	  if result = (sh,OK) {
-	    // there is a fork on the main blockchain. -> call panic
-	    // with all the evidence
-	      Add_to_state(s,sh)
-	  } else if result = (sh,EXPIRED) {
-	    // there is a fork on the main
-	    // blockchain but trusting period expired. -> if still
-	    // within unbonding period call panic
-	     if within_unbonding(sh) {
-		   Report_and_Stop(sh)
-		 }
-		 else {
-		   // try with later trusted state?
-		   TODO
-		 }
-	  } else {
-	   //  _s_ might be faulty or unreachable
-	   Replace_peer(s)
-	  }
+func FailureDetector(hd Header,trustedState TrustedState)  {
+	for i, s range Secondaries {
+		sh := Commit(s,hd.height)
+		if validateSignedHeaderAndVals(sh,...) fails {
+			// sh is malformed (fails basic validation): *s* is
+			// faulty. We replace it in the peer set by a different full node
+			Replace_Secondary(s)
+			// if this fails, we do not have more full node addresses
+			// to talk to. Should we ask for more full nodes?
+		}
+		else {
+			if hd == sh {
+				// header matches. we do nothing
+			}	
+			else {
+			    // header does not match. there is a situation.
+				// we try to verify sh by querying s
+				result := VerifyHeaderAtHeight(sh.height, trusted state, s)
+				if result = (sh,OK) {
+				    // we verified header sh which is conflicting to hd
+					// there is a fork on the main blockchain. -> call panic
+					// with all the evidence	
+					Report_and_Stop(sh)
+				} 
+				else if result = (sh,EXPIRED) {
+				    // we verified header sh which is conflicting to hd
+					// there is a fork on the main
+					// blockchain but trusting period expired. -> if still
+					// within unbonding period do panic
+					if still_punishable(sh) {
+						Report_and_Stop(sh)
+					} 
+					else {
+						// try to reproduce the fork  with a 
+						// later trusted state? If we are lucky, 
+						// VerifyHeaderAtHeight returns with OK
+						TODO
+					}
+				} 
+				else {
+					// s might be faulty or unreachable
+					// 
+					Replace_peer(s)
+				}
+			}
+		}
 	}
-  }
 }
 
 ```
