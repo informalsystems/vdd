@@ -232,8 +232,8 @@ Report_and_Stop(sh)
 	- It submits this evidence
 	- It flags the light client to stop
 - Expected Postcondition
-    - It terminates everything. TODO: should this be described in a nicer
-  control flow?
+    - It "terminates everything". TODO: should this be described in a nicer
+  control flow? How should this be escalated to the whole light client?
 
 #### From the verifier
 
