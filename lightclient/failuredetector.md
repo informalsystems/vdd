@@ -47,15 +47,15 @@ temporal logic verification conditions. For those, see [LCD-VC*] below.
 #### **[LCD-IP-Q]**
 
 Whenever the light client verifier adds a new pair
-_(p,h)_ containing the primary _p_ and a header _h_ to *State*, the
+*(p,h)* containing the primary *p* and a header *h* to *State*, the
 failure detector should query the secondaries by calling `Commit` remotely.
 
 #### **[LCD-IP-RespOK]**
 
 If a header *h'*, returned by the secondary *s*, is
-equal to *h* we add _(s,h)_ to state.
+equal to *h* we add *(s,h)* to state.
 
-_Remark:_ We use the procedure `Add_to_state(s,h)`.
+*Remark:* We use the procedure `Add_to_state(s,h)`.
 This information might later be useful in case we find a
 problem when we get another header for this height from a different secondary.
 
@@ -63,9 +63,9 @@ problem when we get another header for this height from a different secondary.
 
 #### **[LCD-IP-RespBad]**
 
-Otherwise, that is, if *h'* returned by _s_ is
+Otherwise, that is, if *h'* returned by *s* is
 different from *h*, we analyze the situation. If the failure detector
-can prove a fork on the main chain by bisecting with _s_, it panics: stops the
+can prove a fork on the main chain by bisecting with *s*, it panics: stops the
 light client and submits evidence.
 
 
@@ -92,7 +92,7 @@ Correct full nodes have the incentive to respond, because the failure detector m
 **[LCD-A-CorrFull]** At all times there is at least one correct full
 node among the primary and the secondary.
 
-_Remark:_ Perhaps [LCD-A-CorrFull] is not needed in the end because
+*Remark:* Perhaps [LCD-A-CorrFull] is not needed in the end because
 the verification conditions [LCD-VC-*] have preconditions on specific
 cases where primary and/or secondaries are faulty.
 
@@ -104,18 +104,18 @@ cases where primary and/or secondaries are faulty.
 
 ## Problem statement
 
-The failure detector gets as input a header at height _h_ and should
+The failure detector gets as input a header at height *h* and should
 query the secondaries for their headers. Eventually, the failure
 detector should
 decide
-  - whether to report evidence for height _h_
-  - whether to stop operation at height _h_ 
+  - whether to report evidence for height *h*
+  - whether to stop operation at height *h* 
   
 It should satisfy the following temporal formulas  
 
 **[LCD-VC-INV]** If there is no fork at height *h*, and the primary
 and the secondaries are correct, then the failure detector should
-never output evidence for height *h* and should not stop at height _h_.
+never output evidence for height *h* and should not stop at height *h*.
 
 **[LCD-VC-INV-DONT-STOP]** If there is no fork at height *h*, and
  the primary is correct, then the failure detector should never stop
@@ -149,13 +149,13 @@ the failure detector eventually outputs evidence for height *h*.
 
 - Fixed set of full nodes provided in the configuration upon 
      initialization. Initially this set is partitioned into
-    -  one full node that is the _primary_ (singleton set), 
-	-  a set _Secondaries_ (of fixed size, e.g., 3)
-	-  a set _FullNodes_
-- A set of nodes that the lightclient suspects of being faulty _FaultyNodes_; it is initially empty
+    -  one full node that is the *primary* (singleton set), 
+	-  a set *Secondaries* (of fixed size, e.g., 3)
+	-  a set *FullNodes*
+- A set of nodes that the lightclient suspects of being faulty *FaultyNodes*; it is initially empty
 - The verifier communicates with the primary (see verifier
- spec). Whenever the verifier successfully verifies a header _h_ from the primary _p_, it stores
- _(p,h)_
+ spec). Whenever the verifier successfully verifies a header *h* from the primary *p*, it stores
+ *(p,h)*
  in *State*
 
 
@@ -176,16 +176,16 @@ func Commit(addr Address, height int64) (SignedHeader, error)
 ```
 
 - Implementation remark
-   - RPC to full node _n_ at address _addr_
+   - RPC to full node *n* at address *addr*
 - Expected precodnition
   - header of `height` exists on blockchain
 - Expected postcondition
-  - if _n_ is correct: Returns a sound signed header of height `height`
+  - if *n* is correct: Returns a sound signed header of height `height`
   from the blockchain if communication is timely (no timeout)
-  - if _n_ is faulty: Returns a signed header with arbitrary content
+  - if *n* is faulty: Returns a signed header with arbitrary content
 - Error condition
-   * if _n_ is correct: precondition violated or timeout
-   * if _n_ is faulty: arbitrary error
+   * if *n* is correct: precondition violated or timeout
+   * if *n* is faulty: arbitrary error
 
 ----
 
@@ -196,7 +196,7 @@ func Commit(addr Address, height int64) (SignedHeader, error)
 Add_to_state(addr Address, sh SignedHeader)
 ```
 - Expected postcondition
-   - The pair _(addr,sh)_ is added to _State_
+   - The pair *(addr,sh)* is added to *State*
 
 
 
@@ -208,8 +208,8 @@ still_punishable(sh SignedHeader) (Boolean)
   TODO: fix the period that should be checked. Something between
   trusting period and unbonding period?
 - Expected postcondition
-    - returns true if misbehavior related to _sh_ can still be
-      punished. Can be approximated by _sh.bfttime + unbondingperiod > now_
+    - returns true if misbehavior related to *sh* can still be
+      punished. Can be approximated by *sh.bfttime + unbondingperiod > now*
 	  
 
 
@@ -217,10 +217,10 @@ still_punishable(sh SignedHeader) (Boolean)
 Replace_Secondary(addr Address)
 ```
 - Expected precondition
-    - _FullNodes_ is nonempty
+    - *FullNodes* is nonempty
 - Expected postcondition
-    - addr is moved from _Secondaries_ to _FaultyNodes_
-    - an address _a_ is moved from _FullNodes_ to _Secondaries_
+    - addr is moved from *Secondaries* to *FaultyNodes*
+    - an address *a* is moved from *FullNodes* to *Secondaries*
 - Error condition
     - if precondition is violated
 
@@ -230,9 +230,9 @@ Report_and_Stop(sh)
 - Comment:
     - This function communicates the existence of a fork to the outside
 	- It creates the evidence from its local information: 
-	       - all headers of height _sh.height_
-		   - possibly all the other pairs (f,h) from _State_ from full 
-		     nodes _f_ that where used to find the fork (the primary,
+	       - all headers of height *sh.height*
+		   - possibly all the other pairs (f,h) from *State* from full 
+		     nodes *f* that where used to find the fork (the primary,
 		     all involved secondaries)
 	- It submits this evidence
 	- It flags the light client to stop
@@ -249,14 +249,14 @@ VerifyHeaderAtHeight
 ## Solution
 
 Shared data of the light client
-- a pool of full nodes _FullNodes_ that have not been contacted before
-- peer set called _Secondaries_
+- a pool of full nodes *FullNodes* that have not been contacted before
+- peer set called *Secondaries*
 - primary
 
 
 
 The problem is solved by calling  the function `FailureDetector` with a header that has
-just been verified by the verifier as a parameter. _trustedState_
+just been verified by the verifier as a parameter. *trustedState*
 should be "a possibly old"
 trusted state to increase the likelihood of detecting a fork.
 
@@ -315,13 +315,13 @@ func FailureDetector(hd Header,trustedState TrustedState)  {
 
 ```
 - Comments
-    - Correctness is based on that _hd_ has been verified by verification.
+    - Correctness is based on that *hd* has been verified by verification.
 - Expected precondition
     - trustedState within trustingperiod
 	- Secondaries initialized and non-empty
 - Expected postcondition
     - satisfies [LCD-VC-INV], [LCD-VC-INV-DONT-STOP],
-	[LCD-VC-LIFE-FORK], [LCD-VC-LIFE-FLTPRIM] for height _hd.height_.
+	[LCD-VC-LIFE-FORK], [LCD-VC-LIFE-FLTPRIM] for height *hd.height*.
 	- returns false under the preconditions of [LCD-VC-INV], [LCD-VC-INV-DONT-STOP]
 	- returns false otherwise
 	- removes faulty secondary if it reports wrong header
@@ -344,7 +344,7 @@ of the problem statement
 
 #### Argument for [LCD-VC-INV-DONT-STOP]
 
-- In this case, _hd_ is the one from the blockchain
+- In this case, *hd* is the one from the blockchain
 - As there is no fork, no faulty secondary can create a sequence of
   headers that convince the failure detector. 
   
