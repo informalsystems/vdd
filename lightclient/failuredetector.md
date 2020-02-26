@@ -322,8 +322,8 @@ func FailureDetector(hd Header,trustedState TrustedState)  {
 - Expected postcondition
     - satisfies [LCD-VC-INV], [LCD-VC-INV-DONT-STOP],
 	[LCD-VC-LIFE-FORK], [LCD-VC-LIFE-FLTPRIM] for height *hd.height*.
-	- returns false under the preconditions of [LCD-VC-INV], [LCD-VC-INV-DONT-STOP]
-	- returns false otherwise
+	- TODO: perhaps add return values: returns false under the preconditions of [LCD-VC-INV], [LCD-VC-INV-DONT-STOP]
+	-  TODO: perhaps add return values: returns true otherwise
 	- removes faulty secondary if it reports wrong header
 - Error condition
     - fails if precondition is violated
