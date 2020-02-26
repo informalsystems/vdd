@@ -63,7 +63,7 @@ problem when we get another header for this height from a different secondary.
 
 #### **[LCD-IP-RespBad]**
 
-Otherwise, that is if *h'* returned by _s_ is
+Otherwise, that is, if *h'* returned by _s_ is
 different from *h*, we analyze the situation. If the failure detector
 can prove a fork on the main chain by bisecting with _s_, it panics: stops the
 light client and submits evidence.
@@ -119,6 +119,11 @@ never output evidence for height *h* and should not stop at height _h_.
 
 **[LCD-VC-INV-DONT-STOP]** If there is no fork at height *h*, and
  the primary is correct, then the failure detector should never stop
+ at height *h*.
+
+**[LCD-VC-LIVE-DONT-STOP]** If there is no fork at height *h*, and
+ the primary is correct, then the failure detector should eventually 
+ decide to not stop and to not report evidence
  at height *h*.
 
 
@@ -346,7 +351,9 @@ of the problem statement
   TODO: the last point requires pointers to blockchain invariants, and
   that if there is not fork, no sequence of proof can be generated
 
+#### Argument for [LCD-VC-LIVE-DONT-STOP]
 
+TODO
 
 #### Argument for [LCD-VC-LIFE-FORK]
 
