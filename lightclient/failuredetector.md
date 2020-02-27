@@ -121,7 +121,7 @@ never output evidence for height *h* and should not stop at height *h*.
  the primary is correct, then the failure detector should never stop
  at height *h*.
 
-**[LCD-VC-LIVE-DONT-STOP]** If there is no fork at height *h*, and
+**[LCD-VC-LIFE-DONT-STOP]** If there is no fork at height *h*, and
  the primary is correct, then the failure detector should eventually 
  decide to not stop and to not report evidence
  at height *h*.
