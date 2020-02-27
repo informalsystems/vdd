@@ -81,7 +81,10 @@ func Validators(height int64) (ValidatorSet, error)
 ----
 
 #### **[FN-LuckyCase]**:
-The primary is correct and no timeout occurs on `Commit` and `Validators`.
+The primary is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
+
+#### **[FN-ManifestFaulty]**
+The primary is faulty and a faulty header is received.
 
 
 
@@ -122,6 +125,16 @@ Simulation, implementation, etc. relations
 
 > some math that allows to write specifications and pseudo code solution below.
 Some variables, etc. 
+
+### Data structures
+The following are data structures that are needed for this specification.
+
+```go
+type SignedHeader struct {
+    Header        Header
+    Commit        Commit       
+}
+```
 
 
 ## Solution

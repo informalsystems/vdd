@@ -121,6 +121,7 @@ Given a full node, a _validator_ is a pair _(public key, voting power)_, where
 Remark: We observed that the term _validator_ refers to both a data structure and a full node that participates in the distributed computation. Therefore, we introduce the notions _validator pair_ and _validator node_, respectively.
 
 #### **[TMBC-HEADER-FIELDS]**:
+TODO: is this necessary here, if we add the data structures below? \
 Each header contains (among others) the following fields
  -  _Validators_: a set of validator pairs (as defined in [**[TMBC-VALIDATOR]**](TMBC-VALIDATOR-link), of the validator nodes that participated in the consensus instance which generated the block,
  - _NextValidators_: a set of validator pairs of the full nodes that participate in the consensus instance of the next block,
@@ -243,7 +244,53 @@ Every correct Tendermint full node locally stores a prefix of the current list o
 > some math that allows to write specifications and pseudo code solution below.
 Some variables, etc.
 
-For the remainder we refer to arXiv paper.
+### Data structures
+
+The following are data structures that are needed for this specification.
+
+```go
+type Validator struct {
+    Address       Address     
+    VotingPower   int64       
+}
+```
+The `Validator` data structure is used to capture the validator pair, 
+defined in [**[TMBC-VALIDATOR]**](#tmbc-validator).
+It has the fields
+  - `Address`, an address of the validator node
+  - `VotingPower`, an integer, denoting the validator's voting power 
+
+---
+```go
+type ValidatorSet struct {
+    Validators         []Validator
+    TotalVotingPower   int64
+}
+```
+The `ValidatorSet` data structure is used to model a set of `Validators`, and it has the following fields:
+ - `Validators`, a collection of `Validator` data structures, 
+ - `TotalVotingPower`, an integer, denoting the total voting power of all the validator pairs in `Validators`. 
+
+
+---
+```go
+type Header struct {
+    Height               int64
+    Time                 Time          
+    LastBlockID          BlockID       
+    ValidatorsHash       []byte        
+    NextValidatorsHash   []byte        
+}
+```
+The `Header` data structure is essential for this specification. 
+It contains the following fields, as defined in [**[TMBC-HEADER-FIELDS]**](#tmbc-header-fields):
+  - `Height`, an integer, denoting the height of the header
+  - `Time`, a time point, denoting the chain time when the header was generated
+  - `LastBlockID`, a block idenitifier, which dis used as a pointer to the previous block
+  - `ValidatorsHash`, a hash of the validator set for the current block
+  - `NextValidatorsHash`, a hasn of the validator set for the next block
+---
+For the remaining data structures, we refer to [arXiv paper](arXiv).
 
 ## Solution
 
@@ -286,6 +333,8 @@ of the problem statement
 
 [[verifier]] Light Client Verification Specification
 
+[[arXiv]] The Tendermint paper on arXiv
+
 
 [block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#block 
 [blockchain]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#blockchain
@@ -299,3 +348,5 @@ of the problem statement
 [TMBC-VALIDATOR-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-validator
 [TMBC-CORRECT-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-correct
 [TMBC-TIME-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-time
+
+[arXiv]: https://arxiv.org/abs/1807.04938

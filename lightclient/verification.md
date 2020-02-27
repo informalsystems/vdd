@@ -190,47 +190,30 @@ TODO: _State_ is missing?
 In the following, only the details of the data structures needed for this specification are given.
 
  ```go
-   type Header struct {
-        Height               int64
-        Time                 Time          // the chain time when the header (block) was generated
+type TrustedState {
+    SignedHeader   SignedHeader
+    ValidatorSet   ValidatorSet
+}
+```
+A `TrustedState` is a data stucture that is used to store data about 
+correct headers (defined below) in the _State_ of the light client. 
+It has the following fields:
+  - `SignedHeader`, a [signed header](fullnode-data-structures) 
+  - `ValidatorSet`, a [validator set](blockchain-validator-set)
 
-        LastBlockID          BlockID       // prev block info
-        ValidatorsHash       []byte        // hash of the validators for the current block
-        NextValidatorsHash   []byte        // hash of the validators for the next block
-   }
+--- 
 
-   type SignedHeader struct {
-        Header        Header
-        Commit        Commit            // commit for the given header
-   }
-
-   type ValidatorSet struct {
-        Validators         []Validator
-        TotalVotingPower   int64
-   }
-
-   type Validator struct {
-        Address       Address           // validator address (we assume validator's addresses are unique)
-        VotingPower   int64             // validator's voting power
-   }
-
-   type TrustedState {
-        SignedHeader   SignedHeader
-        ValidatorSet   ValidatorSet
-   }
- ```
 #### **[LCV-CORRECT-SIGNED-HEADER]**
 A signed header _sh_ of height _h_ is correct, if it coincides with the header at height _h_ on the blockchain, and:
  - if the `Commit` of _sh_ equals to the `LastCommit` of height _h+1_ (canonic commit), or
  - if the `Commit` of _sh_ contains signatures of validators of height _h_ that represent more than two-thirds of the voting power at height _h_.
 
 
----
-
 ### Auxiliary Functions (Local)
 
 
 TODO: should this be here? \
+TODO bfttime -> Time \
 We assume the following auxiliary functions:
 ```go
 func validateSignedHeaderAndVals(sh SignedHeader, 
@@ -289,35 +272,32 @@ func VerifyHeaderAtHeight(untrustedHeight int64,
   - _startTime_ and _endTime_ are the local system time right after
   invocation of `VerifyHeaderAtHeight` and right before the function returns, respectively.
 - Expected precondition
-  - The header of `trustedState` is within _trustingPeriod_ from _startTime_
+  - The value `Time` of the `SignedHeader` of `trustedState` is within _trustingPeriod_ from _startTime_
 - Expected postcondition: 
-  - Returns `(header, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
-  if `header` is the header at height `untrustedHeight` of the blockchain and if `header` was generated within _trustingPeriod_ from _endTime_
-  - Returns `(header, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link),
-  if `header` is the header at height `untrustedHeight` of the blockchain and if `header` was generated outside of _trustingPeriod_ from _endTime_	 
+  - Returns `(trustedState, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
+  if:
+    - the signed header of `trustedState` is the header at height `untrustedHeight` of the blockchain, and 
+    - the header `trustedState` was generated within _trustingPeriod_ from _endTime_
+  - Returns `(trustedState, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), if
+    - the signed header of `trustedState` is the header at height `untrustedHeight` of the blockchain, and 
+    - the signed header  of `trustedState` was generated after _endTime - trustingPeriod_ 
 - Error conditions
   - precondition violated 
   - [**[FN-LuckyCase]**](FN-LuckyCase-link) does not hold
-  (unless outside of lucky case but faulty primary sends correct
-  headers; depends on the definition of faulty)  (TODO: unclear?)
-
+  - [**[FN-ManifestFaulty]**](FN-ManifestFaulty-link)
+  
 
 
 #### **[LCV-INTF]**:
 _State_ is supposed to be maintained outside of this specification. When 
-`VerifyHeaderAtHeight` is called, _trustedState_ is in _State_. When _TrustedState_ is 
-returned it is added to _State_.
-(TODO: unclear?)
-
-
+`VerifyHeaderAtHeight` is called, the signed header of the `trustedState` passed as input is in _State_. When the function returns a `TrustedState`, its signed header is added to _State_.
 
 ---
-`VerifyBisection` is used to get a header of height `untrustedHeight` from the 
-blockchain. 
+`VerifyBisection` is used to get a trusted state, whose signed header has height `untrustedHeight` in the blockchain. 
 To do so, `VerifyBisection` first downloads the necessary information
-from the _primary_, by calling `query_primary`.
+from the _primary_, by calling `QueryPrimary`.
 This information includes a signed header `sh`, and two validator sets `vs, nextVs`.
-The result of `query_primary` is passed as input, together with the `trustedState`,
+The result of `QueryPrimary` is passed as input, together with the `trustedState`,
 to the function `VerifySingle`.
 Based on the result of `VerifySingle`, either the signed header `sh` is returned, 
 or a new signed header is computed recursively. (TODO: fix)
@@ -332,41 +312,50 @@ func VerifyBisection(untrustedHeight int64,
                      now Time
 		     ) (TrustedState, error) {
 
-  sh, vs, nextVs := query_primary(addr,untrustedHeight)
-  res := VerifySingle(sh, vs, nextVs, trustedState)
-  if res == "success" {
-    return sh // TODO: should this be trustedState? or TrustedState(sh, vs)?
-  } else if res == "could not verify" {
-    compute pivot
-    newTrustedState := VerifyBisection(pivot, trustedState, now)
-    return VerifyBisection(untrustedHeight, newTrustedState, now)
+  sh, vs, nextVs, err := QueryPrimary(addr,untrustedHeight)
+  if err == nil {
+    newTrustedState, err := VerifySingle(sh, vs, nextVs, trustedState)
+    if err == nil {
+      return newTrustedState 
+    } else {
+      compute pivot
+      newTrustedState := VerifyBisection(pivot, trustedState, now)
+      return VerifyBisection(untrustedHeight, newTrustedState, now)
+      }
   }
 }
 ```
 - Expected precondition
-  - `trustedState.bfttime` is within _trustingPeriod_ from `now`
-  (TODO: there is no bfttime in trustedstate, or header. is this referring to `trustedState.SignedHeader.Header.Time`?)
+  - the value `Time` of the signed header of `trustedState` is within _trustingPeriod_ from `now`
+
 - Expected postcondition
-  - Returns header hd of height untrustedHeight from blockchain if
-    `hd.Time > now + clockDrift` under [**[FN-LuckyCase]**](FN-LuckyCase-link)
-    (TODO: the signature says that it returns `TrustedState`)
+  - If [**[FN-LuckyCase]**](FN-LuckyCase-link) holds:
+  Returns a trusted state whose header is the header at height `untrustedHeight` from the blockchain, if the _bfttime_ of the header is greater than `now + clockDrift` 
+    
 - Error conditions 
-  - if precondition is violated  or if outside of [**[FN-LuckyCase]**](FN-LuckyCase-link)
- or _something about time is fishy_ (**TODO:** Check with Zarko)
+  - violated precondition 
+  - [**[FN-LuckyCase]**](FN-LuckyCase-link) does not hold
+  - the header lies in the future (**TODO:** Check with Zarko)
 
 ---
 
 ```go
-func query_primary(addr Address, untrustedHeight int64) 
-                  (SignedHeader,  ValidatorSet, ValidatorSet)
+func QueryPrimary(addr Address, 
+                  untrustedHeight int64) 
+                  (SignedHeader,  ValidatorSet, ValidatorSet, error)
 ```
 -  Implementation remark
-   - Used to communicate with a full node _n_ at address _addr_ via RPCs `Commit` and `Validators` (TODO: unclear?)
+   - Used to communicate with a full node _n_ at address _addr_ via RPCs `Commit` and `Validators` 
 - Expected precondition
-  -  `hd.Time < now + clockDrift`
+  - true
 - Expected postcondition: 
-  - If _n_ is correct and there is no error in the RPC to _n_: Returns the following data: a `SignedHeader` of height `untrustedHeight`, a `ValidatorSet` of height `untrustedHeight`, and a `ValidatorSet` of height `untrustedHeight + 1` 
-  - If _n_ is faulty or there is an error in the RPC to _n_: (TODO: is an arbitrary triple (sh, vs, nextVs) returned?)
+  - If _n_ is correct and there is no error in the RPC to _n_: Returns the following data:
+    - `SignedHeader` of height `untrustedHeight`, 
+    - `ValidatorSet` of height `untrustedHeight`, 
+    - `ValidatorSet` of height `untrustedHeight + 1` 
+    - `error`, in this case `nil`
+  - If _n_ is faulty or there is an error in the RPC to _n_: `error != nil`
+  - The value `Time` of the returned `SignedHeader` is smaller than `now + clockDrift`
 - Error conditions
   - precondition violated
   - error in RPC to _n_
@@ -377,19 +366,19 @@ A faulty primary might return arbitrary values, without
 forcing the function to report an error.
 TODO: should this be added to the error condition of every function?
 
-If `query_primary` returns without error, `VerifyBisection` calls `VerifySingle`.
+If `QueryPrimary` returns without error, `VerifyBisection` calls `VerifySingle`.
 
 ---
 
 
 ```go
-func verifySingle(untrustedSh SignedHeader,
+func VerifySingle(untrustedSh SignedHeader,
                   untrustedVs ValidatorSet,
                   untrustedNextVs ValidatorSet,
                   trustedState TrustedState)  error
 ```
 - Expected precondition:
-  * untrustedSh.Header.Time > now + clockDrift
+  - the _bfttime_ of the signed header `untrustedSh` is greater than `now + clockDrift` 
   * isWithinTrustedPeriod(trustedState.SignedHeader.Header,
     trustingPeriod, now)
   * trustedState.SignedHeader.Header.Height < untrustedHeader.Height
@@ -412,7 +401,7 @@ func verifySingle(untrustedSh SignedHeader,
 
 
 *Remark:* This function is not making external (RPC) calls to the full node; the whole logic is
-based on the local (given) state. Only `query_primary` makes external calls!
+based on the local (given) state. Only `QueryPrimary` makes external calls!
 
 If `VerifySingle` is successful, it returns _TrustedState_ to `VerifyBisection` which in turn also returns _TrustedState_. Otherwise (and there is no fatal error), `VerifyBisection` computes a pivot height between _trustedState.height_ and _untrustedHeight_, and goes into recursion.
 
@@ -466,3 +455,5 @@ Possibly giving inductive invariants that can be used to prove the specification
 
 [FN-LuckyCase-link]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md#fn-luckycase
 
+[blockchain-validator-set]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#data-structures
+[fullnode-data-structures]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md#data-structures
