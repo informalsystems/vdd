@@ -54,7 +54,7 @@ failure detector should query the secondaries by calling `Commit` remotely.
 If a header *h'*, returned by the secondary *s*, is
 equal to *h* we add *(s,h)* to state.
 
-TODO: We? Light client? _State_?
+TODO: Who is we? Light client/Failure detector? Is it added to _State_?
 
 *Remark:* This information might later be useful in case we find a
 problem when we get another header for this height from a different secondary.
@@ -183,6 +183,8 @@ For the purpose of this light client specification, we assume that the
      Tendermint Full Node exposes the following functions over
      Tendermint RPC:
 
+TODO: isn't this defined in fullnode.md already? 
+
 ```go
 func Commit(addr Address, height int64) (SignedHeader, error)
 ```
@@ -203,7 +205,7 @@ func Commit(addr Address, height int64) (SignedHeader, error)
 
 ### Auxiliary Functions (Local)
 
-
+TODO: Comment -> Implementation remark
 ```go
 Add_to_state(addr Address, sh SignedHeader)
 ```
@@ -272,6 +274,8 @@ The problem is solved by calling  the function `FailureDetector` with a header t
 just been verified by the verifier as a parameter. *trustedState*
 should be "a possibly old"
 trusted state to increase the likelihood of detecting a fork.
+
+TODO: Should the text in comments be extracted in a paragraph? 
 
 ```go
 func FailureDetector(hd Header, trustedState TrustedState)  {
