@@ -55,17 +55,26 @@ Therefore, in this specification, we do not distinguish between hashes and the
 data they represent.
 
 #### **[TMBC-SEQ]**:
-The Tendermint blockchain is a list *chain* of headers. 
 
- - `Height`
- - `Time`
- - `LastBlockID`
- - `LastCommit`
- - `Validators`
- - `NextValidators`
- - `Data`
- - `AppState`
- - `LastResults`
+
+
+The Tendermint blockchain is a list *chain* of headers. For all *i <=
+len(chain)*, each header *chain[i]*
+contains the following fields.
+
+ - `Height`: non-negative integer
+ - `Time`: time (integer)
+ - `LastBlockID`: Hashvalue
+ - `LastCommit` DomainCommit
+ - `Validators`: DomainVal
+ - `NextValidators`: DomainVal
+ - `Data`: DomainTX
+ - `AppState`: DomainApp
+ - `LastResults`: DomainRes
+ 
+ 
+
+
  
 ### Invariants
  
@@ -86,15 +95,27 @@ it contains a header of height *h'*.
 For all *i < len(chain)*: *chain[i+1].Validators = chain[i].NextValidators*
 
 
-###  Functions and more invariants
+###  Functions, Domains, and more invariants
+
+#### **[TMBC-SEQ-PossCommit]**:
+There is a function PossibleCommit that maps for *0 < i <= len(chain)*, 
+chain[i-1] to a set of values in DomainCommit.
+
+*Remark.* TODO: in the distributed part we assume that no-one can
+compute or guess that.
+
+
+
 
 #### **[TMBC-SEQ-FUNCTIONS]**:
 The system provides the following functions:
 
 - `hash`: assumed to be a bijection
-- `proof(b,commit)`: a predicate: true iff *commit* proofs that *b* is
-  part of the chain.
+- `proof(b,commit)`: a predicate: true iff 
+     * *b* is part of the chain
+	 * proof is in PossibleCommit(b.Height)
 - `skip-proof`: a predicate for blocks
+
 
 
 The application provides the following function:
