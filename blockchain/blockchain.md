@@ -4,17 +4,17 @@
 
 > Rough outline of what the component is doing and why. 2-3 paragraphs
 
-A blockchain is a growing list of sets of transactions, denoted by _decision_. 
+A blockchain is a growing list of sets of transactions, denoted by *decision*. 
 If several processes in a distributed system have access to the blockchain, they can (1) provide transactions as input and (2) use the decision list to execute these transactions in order. 
 
-The _decision_ list itself should be implemented in a reliable way, which introduces the need for fault-tolerance and distribution.
+The *decision* list itself should be implemented in a reliable way, which introduces the need for fault-tolerance and distribution.
 The Tendermint protocols implement the blockchain over an unreliable (Byzantine) distributed system. 
-More precisely, a Tendermint system consists of many full nodes that each maintain a local copy of the (prefix of the current) _decision_ list.
+More precisely, a Tendermint system consists of many full nodes that each maintain a local copy of the (prefix of the current) *decision* list.
 
-In this specification, we are only concerned with the _decision_ lists. 
+In this specification, we are only concerned with the *decision* lists. 
 They are maintained at so-called [full nodes][fullnode], and are the result of the execution of the Tendermint consensus protocol (described in the ArXiv paper). 
-The Tendermint consensus implements a loop with iterator _h_ (height). 
-In each iteration, upon deciding on the transactions to be put into the _decision_ list, a new _decision_ list entry is created.
+The Tendermint consensus implements a loop with iterator *h* (height). 
+In each iteration, upon deciding on the transactions to be put into the *decision* list, a new *decision* list entry is created.
 
 
 # Part I - Outside view
@@ -29,8 +29,8 @@ will be used.
 
 This specification is central in the collection of Tendermint protocols. 
 The behavior of protocols like [fastsync][fastsync], or the [light client][lightclient] will be defined with respect to this specification. 
-E.g., the light client implements a read operation of the _decision_ list entry of some height _h_. 
-It is thus crucial to understand what data is stored in this _decision_ list entry, and what are the precise semantics of a read operation in a faulty environment.
+E.g., the light client implements a read operation of the *decision* list entry of some height *h*. 
+It is thus crucial to understand what data is stored in this *decision* list entry, and what are the precise semantics of a read operation in a faulty environment.
 
 
 ## Informal Problem statement
@@ -45,8 +45,8 @@ A blockchain provides a growing sequence of sets of transactions.
 > should be English and precise. will be accompanied with a TLA spec.
 
 #### **[TMBC-HEADER]**:
-A set of blockchain transactions is stored in a data structure called _block_, which 
-contains a field called _header_. (The data structure _block_ is defined [here][block]). 
+A set of blockchain transactions is stored in a data structure called *block*, which 
+contains a field called *header*. (The data structure *block* is defined [here][block]). 
 As the header contains hashes to the relevant fields of the block, for the purpose of this
 specification, we will assume that the blockchain is a list of headers, rather than a
 list of blocks. 
@@ -55,14 +55,109 @@ Therefore, in this specification, we do not distinguish between hashes and the
 data they represent.
 
 #### **[TMBC-SEQ]**:
-The Tendermint blockchain is a list of headers. 
- - A header is a record of data (defined [here][header]).
- - Each header has an integer called a _height_.
- - Heights are strictly increasing.
- - If the blockchain contains a header of height _h_, then for all _h'<h_
-it contains a header of height _h'_.
- - During operation, new headers may be appended to the list one by one.
+The Tendermint blockchain is a list *chain* of headers. 
 
+ - `Height`
+ - `Time`
+ - `LastBlockID`
+ - `LastCommit`
+ - `Validators`
+ - `NextValidators`
+ - `Data`
+ - `AppState`
+ - `LastResults`
+ 
+### Invariants
+ 
+#### **[TMBC-SEQ-INV-NOHOLES]**:
+  If the blockchain contains a header of height *h*, then for all *h'
+  < h*
+it contains a header of height *h'*.
+ 
+
+
+
+#### **[TMBC-SEQ-INV-INC]**:
+ For all *i < len(chain)*: *chain[i].Height < chain[i+1].Height*
+
+#### **[TMBC-SEQ-INV-TIME]**:
+ For all *i < len(chain)*: *chain[i].Time < chain[i+1].Time*
+
+
+#### **[TMBC-SEQ-INV-NV]**:
+For all *i < len(chain)*: *chain[i+1].Valid
+ators = chain[i].NextValidtors*
+
+###  Functions and invariants
+
+- `hash`: assumed to be a bijection
+- `proof`: a predicate for subsequent blocks
+- `skip-proof`: a predicate for blocks
+- `execute`: used for state machine replication. maps Data
+  (transactions) and a state to a new state. It is a function
+  (deterministic transitions)
+
+Given two blocks *b* and *b'*:
+
+- *match-hash(b,b') iff hash(b) = b'.LastBlockID*
+- *match-proof(b,b') iff proof(b.Validators, b'.LastCommit)*
+
+#### **[TMBC-SEQ-INV-BC]**:
+ For all *i < len(chain)*: *match-hash(chain[i], chain[i+1])*
+ 
+#### **[TMBC-SEQ-INV-LC]**:
+For all *i < len(chain)*: *proof(chain[i], chain[i+1])*
+
+
+
+#### **[TMBC-SEQ-INV-APP]**:
+For all *i < len(chain)*: *chain[i+1].AppState = execute(chain[i].Data,chain[i].AppState)*
+
+### Validation
+
+*Remark:* The following formalizes block validation.
+If I know one of them is from the blockchain, then the other
+one is not.
+
+#### **[TMBC-SEQ-VAL-BC]**:
+Given two blocks *b* and *b'*, if *match-hash(b,b') = false*, then *b*
+and *b'* are not subsequent headers of the blockchain.
+
+
+#### **[TMBC-SEQ-VAL-LC]**:
+Given two blocks *b* and *b'*, if *proof(b,b') = false*, then *b*
+and *b'* are not subsequent headers of the blockchain.
+
+#### **[TMBC-SEQ-SKIPVAL-LC]**:
+Given two blocks *b* and *b'*, if *skip-proof(b,b') = true* and *b* is
+a header in the blockchain, then *b'* is a header in the blockchain.
+
+
+### Appending a block
+
+#### **[TMBC-SEQ-GROW]**: 
+During operation, new headers may be appended to the list one by one.
+
+#### **[TMBC-SEQ-ASS-E]**: 
+If a header is appended at time *t* then no additional header will be
+appended before time *t + ETIME*
+
+
+#### **[TMBC-SEQ-ASS-L]**: 
+If a header is appended at time *t* then the next header will be
+appended before time *t + LTIME*
+
+#### **[TMBC-SEQ-ASS-ELEL]**: 
+*ETIME <= LTIME*
+
+*Remark:* *ETIME* and *LTIME* define the earliest and latest times at
+which a new block is added. We might later parameterize by setting
+*ETIME* to infinity, e.g., when we say that fastsync terminates in the
+case the blockchain does not grow.
+
+
+
+ 
 # Part II - Protocol view
 
 ## Environment/Assumptions/Incentives
@@ -78,29 +173,29 @@ correctly
 ## Timing, nodes, and correctness assumptions
 
 In a Tendermint system, the nodes that choose to interact with each other collectively 
-implement the _decision_ list in a distributed manner by executing a protocol. 
+implement the *decision* list in a distributed manner by executing a protocol. 
 The Tendermint protocols should ensure that the participating nodes cannot benefit by 
 deviating from the expected behavior. 
 As a result, the nodes should be motivated (incentivized) to follow the protocol. 
 This is achieved by requiring the nodes to bond atoms and by the system punishing the nodes that do not follow the protocol. 
 That is, the nodes bond atoms in order to participate, and they are punished if they misbehave. 
 If the nodes want to claim their atoms, they have to wait for a certain period of time, 
-called the _unbonding period_. 
+called the *unbonding period*. 
 The unbonding period is a configuration parameter of the system. 
 
 #### **[TMBC-TIME_PARAMS]**:
 A Tendermint blockchain has the following configuration parameters:
- - _unbondingPeriod_: a time duration.
- - _trustingPeriod_: a time duration smaller than _unbondingPeriod_.
+ - *unbondingPeriod*: a time duration.
+ - *trustingPeriod*: a time duration smaller than *unbondingPeriod*.
 
 #### **[TMBC-NODES]**:
-Tendermint full nodes (or just _full nodes_), execute a set of protocols, e.g., consensus, gossip, fast sync, etc. 
-When a full node actively participates in the distributed consensus, it is called a _validator node_.
+Tendermint full nodes (or just *full nodes*), execute a set of protocols, e.g., consensus, gossip, fast sync, etc. 
+When a full node actively participates in the distributed consensus, it is called a *validator node*.
 
 #### **[TMBC-CORRECT]**:
-We define a predicate _correct(n, t)_, where _n_ is a node and _t_ is a 
+We define a predicate *correct(n, t)*, where *n* is a node and *t* is a 
 time point. 
-The predicate _correct(n, t)_ is true if and only if the node _n_ follows all the protocols until time _t_.
+The predicate *correct(n, t)* is true if and only if the node *n* follows all the protocols until time *t*.
 
 ### Full node invariants
 
@@ -114,138 +209,13 @@ Signatures and hashes cannot be broken.
 ## Blockchain data structure
 
 #### **[TMBC-VALIDATOR]**:
-Given a full node, a _validator_ is a pair _(public key, voting power)_, where 
-  - _public key_ is the public key of the full node, 
-  - _voting power_ is an integer (representing the full node's voting power in a certain consensus instance).
+Given a full node, a *validator* is a pair *(public key, voting power)*, where 
+  - *public key* is the public key of the full node, 
+  - *voting power* is an integer (representing the full node's voting power in a certain consensus instance).
 
-Remark: We observed that the term _validator_ refers to both a data structure and a full node that participates in the distributed computation. Therefore, we introduce the notions _validator pair_ and _validator node_, respectively.
+Remark: We observed that the term *validator* refers to both a data structure and a full node that participates in the distributed computation. Therefore, we introduce the notions *validator pair* and *validator node*, respectively.
 
 #### **[TMBC-HEADER-FIELDS]**:
-TODO: is this necessary here, if we add the data structures below? \
-Each header contains (among others) the following fields
- -  _Validators_: a set of validator pairs (as defined in [**[TMBC-VALIDATOR]**](TMBC-VALIDATOR-link), of the validator nodes that participated in the consensus instance which generated the block,
- - _NextValidators_: a set of validator pairs of the full nodes that participate in the consensus instance of the next block,
- - _bfttime_: the real-time at which the block is generated,
- - _LastCommit_: the set of signatures of the validators that committed the last block.
-
-#### **[TMBC-TIME]**:
-The time _bfttime_ corresponds to the reading of the local clock of a validator (how this time is computed may change when the Tendermint consensus is modified). 
-In this specification, we assume that all clocks are synchronized to real-time (and so is bfttime). 
-We can make this more precise eventually (incorporating clock drift, accuracy, precision, etc.). 
-Right now, we consider this assumption sufficient, as clock synchronization (under NTP) is in the order of milliseconds and _trustingPeriod_ is in the order of weeks.
-
-### Blockchain data structure invariants
-
-#### **[TMBC-INV-SIGN]**:
-The _LastCommit_ field of the block at height _h+1_ contains only signatures of 
-validators. The validators that signed have more than two-thirds of the voting power at height _h_.
-
-#### **[TMBC-INV-VALID]**:
-The _NextValidator_ set of a block at height _h_ is equal to the _Validator_ set 
-of the block at height _h+1_.
-
-#### **[TMBC-INV-VALID-UNIQUE]**:
-The set _Validators_ contains at most one validator pair for each full node.
-
-#### **[TMBC-INV-NEXT-VALID-UNIQUE]**:
-The set _NextValidators_ contains at most one validator pair for each full node.
- 
-## Failure model
-
-#### **[TMBC-FM-CONS]**: 
-(Consensus failure model)
-There is a set _C_ of validator pairs, such that _C_ is a subset of _NextValidators_ at height _h_, where: 
-  - The validator pairs in _C_ hold more than two-thirds of the total voting power in _NextValidators_ at height _h_
-  - Every validator pair in _C_ follows the consensus protocol until consensus for height _h+1_ is terminated. 
-
-
-
-#### **[TMBC-FM-2THIRDS]**:
-(Tendermint Failure Model)
-If a block _h_ is generated at time _bfttime_, then there is a set _C_ of validator pairs, such that _C_ is a subset of _NextValidators_ at height _h_, where:
-  - The validator pairs in _C_ hold more than two-thirds of the total voting power in _NextValidators_ at height _h_
-  - Every validator in _C_ follows *all* protocols until _bfttime + trustingPeriod_
-
-<!-- Formally,
-\[
-\sum*{(v,p) \in h.Header.NextV \wedge correct(v,h.Header.bfttime + trustingPeriod)} p >
-2/3 \sum*{(v,p) \in h.Header.NextV} p
-\] -->
-
-_Remark:_ The definition of correct [**[TMBC-CORRECT]**](TMBC-CORRECT-link) refers to realtime, while it is used here with _bfttime_ and _trustingPeriod_, which are "hardware times". 
-Due to [**[TMBC-TIME]**](TMBC-TIME-link), we do not make a distinction here. 
-
-
-
-
-## Distributed Problem Statement
-
-### Design choices
-
-> input/output variables used to define the temporal properties. Most likely they come from an ADR
-
-Each correct full node _p_ maintains its local copy of the Tendermint blockchain, denoted by _decision_p_. 
-
-A block is a data structure described [here](block).
-
-#### **[TMBC-D-VAL]**:
-There is a predicate _Valid()_ defined over blocks.
-(perhaps we do not need that now)
-
-### Temporal Properties
-
-> safety specifications / invariants in English
-
-> liveness specifications in English. Possibly with timing/fairness requirements:
-e.g., if the component is connected to a correct full node and communication is
-reliable and timely, then something good happens eventually.
-
-
-
-
-
-### Safety
-
-#### **[TMBC-VC_AGR]**:
-It is always the case that, for any two correct full nodes _p_ and _q_, it holds that _decision_p_ is a prefix of _decision_q_ or _decision_q_ is a prefix of _decision_p_.
-
-#### **[TMBC-VC_VAL]**:
-TODO: Not clear. 
-Application specific. 
-We will need to fix that eventually. 
-I guess for fastsync and light client we don't need it.
-(It is always the case that each _decision_ list entry _b_ satisfies _Valid(b)_. not
-  sure. _Valid_ may take the current state)
-(_Remark:_ Validity should make reference to the mempool, e.g., only messages from the
-  mempool + we will need a spec for the mempool. For now I leave it like that
-  as the light client and fastsync do not care about that.).
-
-
-
-### Liveness
-#### **[TMBC-VC-PROG]**: 
-For all correct full nodes _p_ and all times _t_ there exists a time _t'_, such that _|decision_p(t)| < |decision_p(t')|_.
-
-
-> How is the problem statement linked to the "Sequential Problem statement".
-Simulation, implementation, etc. relations
-
-### Solving the sequential specification
-TODO: How does the distributed specification map to the sequential one? The argument should arrive at:
-
-#### **[TMBC-CorrFull]**: 
-Every correct Tendermint full node locally stores a prefix of the current list of headers from [**[TMBC-SEQ]**](TMBC-SEQ-link).
-
-
-## Definitions
-
-> In this section we become more concrete, with basic (abstracted) data types
-
-> some math that allows to write specifications and pseudo code solution below.
-Some variables, etc.
-
-### Data structures
-
 The following are data structures that are needed for this specification.
 
 ```go
@@ -272,24 +242,191 @@ The `ValidatorSet` data structure is used to model a set of `Validators`, and it
  - `TotalVotingPower`, an integer, denoting the total voting power of all the validator pairs in `Validators`. 
 
 
----
 ```go
 type Header struct {
-    Height               int64
-    Time                 Time          
-    LastBlockID          BlockID       
-    ValidatorsHash       []byte        
-    NextValidatorsHash   []byte        
-}
+	// basic block info
+	Version  Version
+	ChainID  string
+	Height   int64
+	Time     Time
+
+	// prev block info
+	LastBlockID BlockID
+
+	// hashes of block data
+	LastCommitHash []byte // commit from validators from the last block
+	DataHash       []byte // MerkleRoot of transaction hashes
+
+	// hashes from the app output from the prev block
+	ValidatorsHash     []byte // validators for the current block
+	NextValidatorsHash []byte // validators for the next block
+	ConsensusHash      []byte // consensus params for current block
+	AppHash            []byte // state after txs from the previous block
+	LastResultsHash    []byte // root hash of all results from the txs from the previous block
+
+	// consensus info
+	EvidenceHash    []byte // evidence included in the block
+	ProposerAddress []byte // original proposer of the block
 ```
 The `Header` data structure is essential for this specification. 
-It contains the following fields, as defined in [**[TMBC-HEADER-FIELDS]**](#tmbc-header-fields):
   - `Height`, an integer, denoting the height of the header
   - `Time`, a time point, denoting the chain time when the header was generated
   - `LastBlockID`, a block idenitifier, which dis used as a pointer to the previous block
   - `ValidatorsHash`, a hash of the validator set for the current block
-  - `NextValidatorsHash`, a hasn of the validator set for the next block
+      *  *Validators*: a set of validator pairs (as defined in [**[TMBC-VALIDATOR]**](TMBC-VALIDATOR-link), of the validator nodes that participated in the consensus instance which generated the block,
+  - `NextValidatorsHash`, a hasn of the validator set for the next
+    block
+     * *NextValidators*: a set of validator pairs of the full nodes
+        that participate in the consensus instance of the next block,
+ - *LastCommit*: the set of signatures of the validators that committed the last block.
 ---
+
+
+
+#### **[TMBC-TIME]**:
+
+TODO: fix after Zarko's comments
+
+The time *bfttime* corresponds to the reading of the local clock of a validator (how this time is computed may change when the Tendermint consensus is modified). 
+In this specification, we assume that all clocks are synchronized to real-time (and so is bfttime). 
+We can make this more precise eventually (incorporating clock drift, accuracy, precision, etc.). 
+Right now, we consider this assumption sufficient, as clock synchronization (under NTP) is in the order of milliseconds and *trustingPeriod* is in the order of weeks.
+
+### Blockchain data
+
+#### **[TMBC-DAT-DATA]**:
+`Data` is a list of transactions
+
+#### **[TMBC-DAT-COMMIT]**:
+List of signatures
+
+
+
+
+
+### Blockchain data structure invariants
+
+#### **[TMBC-INV-SIGN]**:
+The *LastCommit* field of the block at height *h+1* contains only signatures of 
+validators. The validators that signed have more than two-thirds of the voting power at height *h*.
+
+#### **[TMBC-INV-VALID]**:
+The *NextValidator* set of a block at height *h* is equal to 
+the *Validator* set 
+of the block at height *h+1*.
+
+#### **[TMBC-INV-VALID-UNIQUE]**:
+The set *Validators* contains at most one validator pair for each full node.
+
+#### **[TMBC-INV-NEXT-VALID-UNIQUE]**:
+The set *NextValidators* contains at most one validator pair for each full node.
+ 
+#### **[TMBC-INV-BLOCKID]**:
+TODO: `BlockID` is a unique identifier of the block. (It contains the hash
+(Merkleroot) of the fields in the header)
+ 
+#### **[TMBC-INV-COMMIT]**:
+TODO: what is to say about signatures. Votes?
+
+## Failure model
+
+#### **[TMBC-FM-CONS]**: 
+(Consensus failure model)
+There is a set *C* of validator pairs, such that *C* is a subset of *NextValidators* at height *h*, where: 
+  - The validator pairs in *C* hold more than two-thirds of the total voting power in *NextValidators* at height *h*
+  - Every validator pair in *C* follows the consensus protocol until consensus for height *h+1* is terminated. 
+
+
+
+#### **[TMBC-FM-2THIRDS]**:
+(Tendermint Failure Model)
+If a block *h* is generated at time *bfttime*, then there is a set *C* of validator pairs, such that *C* is a subset of *NextValidators* at height *h*, where:
+  - The validator pairs in *C* hold more than two-thirds of the total voting power in *NextValidators* at height *h*
+  - Every validator in *C* follows *all* protocols until *bfttime + trustingPeriod*
+
+<!-- Formally,
+\[
+\sum*{(v,p) \in h.Header.NextV \wedge correct(v,h.Header.bfttime + trustingPeriod)} p >
+2/3 \sum*{(v,p) \in h.Header.NextV} p
+\] -->
+
+*Remark:* The definition of correct [**[TMBC-CORRECT]**](TMBC-CORRECT-link) refers to realtime, while it is used here with *bfttime* and *trustingPeriod*, which are "hardware times". 
+Due to [**[TMBC-TIME]**](TMBC-TIME-link), we do not make a distinction here. 
+
+
+
+
+## Distributed Problem Statement
+
+### Design choices
+
+> input/output variables used to define the temporal properties. Most likely they come from an ADR
+
+Each correct full node *p* maintains its local copy of the Tendermint blockchain, denoted by *decision_p*. 
+
+A block is a data structure described [here](block).
+
+#### **[TMBC-D-VAL]**:
+There is a predicate *Valid()* defined over blocks.
+(perhaps we do not need that now)
+
+### Temporal Properties
+
+> safety specifications / invariants in English
+
+> liveness specifications in English. Possibly with timing/fairness requirements:
+e.g., if the component is connected to a correct full node and communication is
+reliable and timely, then something good happens eventually.
+
+
+
+
+
+### Safety
+
+#### **[TMBC-VC_AGR]**:
+It is always the case that, for any two correct full nodes *p* and *q*, it holds that *decision_p* is a prefix of *decision_q* or *decision_q* is a prefix of *decision_p*.
+
+#### **[TMBC-VC_VAL]**:
+TODO: Not clear. 
+Application specific. 
+We will need to fix that eventually. 
+I guess for fastsync and light client we don't need it.
+(It is always the case that each *decision* list entry *b* satisfies *Valid(b)*. not
+  sure. *Valid* may take the current state)
+(*Remark:* Validity should make reference to the mempool, e.g., only messages from the
+  mempool + we will need a spec for the mempool. For now I leave it like that
+  as the light client and fastsync do not care about that.).
+
+
+
+### Liveness
+#### **[TMBC-VC-PROG]**: 
+For all correct full nodes *p* and all times *t* there exists a time *t'*, such that *|decision_p(t)| < |decision_p(t')|*.
+
+
+> How is the problem statement linked to the "Sequential Problem statement".
+Simulation, implementation, etc. relations
+
+### Solving the sequential specification
+TODO: How does the distributed specification map to the sequential one? The argument should arrive at:
+
+#### **[TMBC-CorrFull]**: 
+Every correct Tendermint full node locally stores a prefix of the current list of headers from [**[TMBC-SEQ]**](TMBC-SEQ-link).
+
+
+## Definitions
+
+> In this section we become more concrete, with basic (abstracted) data types
+
+> some math that allows to write specifications and pseudo code solution below.
+Some variables, etc.
+
+### Data structures
+
+
+
+
 For the remaining data structures, we refer to [arXiv paper](arXiv).
 
 ## Solution

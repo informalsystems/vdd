@@ -21,7 +21,7 @@ current state of a Tendermint blockchain. Its typical use case is a
 full node that was disconnected from the system for some time. The
 recovering full node then queries its peers for the blocks that were
 decided on by the Tendermint blockchain during the period the full
-node was disconnected.
+node was disconnected. It then executes the transactions in the block.
 
 ## Informal Problem statement
 
@@ -38,15 +38,18 @@ read the most recent block and then terminates.
 
 > should be English and precise. will be accompanied with a TLA spec.
 
-*Fastsync* gets as input a block of height *h*, and produces as
-outpout a list of blocks.
+*Fastsync* gets as input a block of height *h* and the corresponding
+application state *s*, and produces as
+outpout a list *l* of blocks and the state when applying the transaction
+of the list *l* to *s*.
 
 #### **[FS-Seq-Live]**: 
 *Fastsync* eventually terminates.
  
 #### **[FS-Seq-Term]**:
 When *Fastsync* terminates, it outputs a list of all blocks from
-height *h* to the current height of the blockchain [**[TMBC-SEQ]**][TMBC-SEQ-link].
+height *h* to the current height *h'* of the blockchain
+[**[TMBC-SEQ]**][TMBC-SEQ-link].
 
 *Remark:* this will require timing assumptions on the rate at which a
 block is added to the blockchain, and message and computation delays
@@ -75,7 +78,7 @@ ratio of correct/faulty nodes.
 #### **[FS-A-Comm]**:
 Communication between Fastsync and a correct full node is reliable and bounded in time.
 
-#### **[LFS-A-LCC]**:
+#### **[FS-A-LCC]**:
 The node executing Fastsync is following the protocol (it is correct).
 
 TODO: message passing vs. rpc
