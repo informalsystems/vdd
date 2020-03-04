@@ -75,8 +75,6 @@ The Tendermint blockchain is a list *chain* of headers.
 it contains a header of height *h'*.
  
 
-
-
 #### **[TMBC-SEQ-INV-INC]**:
  For all *i < len(chain)*: *chain[i].Height < chain[i+1].Height*
 
@@ -85,22 +83,31 @@ it contains a header of height *h'*.
 
 
 #### **[TMBC-SEQ-INV-NV]**:
-For all *i < len(chain)*: *chain[i+1].Valid
-ators = chain[i].NextValidtors*
+For all *i < len(chain)*: *chain[i+1].Validators = chain[i].NextValidators*
 
-###  Functions and invariants
+
+###  Functions and more invariants
+
+#### **[TMBC-SEQ-FUNCTIONS]**:
+The system provides the following functions:
 
 - `hash`: assumed to be a bijection
-- `proof`: a predicate for subsequent blocks
+- `proof(b,commit)`: a predicate: true iff *commit* proofs that *b* is
+  part of the chain.
 - `skip-proof`: a predicate for blocks
+
+
+The application provides the following function:
+
 - `execute`: used for state machine replication. maps Data
   (transactions) and a state to a new state. It is a function
   (deterministic transitions)
+  
 
 Given two blocks *b* and *b'*:
 
 - *match-hash(b,b') iff hash(b) = b'.LastBlockID*
-- *match-proof(b,b') iff proof(b.Validators, b'.LastCommit)*
+- *match-proof(b,b') iff proof(b, b'.LastCommit)*
 
 #### **[TMBC-SEQ-INV-BC]**:
  For all *i < len(chain)*: *match-hash(chain[i], chain[i+1])*
@@ -326,7 +333,8 @@ TODO: `BlockID` is a unique identifier of the block. (It contains the hash
 (Merkleroot) of the fields in the header)
  
 #### **[TMBC-INV-COMMIT]**:
-TODO: what is to say about signatures. Votes?
+TODO: what is to say about signatures. Votes? subset of validator of
+previous block
 
 ## Failure model
 
