@@ -266,6 +266,25 @@ Report_and_Stop(sh)
 ```go
 VerifyHeaderAtHeight
 ```
+- Implementation remark
+  - _startTime_ and _endTime_ are the local system time right after
+  invocation of `VerifyHeaderAtHeight` and right before the function returns, respectively.
+- Expected precondition
+  - The field `Time` of the signed header of `trustedState` is within _trustingPeriod_ from _startTime_
+- Expected postcondition: 
+TODO: match with current return statements.
+  - Returns `(trustedState, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
+  if the signed header of `trustedState`:
+    - is the header at height `untrustedHeight` of the blockchain, and 
+    - was generated within _trustingPeriod_ from _endTime_
+  - Returns `(trustedState, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), if
+  the signed header of `trustedState`:
+    - is the header at height `untrustedHeight` of the blockchain, and 
+    - was generated after _endTime - trustingPeriod_ 
+- Error conditions
+  - precondition violated 
+  - [**[FN-LuckyCase]**](FN-LuckyCase-link) does not hold
+  - [**[FN-ManifestFaulty]**](FN-ManifestFaulty-link) holds
 
 ## Solution
 
