@@ -29,7 +29,9 @@ This specification, the failure detector, is a "second line of defense", in case
 The [light client](lightclient) maintains a simple address book 
 containing addresses of full nodes that it can pick as primary and
 secondaries.
-TODO: what is the purpose of a secondary?
+To obtain a new header, the light client first does [verification](verification)
+ with the primary, and then cross-checks the header
+with the secondaries using this specification.
 
 ### Informal Problem statement
 
@@ -52,9 +54,8 @@ failure detector should query the secondaries by calling `Commit` remotely.
 #### **[LCD-IP-RespOK]**
 
 If a header *h'*, returned by the secondary *s*, is
-equal to *h* we add *(s,h)* to state.
+equal to *h* the failure detector adds *(s,h)* to state.
 
-TODO: Who is we? Light client/Failure detector? Is it added to _State_?
 
 *Remark:* This information might later be useful in case we find a
 problem when we get another header for this height from a different secondary.
@@ -63,7 +64,7 @@ problem when we get another header for this height from a different secondary.
 #### **[LCD-IP-RespBad]**
 
 Otherwise, that is, if *h'* returned by *s* is
-different from *h*, we analyze the situation. If the failure detector
+different from *h*, the failure detector has to analyze the situation. If the failure detector
 can prove a fork on the main chain by performing the bisection protocol with *s*, it stops the
 light client and submits evidence.
 
@@ -78,9 +79,17 @@ that has not been primary or secondary before)
 
 ## Assumptions/Incentives/Environment
 
-It is not in the interest of faulty full nodes to talk to the failure detector as long as the failure detector is connected to at least one correct full node. This would only increase the likelihood of misbehavior being detected. Also we cannot punish them easily (cheaply). The absence of a response need not be the fault of the full node. Also, a faulty failure detector could wrongly accuse correct full nodes.
+It is not in the interest of faulty full nodes to talk to the failure
+detector as long as the failure detector is connected to at least one
+correct full node. This would only increase the likelihood of
+misbehavior being detected. Also we cannot punish them easily
+(cheaply). The absence of a response need not be the fault of the full
+node. 
 
-Correct full nodes have the incentive to respond, because the failure detector may help them to understand whether their header is a good one. We can thus base liveness arguments of the failure detector on the assumptions that correct full nodes reliably talk to us.
+Correct full nodes have the incentive to respond, because the failure
+detector may help them to understand whether their header is a good
+one. We can thus base liveness arguments of the failure detector on
+the assumptions that correct full nodes reliably talk to us.
 
 
 **Assumptions**
@@ -135,26 +144,25 @@ If there is no fork at height *h*, and
 #### **[LCD-VC-LIFE-FORK]**
 
 If there is a fork (two correct full nodes decided on different blocks for the same height), and
-- the user of the light client requests a header of a height *h* that is affected (within the trusting period), and
+- the light client needs to obtain a header of a height *h* that is
+ affected,
+ and
 - there are two correct full nodes *i* and *j* that are
     - on different branches, and
     - primary or secondary,
 
 then the failure detector eventually outputs evidence for height *h*.
 
-#### **[LCD-VC-LIFE-FLTPRIM]**
 
-If there is no fork on the main chain and if
-the verification trusts a header at
-height *h* that deviates from the header on the chain (possibly
-because the primary is faulty), and there is a correct secondary, then
-the failure detector eventually outputs evidence for height *h*.
-
-TODO: Should we consider this case? Can the precondition happen? Can the verification trust a faulty header if there is no fork?
 
 #### **[LCD-REQ-REP]**
 
 If the failure detector observes two conflicting headers for height *h*, it should try to verify both. If both are verified it should report evidence.
+
+If the primary reports header *h* and a secondary reports header *h'*,
+     and if *h'* can be verified based on common root of trust, then
+     evidence should be generated; TODO: shall we add "otherwise drop
+     h' and continue normal operation"?
 
 
 ## Definitions
@@ -183,7 +191,6 @@ For the purpose of this light client specification, we assume that the
      Tendermint Full Node exposes the following functions over
      Tendermint RPC:
 
-TODO: isn't this defined in fullnode.md already? 
 
 ```go
 func Commit(addr Address, height int64) (SignedHeader, error)
@@ -205,7 +212,7 @@ func Commit(addr Address, height int64) (SignedHeader, error)
 
 ### Auxiliary Functions (Local)
 
-TODO: Comment -> Implementation remark
+
 ```go
 Add_to_state(addr Address, sh SignedHeader)
 ```
@@ -217,7 +224,7 @@ Add_to_state(addr Address, sh SignedHeader)
 ```go
 still_punishable(sh SignedHeader) (Boolean)
 ```
-- Comment: it might make sense to check whether the unbonding period is
+- Implementation Remark: it might make sense to check whether the unbonding period is
   still running although the trusting period is over
   TODO: fix the period that should be checked. Something between
   trusting period and unbonding period?
@@ -241,7 +248,7 @@ Replace_Secondary(addr Address)
 ```go
 Report_and_Stop(sh)
 ```
-- Comment:
+- Implementation Remark:
     - This function communicates the existence of a fork to the outside
 	- It creates the evidence from its local information:
 	     - all headers of height *sh.height*
@@ -275,7 +282,6 @@ just been verified by the verifier as a parameter. *trustedState*
 should be "a possibly old"
 trusted state to increase the likelihood of detecting a fork.
 
-TODO: Should the text in comments be extracted in a paragraph? 
 
 ```go
 func FailureDetector(hd Header, trustedState TrustedState)  {
@@ -338,7 +344,7 @@ func FailureDetector(hd Header, trustedState TrustedState)  {
 	- Secondaries initialized and non-empty
 - Expected postcondition
     - satisfies [LCD-VC-INV], [LCD-VC-INV-DONT-STOP],
-	[LCD-VC-LIFE-FORK], [LCD-VC-LIFE-FLTPRIM] for height *hd.height*.
+	[LCD-VC-LIFE-FORK] for height *hd.height*.
 	- TODO: perhaps add return values: returns false under the preconditions of [LCD-VC-INV], [LCD-VC-INV-DONT-STOP]
 	-  TODO: perhaps add return values: returns true otherwise
 	- removes faulty secondary if it reports wrong header
@@ -378,12 +384,7 @@ Can be proven under the assumption that TrustedState is choosen before
 the fork happened.
 
 
-#### Argument for [LCD-VC-LIFE-FLTPRIM]
 
-- When called on a correct secondary, `Commit` will return the header
-  from the blockchain
--  hd == sh will evaluate to false.
-- `VerifyHeaderAtHeight` will
 
 # References
 
