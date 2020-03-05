@@ -264,23 +264,33 @@ Report_and_Stop(sh)
 #### From the verifier
 
 ```go
-VerifyHeaderAtHeight
+VerifyHeaderAtHeight (untrustedHeight int64,
+                          trustedState TrustedState,
+			              addr Address) (TrustedState, error)
 ```
 - Implementation remark
-  - _startTime_ and _endTime_ are the local system time right after
+  - signature deviates from current verification spec, which is
+    written with having bisection with the primary in mind. However,
+    we also need bisection with secondaries, so that I added the
+    Address `addr` of the full node the light client should do
+    bisection with.
+  - *startTime* and *endTime* are the local system time right after
   invocation of `VerifyHeaderAtHeight` and right before the function returns, respectively.
 - Expected precondition
-  - The field `Time` of the signed header of `trustedState` is within _trustingPeriod_ from _startTime_
+  - The field `Time` of the signed header of `trustedState` is within *trustingPeriod* from *startTime*
 - Expected postcondition: 
-TODO: match with current return statements.
-  - Returns `(trustedState, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
+    - Returns `(trustedState, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
   if the signed header of `trustedState`:
     - is the header at height `untrustedHeight` of the blockchain, and 
-    - was generated within _trustingPeriod_ from _endTime_
-  - Returns `(trustedState, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), if
+    - was generated within *trustingPeriod* from *endTime*
+    - corresponds to`return (trustedState,
+      nil)` in current verification spec.
+- Returns `(trustedState, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), if
   the signed header of `trustedState`:
     - is the header at height `untrustedHeight` of the blockchain, and 
-    - was generated after _endTime - trustingPeriod_ 
+    - was generated after *endTime - trustingPeriod* 
+	- corresponds to `return (trustedState,
+      ErrHeaderNotWithinTrustedPeriod)` in current verification spec.
 - Error conditions
   - precondition violated 
   - [**[FN-LuckyCase]**](FN-LuckyCase-link) does not hold
