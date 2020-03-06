@@ -8,7 +8,7 @@ thousands lines of code. Therefore, there is lot of space for potential
 bugs: protocol bugs, concurrency bugs, implementation bugs, security bugs, etc.
 
 As bugs in (some) modern distributed systems have potentially high cost,
-people has started considering computer-aided verification tools and
+people have started considering computer-aided verification tools and
 methodologies as a way to increase correctness and verifiability of
 those critical systems. However current approaches turns out to be
 impractical (to large scale), either because of tools and methodology
