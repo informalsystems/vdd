@@ -10,7 +10,7 @@ bugs: protocol bugs, concurrency bugs, implementation bugs, security bugs, etc.
 As bugs in (some) modern distributed systems have potentially high cost,
 people have started considering computer-aided verification tools and
 methodologies as a way to increase correctness and verifiability of
-those critical systems. However current approaches turns out to be
+those critical systems. However current approaches turn out to be
 impractical (to large scale), either because of tools and methodology
 theoretical limits (completely automated verification methods such as
 model checking hit theoretical limits and undecidability results), or
