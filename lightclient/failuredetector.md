@@ -209,10 +209,17 @@ func Commit(addr Address, height int64) (SignedHeader, error)
    * if *n* is faulty: arbitrary error
 
 #### **[FN-LuckyCase]**:
+<<<<<<< HEAD
 The full node on which the RPC is called is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
 
 #### **[FN-ManifestFaulty]**
 The  full node on which the RPC is called is faulty and a faulty header is received.
+=======
+The  full node on which the procedure is called remotely is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
+
+#### **[FN-ManifestFaulty]**
+The  full node on which the procedure is called remotely is faulty and a faulty header is received.
+>>>>>>> 52d19b80a6e0cbe4ad889329f36b62a517d4fa5b
 
 ----
 
@@ -270,11 +277,16 @@ Report_and_Stop(sh)
 #### From the verifier
 
 ```go
+<<<<<<< HEAD
 VerifyHeaderAtHeight(untrustedHeight int64,
+=======
+VerifyHeaderAtHeight (untrustedHeight int64,
+>>>>>>> 52d19b80a6e0cbe4ad889329f36b62a517d4fa5b
                           trustedState TrustedState,
 			              addr Address) (TrustedState, error)
 ```
 - Implementation remark
+<<<<<<< HEAD
   - *startTime* and *endTime* are the local system time right after
   invocation of `VerifyHeaderAtHeight` and right before the function
   returns, respectively.
@@ -290,13 +302,36 @@ VerifyHeaderAtHeight(untrustedHeight int64,
        - was generated within *trustingPeriod* from *endTime*
        - Comment: corresponds to `return (trustedState, nil)` in current version of verification.
 
+=======
+  - signature deviates from current verification spec, which is
+    written with having bisection with the primary in mind. However,
+    we also need bisection with secondaries, so that I added the
+    Address `addr` of the full node the light client should do
+    bisection with.
+  - *startTime* and *endTime* are the local system time right after
+  invocation of `VerifyHeaderAtHeight` and right before the function returns, respectively.
+- Expected precondition
+  - The field `Time` of the signed header of `trustedState` is within *trustingPeriod* from *startTime*
+- Expected postcondition: 
+    - Returns `(trustedState, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
+  if the signed header of `trustedState`:
+    - is the header at height `untrustedHeight` of the blockchain, and 
+    - was generated within *trustingPeriod* from *endTime*
+    - corresponds to`return (trustedState,
+      nil)` in current verification spec.
+>>>>>>> 52d19b80a6e0cbe4ad889329f36b62a517d4fa5b
 - Returns `(trustedState, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), if
   the signed header of `trustedState`:
     - is the header at height `untrustedHeight` of the blockchain, and 
     - was generated after *endTime - trustingPeriod* 
+<<<<<<< HEAD
 	- Comment: corresponds to `return (trustedState,
       ErrHeaderNotWithinTrustedPeriod)` in current version of verification.
 
+=======
+	- corresponds to `return (trustedState,
+      ErrHeaderNotWithinTrustedPeriod)` in current verification spec.
+>>>>>>> 52d19b80a6e0cbe4ad889329f36b62a517d4fa5b
 - Error conditions
   - precondition violated 
   - [**[FN-LuckyCase]**](FN-LuckyCase-link) does not hold
@@ -356,7 +391,7 @@ func FailureDetector(hd Header, trustedState TrustedState)  {
 						// try to reproduce the fork  with a
 						// later trusted state? If we are lucky,
 						// VerifyHeaderAtHeight returns with OK
-						TODO
+						TODO: fix what to do here
 					}
 				}
 				else {
@@ -425,14 +460,12 @@ the fork happened.
 
 > links to other specifications/ADRs this document refers to
 
-[[block]] Specification of the block data structure.
-
-[[blockchain]] The specification of the Tendermint blockchain. Tags refering to
-this specification are labeled [TMBC-*].
 
 [[verification]] The specification of the light client verification.
 
 [[lightclient]] The light client ADR [77d2651 on Dec 27, 2019].
+
+[TMBC-FM-2THIRDS-linkVDD]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#**[TMBC-FM-2THIRDS-link]**:
 
 [TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#**[TMBC-FM-2THIRDS-link]**:
 
@@ -443,4 +476,6 @@ this specification are labeled [TMBC-*].
 
 [lightclient]: https://github.com/interchainio/tendermint-rs/blob/e2cb9aca0b95430fca2eac154edddc9588038982/docs/architecture/adr-002-lite-client.md
 
-[verification]: https://github.com/informalsystems/VDD/blob/master/lightclient/failuredetector.md
+[verificationVDD]: https://github.com/informalsystems/VDD/blob/master/lightclient/failuredetector.md
+
+[verification]: https://github.com/tendermint/spec/blob/master/spec/consensus/light-client/verification.md
