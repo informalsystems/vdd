@@ -4,7 +4,7 @@
 technology. At the same time, modern software stacks are quite complex.
 For instance, Byzantine fault tolerant blockchain systems (for example Tendermint) are based on complex fault-tolerant distributed
 protocols, implemented as highly concurrent systems, and overall contain
-thousands lines of code. Therefore, there are lot of space for potential
+thousands lines of code. Therefore, there is lot of space for potential
 bugs: protocol bugs, concurrency bugs, implementation bugs, security bugs, etc.
 
 As bugs in (some) modern distributed systems has potentially high cost,
