@@ -14,7 +14,7 @@ those critical systems. However current approaches turn out to be
 impractical (to large scale), either because of tools and methodology
 theoretical limits (completely automated verification methods such as
 model checking hit theoretical limits and undecidability results), or
-because methods (approaches based on interactive theorem provers) require
+because mechanical verification methods (approaches based on interactive theorem provers) require
 a huge amount of manual work.
 
 Part of the problem is the fact that the verification is often regarded
