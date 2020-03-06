@@ -1,5 +1,7 @@
 **VDD example for high-level English spec**
 
+TODO: check that reliable communication is defined properly
+TODO: authentication
 
 **concentrates on form rather on content, for now**
 

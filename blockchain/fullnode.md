@@ -81,10 +81,10 @@ func Validators(height int64) (ValidatorSet, error)
 ----
 
 #### **[FN-LuckyCase]**:
-The primary is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
+The full node on which the RPC is called is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
 
 #### **[FN-ManifestFaulty]**
-The primary is faulty and a faulty header is received.
+The  full node on which the RPC is called is faulty and a faulty header is received.
 
 
 

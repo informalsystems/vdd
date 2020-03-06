@@ -208,6 +208,12 @@ func Commit(addr Address, height int64) (SignedHeader, error)
    * if *n* is correct: precondition violated or timeout
    * if *n* is faulty: arbitrary error
 
+#### **[FN-LuckyCase]**:
+The full node on which the RPC is called is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
+
+#### **[FN-ManifestFaulty]**
+The  full node on which the RPC is called is faulty and a faulty header is received.
+
 ----
 
 ### Auxiliary Functions (Local)
@@ -264,23 +270,33 @@ Report_and_Stop(sh)
 #### From the verifier
 
 ```go
-VerifyHeaderAtHeight
+VerifyHeaderAtHeight(untrustedHeight int64,
+                          trustedState TrustedState,
+			              addr Address) (TrustedState, error)
 ```
 - Implementation remark
-  - _startTime_ and _endTime_ are the local system time right after
-  invocation of `VerifyHeaderAtHeight` and right before the function returns, respectively.
+  - *startTime* and *endTime* are the local system time right after
+  invocation of `VerifyHeaderAtHeight` and right before the function
+  returns, respectively.
+  - deviates slightly from in current version of verification. Takes
+    `addr` as parameter as bisection needs to be done with with
+    secondaries and current version only considers bisection with primary.
 - Expected precondition
-  - The field `Time` of the signed header of `trustedState` is within _trustingPeriod_ from _startTime_
+  - The field `Time` of the signed header of `trustedState` is within *trustingPeriod* from *startTime*
 - Expected postcondition: 
-TODO: match with current return statements.
   - Returns `(trustedState, OK)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), 
-  if the signed header of `trustedState`:
-    - is the header at height `untrustedHeight` of the blockchain, and 
-    - was generated within _trustingPeriod_ from _endTime_
-  - Returns `(trustedState, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), if
+   if the signed header of `trustedState`:
+       - is the header at height `untrustedHeight` of the blockchain, and 
+       - was generated within *trustingPeriod* from *endTime*
+       - Comment: corresponds to `return (trustedState, nil)` in current version of verification.
+
+- Returns `(trustedState, EXPIRED)` under [**[FN-LuckyCase]**](FN-LuckyCase-link), if
   the signed header of `trustedState`:
     - is the header at height `untrustedHeight` of the blockchain, and 
-    - was generated after _endTime - trustingPeriod_ 
+    - was generated after *endTime - trustingPeriod* 
+	- Comment: corresponds to `return (trustedState,
+      ErrHeaderNotWithinTrustedPeriod)` in current version of verification.
+
 - Error conditions
   - precondition violated 
   - [**[FN-LuckyCase]**](FN-LuckyCase-link) does not hold
