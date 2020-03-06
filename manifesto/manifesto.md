@@ -2,9 +2,8 @@
 
 **Abstract.** Software bugs can be increasingly costly, e.g., blockchain
 technology. At the same time, modern software stacks are quite complex.
-For instance, Byzantine fault tolerant blockchain systems(
-for example Tendermint) are based on complex fault-tolerant distributed
-protocols, implemented as highly concurrent systems, and overall contains
+For instance, Byzantine fault tolerant blockchain systems (for example Tendermint) are based on complex fault-tolerant distributed
+protocols, implemented as highly concurrent systems, and overall contain
 thousands lines of code. Therefore, there are lot of space for potential
 bugs: protocol bugs, concurrency bugs, implementation bugs, security bugs, etc.
 
@@ -272,4 +271,3 @@ with Failing.
 specification
 - Check that code passes tests that corresponds to (automatically) generated
 abstract execution scenarios.
-
