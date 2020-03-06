@@ -1,4 +1,4 @@
-**VDD example for high-level English spec**  
+**VDD example for high-level English spec**
 
 
 **concentrates on form rather on content, for now**
