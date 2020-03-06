@@ -149,7 +149,7 @@ between them (for example consensus) as safety and liveness properties
 are global (it is about all correct processes). In other cases, where
 protocol is more single node oriented (for example fast sync, state sync,
 light client, etc), it might be sufficient modelling a single node
-(that is service consumer) and all other processes as a single environment.
+(that is service consumer) and all other processes represent the environment.
 This should simplify modelling and make model checking more efficient.
 It also makes it simpler to consider multiple environments to be able to
 model weaker or stronger adversaries in a more modular way.
