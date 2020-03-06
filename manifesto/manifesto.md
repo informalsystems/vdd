@@ -95,7 +95,7 @@ unblocking, bounded, etc), etc.
 - synchrony assumptions on the process and network speed: synchronous
 (there is a known upper bound on the process/network speed),
 asynchronous (no assumption is made on upper bound on the process/network
-speed, partially synchronous (system in between synchronous and
+speed), partially synchronous (system in between synchronous and
 asynchronous, i.e., system is eventually synchronous, or transitions between
 periods of asynchrony and synchrony).
 - safety and liveness properties of the problem in the given model
