@@ -189,8 +189,8 @@ model weaker or stronger adversaries in a more modular way.
 
 At this level we think about the specification of the code. Even in
 distributed systems, code inherently runs on one computer, so we take the
-single node perspective here and interactions with the rest of the
-system is modeled as environment.
+single node perspective here while the rest of the
+system is modelled as the environment.
 
 The goal of specification at this level (we call it also low level
 specification) is to be as close as possible to the implementation.
