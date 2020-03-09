@@ -4,17 +4,20 @@
 
 > Rough outline of what the component is doing and why. 2-3 paragraphs
 
-A blockchain is a growing list of sets of transactions, denoted by *decision*. 
-If several processes in a distributed system have access to the blockchain, they can (1) provide transactions as input and (2) use the decision list to execute these transactions in order. 
+A blockchain is a growing list of sets of transactions, denoted by *chain*. 
+If several processes in a distributed system have access to the blockchain, they can (1) provide transactions as input and (2) use the chain list to execute these transactions in order. 
 
-The *decision* list itself should be implemented in a reliable way, which introduces the need for fault-tolerance and distribution.
+The *chain* list itself should be implemented in a reliable way, which introduces the need for fault-tolerance and distribution.
 The Tendermint protocols implement the blockchain over an unreliable (Byzantine) distributed system. 
-More precisely, a Tendermint system consists of many full nodes that each maintain a local copy of the (prefix of the current) *decision* list.
+More precisely, a Tendermint system consists of many full nodes that each maintain a local copy of the (prefix of the current) *chain* list.
 
-In this specification, we are only concerned with the *decision* lists. 
-They are maintained at so-called [full nodes][fullnode], and are the result of the execution of the Tendermint consensus protocol (described in the ArXiv paper). 
+In this specification, we are only concerned with the *chain* lists. 
+They are maintained at so-called [full nodes][fullnode], and are the
+result of the execution of the Tendermint consensus protocol,
+described in the [ArXiv paper][arXiv], and are called *decision* in
+this paper. 
 The Tendermint consensus implements a loop with iterator *h* (height). 
-In each iteration, upon deciding on the transactions to be put into the *decision* list, a new *decision* list entry is created.
+In each iteration, upon deciding on the transactions to be put into the *chain* list, a new *chain* list entry is created.
 
 
 # Part I - Outside view
@@ -29,8 +32,8 @@ will be used.
 
 This specification is central in the collection of Tendermint protocols. 
 The behavior of protocols like [fastsync][fastsync], or the [light client][lightclient] will be defined with respect to this specification. 
-E.g., the light client implements a read operation of the *decision* list entry of some height *h*. 
-It is thus crucial to understand what data is stored in this *decision* list entry, and what are the precise semantics of a read operation in a faulty environment.
+E.g., the light client implements a read operation of the *chain* list entry of some height *h*. 
+It is thus crucial to understand what data is stored in this *chain* list entry, and what are the precise semantics of a read operation in a faulty environment.
 
 
 ## Informal Problem statement
@@ -50,17 +53,15 @@ contains a field called *header*. (The data structure *block* is defined [here][
 As the header contains hashes to the relevant fields of the block, for the purpose of this
 specification, we will assume that the blockchain is a list of headers, rather than a
 list of blocks. 
+
+#### **[TMBC-HASH]**:
 We also assume that every hash in the header identifies the data it hashes. 
 Therefore, in this specification, we do not distinguish between hashes and the 
 data they represent.
 
-#### **[TMBC-SEQ]**:
 
-
-
-The Tendermint blockchain is a list *chain* of headers. For all *i <=
-len(chain)*, each header *chain[i]*
-contains the following fields.
+#### **[TMBC-HEADER-Fields]**:
+A header contains the following fields:
 
  - `Height`: non-negative integer
  - `Time`: time (integer)
@@ -71,12 +72,45 @@ contains the following fields.
  - `Data`: DomainTX
  - `AppState`: DomainApp
  - `LastResults`: DomainRes
- 
- 
 
 
+#### **[TMBC-SEQ]**:
+#### **[TMBC-SEQ-LIST]**:
+
+The Tendermint blockchain is a list *chain* of headers. 
+
+### Appending a block
+
+#### **[TMBC-SEQ-GROW]**: 
+During operation, new headers may be appended to the list one by one.
+
+#### **[TMBC-SEQ-ASS-E]**: 
+If a header is appended at time *t* then no additional header will be
+appended before time *t + ETIME*
+
+
+#### **[TMBC-SEQ-ASS-L]**: 
+If a header is appended at time *t* then the next header will be
+appended before time *t + LTIME*
+
+#### **[TMBC-SEQ-ASS-ELEL]**: 
+*ETIME <= LTIME*
+
+*Remark:* *ETIME* and *LTIME* define the earliest and latest times at
+which a new block is added. We might later parameterize by setting
+*ETIME* to infinity, e.g., when we say that fastsync terminates in the
+case the blockchain does not grow.
+
+
+#### **[TMBC-SEQ-INV]**
+
+ The headers satisfy
+the invariants [TMBC-SEQ-INV-*] defined below.
+
+
+
  
-### Invariants
+### Basic Invariants
  
 #### **[TMBC-SEQ-INV-NOHOLES]**:
   If the blockchain contains a header of height *h*, then for all *h'
@@ -114,7 +148,6 @@ The system provides the following functions:
 - `proof(b,commit)`: a predicate: true iff 
      * *b* is part of the chain
 	 * proof is in PossibleCommit(b.Height)
-- `skip-proof`: a predicate for blocks
 
 
 
@@ -134,7 +167,7 @@ Given two blocks *b* and *b'*:
  For all *i < len(chain)*: *match-hash(chain[i], chain[i+1])*
  
 #### **[TMBC-SEQ-INV-LC]**:
-For all *i < len(chain)*: *proof(chain[i], chain[i+1])*
+For all *i < len(chain)*: *match-proof(chain[i], chain[i+1])*
 
 
 
@@ -144,7 +177,7 @@ For all *i < len(chain)*: *chain[i+1].AppState = execute(chain[i].Data,chain[i].
 ### Validation
 
 *Remark:* The following formalizes block validation.
-If I know one of them is from the blockchain, then the other
+If validations fails, and I know one of the blocks is from the blockchain, then the other
 one is not.
 
 #### **[TMBC-SEQ-VAL-BC]**:
@@ -153,35 +186,11 @@ and *b'* are not subsequent headers of the blockchain.
 
 
 #### **[TMBC-SEQ-VAL-LC]**:
-Given two blocks *b* and *b'*, if *proof(b,b') = false*, then *b*
+Given two blocks *b* and *b'*, if *match-proof(b,b') = false*, then *b*
 and *b'* are not subsequent headers of the blockchain.
 
-#### **[TMBC-SEQ-SKIPVAL-LC]**:
-Given two blocks *b* and *b'*, if *skip-proof(b,b') = true* and *b* is
-a header in the blockchain, then *b'* is a header in the blockchain.
 
-
-### Appending a block
-
-#### **[TMBC-SEQ-GROW]**: 
-During operation, new headers may be appended to the list one by one.
-
-#### **[TMBC-SEQ-ASS-E]**: 
-If a header is appended at time *t* then no additional header will be
-appended before time *t + ETIME*
-
-
-#### **[TMBC-SEQ-ASS-L]**: 
-If a header is appended at time *t* then the next header will be
-appended before time *t + LTIME*
-
-#### **[TMBC-SEQ-ASS-ELEL]**: 
-*ETIME <= LTIME*
-
-*Remark:* *ETIME* and *LTIME* define the earliest and latest times at
-which a new block is added. We might later parameterize by setting
-*ETIME* to infinity, e.g., when we say that fastsync terminates in the
-case the blockchain does not grow.
+  
 
 
 
@@ -201,7 +210,7 @@ correctly
 ## Timing, nodes, and correctness assumptions
 
 In a Tendermint system, the nodes that choose to interact with each other collectively 
-implement the *decision* list in a distributed manner by executing a protocol. 
+implement the *chain* list in a distributed manner by executing a protocol. 
 The Tendermint protocols should ensure that the participating nodes cannot benefit by 
 deviating from the expected behavior. 
 As a result, the nodes should be motivated (incentivized) to follow the protocol. 
@@ -215,6 +224,9 @@ The unbonding period is a configuration parameter of the system.
 A Tendermint blockchain has the following configuration parameters:
  - *unbondingPeriod*: a time duration.
  - *trustingPeriod*: a time duration smaller than *unbondingPeriod*.
+
+
+
 
 #### **[TMBC-NODES]**:
 Tendermint full nodes (or just *full nodes*), execute a set of protocols, e.g., consensus, gossip, fast sync, etc. 
@@ -353,9 +365,6 @@ The set *NextValidators* contains at most one validator pair for each full node.
 TODO: `BlockID` is a unique identifier of the block. (It contains the hash
 (Merkleroot) of the fields in the header)
  
-#### **[TMBC-INV-COMMIT]**:
-TODO: what is to say about signatures. Votes? subset of validator of
-previous block
 
 ## Failure model
 
@@ -384,6 +393,56 @@ Due to [**[TMBC-TIME]**](TMBC-TIME-link), we do not make a distinction here.
 
 
 
+### Validation under [TMBC-FM-2THIRDS]
+
+#### **[TMBC-INV-COMMIT]**:
+
+TODO: formalize A correct node does not sign headers off chain.
+
+
+
+
+#### **[TMBC-VAL-COMMIT]**:
+
+TODO: If a commit contains one correct validator, then the commit is
+in Domaincommit. 
+
+We have to make sure that a set of processes  contains a correct validator
+
+#### **[TMBC-VAL-CONTAINS-CORR]**:
+
+Given a set of full nodes *N*, a real-time *t*, a block *tb*, 
+*Est-Trust-At(tb,N,t)* is true if
+   - *tb.Time > t - trustingPeriod*
+   - the voting power of nodes in *N* in tb.NextValidators is more
+     than 1/3
+
+
+#### **[TMBC-VAL-SKIP]**
+
+Given two blocks *tb* and *b* and a *commit* and a real-time *t*, 
+ *skip-proof(tb,b,bcommit,t) = true* if
+   - *proof(b,bcommit) = true*
+   - *Est-Trust-At(tb,bcommit,t)*
+   - tb.Height < b.Height
+
+#### **[TMBC-VAL-VERIF]**
+Given two blocks *tb* and *b* and a *commit*,  
+   - *tb* is a header in the blockchain,
+   - at real-time *now*, the predicate *skip-proof(tb,b,bcommit,now)*
+     evaluates to *true*
+ 
+then *b* is from the blockchain.
+
+
+
+
+### Refinements of Validation (from above)
+
+
+
+**TODO:** refine validation from above for time
+
 
 ## Distributed Problem Statement
 
@@ -391,7 +450,7 @@ Due to [**[TMBC-TIME]**](TMBC-TIME-link), we do not make a distinction here.
 
 > input/output variables used to define the temporal properties. Most likely they come from an ADR
 
-Each correct full node *p* maintains its local copy of the Tendermint blockchain, denoted by *decision_p*. 
+Each correct full node *p* maintains its local copy of the Tendermint blockchain, denoted by *chain_p*. 
 
 A block is a data structure described [here](block).
 
@@ -414,14 +473,14 @@ reliable and timely, then something good happens eventually.
 ### Safety
 
 #### **[TMBC-VC_AGR]**:
-It is always the case that, for any two correct full nodes *p* and *q*, it holds that *decision_p* is a prefix of *decision_q* or *decision_q* is a prefix of *decision_p*.
+It is always the case that, for any two correct full nodes *p* and *q*, it holds that *chain_p* is a prefix of *chain_q* or *chain_q* is a prefix of *chain_p*.
 
 #### **[TMBC-VC_VAL]**:
 TODO: Not clear. 
 Application specific. 
 We will need to fix that eventually. 
 I guess for fastsync and light client we don't need it.
-(It is always the case that each *decision* list entry *b* satisfies *Valid(b)*. not
+(It is always the case that each *chain* list entry *b* satisfies *Valid(b)*. not
   sure. *Valid* may take the current state)
 (*Remark:* Validity should make reference to the mempool, e.g., only messages from the
   mempool + we will need a spec for the mempool. For now I leave it like that
@@ -431,7 +490,7 @@ I guess for fastsync and light client we don't need it.
 
 ### Liveness
 #### **[TMBC-VC-PROG]**: 
-For all correct full nodes *p* and all times *t* there exists a time *t'*, such that *|decision_p(t)| < |decision_p(t')|*.
+For all correct full nodes *p* and all times *t* there exists a time *t'*, such that *|chain_p(t)| < |chain_p(t')|*.
 
 
 > How is the problem statement linked to the "Sequential Problem statement".
@@ -504,7 +563,7 @@ of the problem statement
 
 [block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#block 
 [blockchain]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#blockchain
-[fastsync]: https://github.com/informalsystems/VDD/
+[fastsync]: https://github.com/informalsystems/VDD/blob/master/fastsync/fastsync.md
 [lightclient]: https://github.com/interchainio/tendermint-rs/blob/e2cb9aca0b95430fca2eac154edddc9588038982/docs/architecture/adr-002-lite-client.md#adr-002-light-client
 [verifier]: https://github.com/informalsystems/VDD/blob/master/lightclient/verification.md#core-verification
 [header]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#header

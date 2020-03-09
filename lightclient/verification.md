@@ -386,12 +386,12 @@ func QueryFullNode(addr Address,
     - `SignedHeader` of height `untrustedHeight`, 
     - `ValidatorSet` of height `untrustedHeight`, 
     - `ValidatorSet` of height `untrustedHeight + 1` 
-    - `error`, in this case `nil`
-  - If *n* is faulty or there is an error in the RPC to *n*: `error != nil`
   - The field time of the returned signed header is smaller than `now + clockDrift`
 - Error conditions
   - precondition violated
-  - error in RPC to *n*
+  - The field time of the returned signed header is greater than or
+    equal to `now + clockDrift`
+  - If *n* is faulty or there is an error in the RPC to *n*
 
 *Remark*: Observe that the error conditions includes "error in RPC to *n*" but
 *not* [**[FN-LuckyCase]**](FN-LuckyCase-link).
