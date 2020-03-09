@@ -4,6 +4,8 @@
 **concentrates on form rather on content, for now**
 
 
+
+
 # Core Verification
 
 > Rough outline of what the component is doing and why. 2-3 paragraphs
