@@ -238,32 +238,47 @@ We define a predicate *correct(n, t)*, where *n* is a node and *t* is a
 time point. 
 The predicate *correct(n, t)* is true if and only if the node *n* follows all the protocols until time *t*.
 
-### Full node invariants
+## Authenticated Byzantine Model
 
-Similar to Nancy Lynch when writing her book, "we do not know of a
-nice formal definition" for Byzantine failures with authentication.
-So, let's try something that we can at least use for verification.
+Due to the incentives, we claim that it is safe to assume below that
+most of the full nodes will follow the protocol. However, we also have
+to capture that full nodes deviate from the prescribed behavior,
+either due to misconfiguration or implementation bugs, or because of
+adversarial behavior. At the same time, we will heavily use digital
+signature, and they constitute a stable technology that allows to
+determine the sender of a message, even if a messages is wrapped into
+another message and forwarded. In the distributed algorithm literature
+(e.g., [[DLS88]][DLS]), this model is called **authenticated
+Byzantine**.  Similar to Nancy Lynch when writing her book on
+distributed algorithms, "we do not know of a nice formal definition"
+for Byzantine failures with authentication.  So, let's try something
+that we can at least use for verification.
 
 #### **[TMBC-Sign]**:
-For each node *n* with addr there is a function *sign_n* that maps *Data* to
-*Signed_Data_n*.
-
-Signed_Data is the disjoint union of Signed_Data over all n
-
-And there is a function *check* that maps Signed_Data
-to the pair Data, addr 
+- For each node with address *addr*, there is a function *sign_addr*
+  that maps *Data* to a domain *SignedData(addr)*.
+- SignedData is the disjoint union of *SignedData(addr)* over all *addr*.
+- There is a function *check* that maps SignedData *sd*
+  to the pair *(data, addr)* such that *sd = sign_addr(data)*.
 
 #### **[TMBC-Sign-NoForge]**:
-in the course of the run, for all processes p and q, p cannot compute
-an element *e* of Signed_Data_q except q has sent *e* before.
+For all runs *r*, for all nodes *p* and *q* with address *aq*, for all
+*sd* from SignedData, if *p*
+sends a message that contains *sd* from *SignedData(aq)* in run *r*,
+then *q* has sent a message containing *sd* earlier in run *r*.
+
+*Remark:* [TMBC-Sign-NoForge] can be written as invariant over the
+message history.
 
 
 #### **[TMBC-FaultyFull]**:
-Except [TMBC-Sign-NoForge], no assumption is made about the behavior of faulty full nodes; they may be Byzantine.
+No assumption is made about the internal
+behavior of faulty full nodes.
 
+#### **[TMBC-Auth-Byz]**:
+[TMBC-Sign-NoForge] and [TMBC-FaultyFull].
 
-#### **[TMBC-Sign]**:
-
+*Remark:* [TMBC-Sign-NoForge]
 
 
 ## Blockchain data structure
@@ -595,3 +610,5 @@ of the problem statement
 [TMBC-TIME-link]: https://github.com/informalsystems/VDD/blob/master/lightclient/blockchain.md#tmbc-time
 
 [arXiv]: https://arxiv.org/abs/1807.04938
+
+[DLS]: https://groups.csail.mit.edu/tds/papers/Lynch/jacm88.pdf
