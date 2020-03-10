@@ -105,7 +105,7 @@ case the blockchain does not grow.
 
 
  
-### Basic Validity Conditions
+### Basic Soundness Conditions
  
 #### **[TMBC-SOUND-NOHOLES]**:
   If the blockchain contains a header of height *h*, then for all *h'
@@ -124,7 +124,7 @@ it contains a header of height *h'*.
 For all *i < len(chain)*: *chain[i+1].Validators = chain[i].NextValidators*
 
 
-###  Functions, Domains, and more invariants
+###  Functions, Domains, and more soundness conditions
 
 #### **[TMBC-SOUND-PossCommit]**:
 There is a function PossibleCommit that maps a block (header) to a set
@@ -317,24 +317,6 @@ of its validator pairs.
 **TODO:** Commit - *LastCommit*: the set of signatures of the
 validators that committed the last block.
 
-
-
-
-
-#### **[TMBC-TIME]**:
-
-TODO: fix after Zarko's comments
-
-The time *bfttime* corresponds to the reading of the local clock of a validator (how this time is computed may change when the Tendermint consensus is modified). 
-In this specification, we assume that all clocks are synchronized to real-time (and so is bfttime). 
-We can make this more precise eventually (incorporating clock drift, accuracy, precision, etc.). 
-Right now, we consider this assumption sufficient, as clock synchronization (under NTP) is in the order of milliseconds and *trustingPeriod* is in the order of weeks.
-
-### Blockchain data
-
-#### **[TMBC-DAT-DATA]**:
-`Data` is a list of transactions
-
 #### **[TMBC-DAT-COMMIT]**:
 List of signatures
 
@@ -342,26 +324,22 @@ List of signatures
 
 
 
-### Blockchain data structure invariants
+### Blockchain invariants
 
-#### **[TMBC-INV-SIGN]**:
+#### **[TMBC-SOUND-SIGN-SOUND]**:
 The *LastCommit* field of the block at height *h+1* contains only signatures of 
-validators. The validators that signed have more than two-thirds of the voting power at height *h*.
+validators from the block at height *h*. 
 
-#### **[TMBC-INV-VALID]**:
-The *NextValidator* set of a block at height *h* is equal to 
-the *Validator* set 
-of the block at height *h+1*.
+#### **[TMBC-SOUND-SIGN-2THIRDS]**:
+The *LastCommit* field of the block at height *h+1* contains
+signatures of validators whose combined voting power at height *h* is
+greater than two-thirds of the total voting power at height *h*.
 
-#### **[TMBC-INV-VALID-UNIQUE]**:
+#### **[TMBC-SOUND-VALID-UNIQUE]**:
 The set *Validators* contains at most one validator pair for each full node.
 
-#### **[TMBC-INV-NEXT-VALID-UNIQUE]**:
+#### **[TMBC-SOUND-NEXT-VALID-UNIQUE]**:
 The set *NextValidators* contains at most one validator pair for each full node.
- 
-#### **[TMBC-INV-BLOCKID]**:
-TODO: `BlockID` is a unique identifier of the block. (It contains the hash
-(Merkleroot) of the fields in the header)
  
 
 ## Failure model
@@ -380,7 +358,7 @@ If a block *h* is generated at time *bfttime*, then there is a set *C* of valida
   - The validator pairs in *C* hold more than two-thirds of the total voting power in *NextValidators* at height *h*
   - Every validator in *C* follows *all* protocols until *bfttime + trustingPeriod*
 
-<!-- Formally,
+<!--- Formally,
 \[
 \sum*{(v,p) \in h.Header.NextV \wedge correct(v,h.Header.bfttime + trustingPeriod)} p >
 2/3 \sum*{(v,p) \in h.Header.NextV} p
