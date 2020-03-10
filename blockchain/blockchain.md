@@ -244,9 +244,22 @@ Similar to Nancy Lynch when writing her book, "we do not know of a
 nice formal definition" for Byzantine failures with authentication.
 So, let's try something that we can at least use for verification.
 
+#### **[TMBC-Sign]**:
+For each node *n* with addr there is a function *sign_n* that maps *Data* to
+*Signed_Data_n*.
+
+Signed_Data is the disjoint union of Signed_Data over all n
+
+And there is a function *check* that maps Signed_Data
+to the pair Data, addr 
+
+#### **[TMBC-Sign-NoForge]**:
+in the course of the run, for all processes p and q, p cannot compute
+an element *e* of Signed_Data_q except q has sent *e* before.
+
 
 #### **[TMBC-FaultyFull]**:
-No assumption is made about the behavior of faulty full nodes; they may be Byzantine.
+Except [TMBC-Sign-NoForge], no assumption is made about the behavior of faulty full nodes; they may be Byzantine.
 
 
 #### **[TMBC-Sign]**:
