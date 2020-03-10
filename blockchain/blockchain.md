@@ -54,8 +54,8 @@ As the header contains hashes to the relevant fields of the block, for the purpo
 specification, we will assume that the blockchain is a list of headers, rather than a
 list of blocks. 
 
-#### **[TMBC-HASH]**:
-We also assume that every hash in the header identifies the data it hashes. 
+#### **[TMBC-HASH-UNIQUENESS]**:
+We assume that every hash in the header identifies the data it hashes. 
 Therefore, in this specification, we do not distinguish between hashes and the 
 data they represent.
 
@@ -102,95 +102,96 @@ which a new block is added. We might later parameterize by setting
 case the blockchain does not grow.
 
 
-#### **[TMBC-SEQ-INV]**
-
- The headers satisfy
-the invariants [TMBC-SEQ-INV-*] defined below.
-
 
 
  
-### Basic Invariants
+### Basic Validity Conditions
  
-#### **[TMBC-SEQ-INV-NOHOLES]**:
+#### **[TMBC-SOUND-NOHOLES]**:
   If the blockchain contains a header of height *h*, then for all *h'
   < h*
 it contains a header of height *h'*.
  
 
-#### **[TMBC-SEQ-INV-INC]**:
- For all *i < len(chain)*: *chain[i].Height < chain[i+1].Height*
+#### **[TMBC-SOUND-INC]**:
+ For all *i < len(chain)*: *chain[i].Height + 1 = chain[i+1].Height*
 
-#### **[TMBC-SEQ-INV-TIME]**:
+#### **[TMBC-SOUND-TIME]**:
  For all *i < len(chain)*: *chain[i].Time < chain[i+1].Time*
 
 
-#### **[TMBC-SEQ-INV-NV]**:
+#### **[TMBC-SOUND-NV]**:
 For all *i < len(chain)*: *chain[i+1].Validators = chain[i].NextValidators*
 
 
 ###  Functions, Domains, and more invariants
 
-#### **[TMBC-SEQ-PossCommit]**:
+#### **[TMBC-SOUND-PossCommit]**:
+There is a function PossibleCommit that maps a block (header) to a set
+of values  in DomainCommit.
+
+
+
+<!---
 There is a function PossibleCommit that maps for *0 < i <= len(chain)*, 
 chain[i-1] to a set of values in DomainCommit.
-
-*Remark.* TODO: in the distributed part we assume that no-one can
-compute or guess that.
+-->
 
 
-
-
-#### **[TMBC-SEQ-FUNCTIONS]**:
+#### **[TMBC-SOUND-FUNCTIONS]**:
 The system provides the following functions:
 
-- `hash`: assumed to be a bijection
-- `proof(b,commit)`: a predicate: true iff 
-     * *b* is part of the chain
-	 * proof is in PossibleCommit(b.Height)
-
-
-
-The application provides the following function:
+- `hash`: We assume that every hash identifies the data it hashes
 
 - `execute`: used for state machine replication. maps Data
   (transactions) and a state to a new state. It is a function
-  (deterministic transitions)
-  
+  (deterministic transitions).  
+  **TODO:** it is provided by the
+  application. Do we need to talk about the application in this spec?
+
+- `proof(b,commit)`: a predicate: true iff 
+     * *b* is part of the *chain*
+	 * proof is in PossibleCommit(b.Height)
+
+*Remark.* Observe that *proof* refers to the *chain*. It thus depends on
+the execution, which changes quantification. For instance, we say
+"there exists a function *hash* such that for all runs", while we
+say "for each run there exists a function *proof*". The consequence is
+that *hash* is a predetermined function (implemented), while *proof*
+will have to be computed during the run as a function of the
+*chain*. The challenge in a distributed system is to locally compute
+*proof* without necessarily having complete knowledge of *chain*. In
+the context of the light client, we even want to infer knowledge about
+*chain* from the outcomes of the local computation of *proof*. We will
+use digital signatures for that.
+
+
 
 Given two blocks *b* and *b'*:
 
-- *match-hash(b,b') iff hash(b) = b'.LastBlockID*
-- *match-proof(b,b') iff proof(b, b'.LastCommit)*
+- `match-hash(b,b')` iff *hash(b) = b'.LastBlockID*
+- `match-proof(b,b')` iff *proof(b, b'.LastCommit)*
 
-#### **[TMBC-SEQ-INV-BC]**:
+#### **[TMBC-SOUND-BC]**:
  For all *i < len(chain)*: *match-hash(chain[i], chain[i+1])*
  
-#### **[TMBC-SEQ-INV-LC]**:
+#### **[TMBC-SOUND-LC]**:
 For all *i < len(chain)*: *match-proof(chain[i], chain[i+1])*
 
 
 
-#### **[TMBC-SEQ-INV-APP]**:
+#### **[TMBC-SOUND-APP]**:
 For all *i < len(chain)*: *chain[i+1].AppState = execute(chain[i].Data,chain[i].AppState)*
+
+
+#### **[TMBC-SEQ-INV]**
+
+At all times, the chain is sound [TMBC-SOUND-*].
 
 ### Validation
 
-*Remark:* The following formalizes block validation.
-If validations fails, and I know one of the blocks is from the blockchain, then the other
-one is not.
 
-#### **[TMBC-SEQ-VAL-BC]**:
-Given two blocks *b* and *b'*, if *match-hash(b,b') = false*, then *b*
-and *b'* are not subsequent headers of the blockchain.
-
-
-#### **[TMBC-SEQ-VAL-LC]**:
-Given two blocks *b* and *b'*, if *match-proof(b,b') = false*, then *b*
-and *b'* are not subsequent headers of the blockchain.
-
-
-  
+ 
 
 
 
@@ -239,11 +240,17 @@ The predicate *correct(n, t)* is true if and only if the node *n* follows all th
 
 ### Full node invariants
 
+Similar to Nancy Lynch when writing her book, "we do not know of a
+nice formal definition" for Byzantine failures with authentication.
+So, let's try something that we can at least use for verification.
+
+
 #### **[TMBC-FaultyFull]**:
 No assumption is made about the behavior of faulty full nodes; they may be Byzantine.
 
+
 #### **[TMBC-Sign]**:
-Signatures and hashes cannot be broken.
+
 
 
 ## Blockchain data structure
