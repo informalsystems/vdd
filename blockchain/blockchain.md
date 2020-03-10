@@ -281,80 +281,43 @@ behavior of faulty full nodes.
 *Remark:* [TMBC-Sign-NoForge]
 
 
-## Blockchain data structure
+## Validators
 
-#### **[TMBC-VALIDATOR]**:
-Given a full node, a *validator* is a pair *(public key, voting power)*, where 
-  - *public key* is the public key of the full node, 
-  - *voting power* is an integer (representing the full node's voting power in a certain consensus instance).
+In [TMBC-HEADER-Fields], most of the fields are defined for abstract
+domains. Here we will specialize DomainVal and DomainCommit, and
+describe how **TODO:** commit and others  
+are implemented in Tendermint.
 
-Remark: We observed that the term *validator* refers to both a data structure and a full node that participates in the distributed computation. Therefore, we introduce the notions *validator pair* and *validator node*, respectively.
-
-#### **[TMBC-HEADER-FIELDS]**:
-The following are data structures that are needed for this specification.
-
-```go
-type Validator struct {
-    Address       Address     
-    VotingPower   int64       
-}
-```
-The `Validator` data structure is used to capture the validator pair, 
-defined in [**[TMBC-VALIDATOR]**](#tmbc-validator).
-It has the fields
-  - `Address`, an address of the validator node
-  - `VotingPower`, an integer, denoting the validator's voting power 
-
----
-```go
-type ValidatorSet struct {
-    Validators         []Validator
-    TotalVotingPower   int64
-}
-```
-The `ValidatorSet` data structure is used to model a set of `Validators`, and it has the following fields:
- - `Validators`, a collection of `Validator` data structures, 
- - `TotalVotingPower`, an integer, denoting the total voting power of all the validator pairs in `Validators`. 
+*Remark:* We observed that in the existing documentation the term
+*validator* refers to both a data structure and a full node that
+participates in the distributed computation. Therefore, we introduce
+the notions *validator pair* and *validator node*, respectively, to
+distinguish these notions in the cases where they are not clear from
+the context.
 
 
-```go
-type Header struct {
-	// basic block info
-	Version  Version
-	ChainID  string
-	Height   int64
-	Time     Time
+#### **[TMBC-VALIDATOR-Pair]**:
 
-	// prev block info
-	LastBlockID BlockID
+Given a full node, a 
+*validator pair* is a pair *(public key, voting power)*, where 
+  - *Address* is the address (public key) of the full node, 
+  - *voting power* is an integer (representing the full node's
+  voting power in a certain consensus instance).
+  
+*Remark:* In the Golang implementation the data type for *validator
+pair* is called `Validator`
 
-	// hashes of block data
-	LastCommitHash []byte // commit from validators from the last block
-	DataHash       []byte // MerkleRoot of transaction hashes
 
-	// hashes from the app output from the prev block
-	ValidatorsHash     []byte // validators for the current block
-	NextValidatorsHash []byte // validators for the next block
-	ConsensusHash      []byte // consensus params for current block
-	AppHash            []byte // state after txs from the previous block
-	LastResultsHash    []byte // root hash of all results from the txs from the previous block
+#### **[TMBC-VALIDATOR-Set]**:
 
-	// consensus info
-	EvidenceHash    []byte // evidence included in the block
-	ProposerAddress []byte // original proposer of the block
-```
-The `Header` data structure is essential for this specification. 
-  - `Height`, an integer, denoting the height of the header
-  - `Time`, a time point, denoting the chain time when the header was generated
-  - `LastBlockID`, a block idenitifier, which dis used as a pointer to the previous block
-  - `ValidatorsHash`, a hash of the validator set for the current block
-      *  *Validators*: a set of validator pairs (as defined in [**[TMBC-VALIDATOR]**](TMBC-VALIDATOR-link), of the validator nodes that participated in the consensus instance which generated the block,
-  - `NextValidatorsHash`, a hasn of the validator set for the next
-    block
-     * *NextValidators*: a set of validator pairs of the full nodes
-        that participate in the consensus instance of the next block,
- - *LastCommit*: the set of signatures of the validators that committed the last block.
----
+A *validator set* is a set of validator pairs. For a validator set
+*vs*, we write TotalVotingPower(vs) for the sum of the voting powers
+of its validator pairs.
+
+**TODO:** Commit - *LastCommit*: the set of signatures of the
+validators that committed the last block.
+
+
 
 
 
