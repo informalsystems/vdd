@@ -469,7 +469,7 @@ Given a (trusted) block *tb* of the blockchain, a set of full nodes *N* contains
 
 
 
-**Remark:** TODO: this has to go into the verification spec.  
+**Remark:** TODO: this has to go into the verification spec.    
 The light client verification checks [TMBC-VAL-CONTAINS-CORR] and
 [TMBC-VAL-COMMIT] as follows: 
 Given a trusted block *tb* and an untrusted block *ub* with a commit *cub*,
@@ -497,21 +497,18 @@ There is a set *C* of validator pairs, such that *C* is a subset of *NextValidat
   - The validator pairs in *C* hold more than two-thirds of the total voting power in *NextValidators* at height *h*
   - For every validator pair *(n,p)* in *C*, follows the consensus protocol until consensus for height *h+1* is terminated. 
 
-> - TMBC-VC_AGR - note that correct is temporal property; does that mean we need
-> to define agreement also as a temporal property? It seems so to me.
-> - TMBC-VC-PROG - the same as above, it seems like it should be temporal property
-> that depends on correct predicate. We probably want also to assume that we always
-> make progress within trusted period (that starts once previous height is committed).
 
-> input/output variables used to define the temporal properties. Most likely they come from an ADR
+We recall that [TMBC-CORRECT] denotes by *correct(n, t)* that full
+node *n* is correct up to time *t* if it follows all the protocols
+up to time *t*. **TODO:** talk about late starter, recovery
+etc. should all be included in correct so that temporal properties
+below are as general as possible.
 
-Each correct full node *p* maintains its local copy of the Tendermint blockchain, denoted by *chain_p*. 
 
-A block is a data structure described [here](block).
+Each correct full node *p* maintains its local copy of the Tendermint
+blockchain, denoted by *chain_p*.
 
-#### **[TMBC-D-VAL]**:
-There is a predicate *Valid()* defined over blocks.
-(perhaps we do not need that now)
+
 
 ### Temporal Properties
 
@@ -531,21 +528,24 @@ reliable and timely, then something good happens eventually.
 It is always the case that, for any two correct full nodes *p* and *q*, it holds that *chain_p* is a prefix of *chain_q* or *chain_q* is a prefix of *chain_p*.
 
 #### **[TMBC-VC_VAL]**:
-TODO: Not clear. 
-Application specific. 
-We will need to fix that eventually. 
-I guess for fastsync and light client we don't need it.
-(It is always the case that each *chain* list entry *b* satisfies *Valid(b)*. not
-  sure. *Valid* may take the current state)
-(*Remark:* Validity should make reference to the mempool, e.g., only messages from the
+For a correct full node *p*, we substitute *chain* with *chain_p* in
+the soundness properties [TMBC-SOUND-?]. For all correct full nodes at
+all times, the soundness requirements hold for *chain_p*.
+
+
+*Remark:* Validity should make reference to the mempool, e.g., only messages from the
   mempool + we will need a spec for the mempool. For now I leave it like that
-  as the light client and fastsync do not care about that.).
+  as the light client and fastsync do not care about that.
+  
+*Remark:* Additional application specific soundness requirements might
+also need to hold.
 
 
 
 ### Liveness
 #### **[TMBC-VC-PROG]**: 
-For all correct full nodes *p* and all times *t* there exists a time *t'*, such that *|chain_p(t)| < |chain_p(t')|*.
+For all correct full nodes *p* and all times *t* there exists a time
+*t'*, such that *|chain_p(t)| < |chain_p(t')|*.
 
 
 > How is the problem statement linked to the "Sequential Problem statement".
