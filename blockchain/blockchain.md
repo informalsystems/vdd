@@ -84,16 +84,16 @@ The Tendermint blockchain is a list *chain* of headers.
 #### **[TMBC-SEQ-GROW]**: 
 During operation, new headers may be appended to the list one by one.
 
-#### **[TMBC-SEQ-ASS-E]**: 
+#### **[TMBC-SEQ-APPEND-E]**: 
 If a header is appended at time *t* then no additional header will be
 appended before time *t + ETIME*
 
 
-#### **[TMBC-SEQ-ASS-L]**: 
+#### **[TMBC-SEQ-APPEND-L]**: 
 If a header is appended at time *t* then the next header will be
 appended before time *t + LTIME*
 
-#### **[TMBC-SEQ-ASS-ELEL]**: 
+#### **[TMBC-SEQ-APPEND-ELEL]**: 
 *ETIME <= LTIME*
 
 *Remark:* *ETIME* and *LTIME* define the earliest and latest times at
@@ -103,25 +103,28 @@ case the blockchain does not grow.
 
 
 
-
  
 ### Basic Soundness Conditions
  
-#### **[TMBC-SOUND-NOHOLES]**:
-  If the blockchain contains a header of height *h*, then for all *h'
-  < h*
-it contains a header of height *h'*.
- 
 
-#### **[TMBC-SOUND-INC]**:
+
+#### **[TMBC-SOUND-INC-HEIGHT]**:
  For all *i < len(chain)*: *chain[i].Height + 1 = chain[i+1].Height*
 
-#### **[TMBC-SOUND-TIME]**:
+*Remark:* We do not write *chain[i].Height = i* to allow that a chain
+can be started at some arbitrary height, e.g., when the is social
+consensus to restart a chain from a given height/block.
+
+*Remark:* Was called [TMBC-SOUND-NO-HOLES]
+
+#### **[TMBC-SOUND-INC-TIME]**:
  For all *i < len(chain)*: *chain[i].Time < chain[i+1].Time*
 
 
-#### **[TMBC-SOUND-NV]**:
+#### **[TMBC-SOUND-NextV]**:
 For all *i < len(chain)*: *chain[i+1].Validators = chain[i].NextValidators*
+
+
 
 
 ###  Functions, Domains, and more soundness conditions
@@ -129,8 +132,6 @@ For all *i < len(chain)*: *chain[i+1].Validators = chain[i].NextValidators*
 #### **[TMBC-SOUND-PossCommit]**:
 There is a function PossibleCommit that maps a block (header) to a set
 of values  in DomainCommit.
-
-
 
 <!---
 There is a function PossibleCommit that maps for *0 < i <= len(chain)*, 
@@ -151,9 +152,9 @@ The system provides the following functions:
 
 - `proof(b,commit)`: a predicate: true iff 
      * *b* is part of the *chain*
-	 * proof is in PossibleCommit(b.Height)
+	 * *commit* is in PossibleCommit(b.Height), cf. [TMBC-SOUND-PossCommit].
 
-*Remark.* Observe that *proof* refers to the *chain*. It thus depends on
+*Remark.* Observe that *proof* refers to the *chain*. It thus depend on
 the execution, which changes quantification. For instance, we say
 "there exists a function *hash* such that for all runs", while we
 say "for each run there exists a function *proof*". The consequence is
@@ -172,12 +173,11 @@ Given two blocks *b* and *b'*:
 - `match-hash(b,b')` iff *hash(b) = b'.LastBlockID*
 - `match-proof(b,b')` iff *proof(b, b'.LastCommit)*
 
-#### **[TMBC-SOUND-BC]**:
+#### **[TMBC-SOUND-CHAIN]**:
  For all *i < len(chain)*: *match-hash(chain[i], chain[i+1])*
  
-#### **[TMBC-SOUND-LC]**:
+#### **[TMBC-SOUND-LAST-COMM]*:
 For all *i < len(chain)*: *match-proof(chain[i], chain[i+1])*
-
 
 
 #### **[TMBC-SOUND-APP]**:
@@ -188,7 +188,7 @@ For all *i < len(chain)*: *chain[i+1].AppState = execute(chain[i].Data,chain[i].
 
 At all times, the chain is sound [TMBC-SOUND-*].
 
-### Validation
+
 
 
  
@@ -210,16 +210,18 @@ correctly
 
 ## Timing, nodes, and correctness assumptions
 
-In a Tendermint system, the nodes that choose to interact with each other collectively 
-implement the *chain* list in a distributed manner by executing a protocol. 
-The Tendermint protocols should ensure that the participating nodes cannot benefit by 
-deviating from the expected behavior. 
-As a result, the nodes should be motivated (incentivized) to follow the protocol. 
-This is achieved by requiring the nodes to bond atoms and by the system punishing the nodes that do not follow the protocol. 
-That is, the nodes bond atoms in order to participate, and they are punished if they misbehave. 
-If the nodes want to claim their atoms, they have to wait for a certain period of time, 
-called the *unbonding period*. 
-The unbonding period is a configuration parameter of the system. 
+In a Tendermint system, the nodes that choose to interact with each
+other collectively implement the *chain* list in a distributed manner
+by executing a protocol.  The Tendermint protocols should ensure that
+the participating nodes cannot benefit by deviating from the expected
+behavior.  As a result, the nodes should be motivated (incentivized)
+to follow the protocol.  This is achieved by requiring the nodes to
+bond atoms and by the system punishing the nodes that do not follow
+the protocol.  That is, the nodes bond atoms in order to participate,
+and they are punished if they misbehave.  If the nodes want to claim
+their atoms, they have to wait for a certain period of time, called
+the *unbonding period*.  The unbonding period is a configuration
+parameter of the system.
 
 #### **[TMBC-TIME_PARAMS]**:
 A Tendermint blockchain has the following configuration parameters:
@@ -230,13 +232,16 @@ A Tendermint blockchain has the following configuration parameters:
 
 
 #### **[TMBC-NODES]**:
-Tendermint full nodes (or just *full nodes*), execute a set of protocols, e.g., consensus, gossip, fast sync, etc. 
-When a full node actively participates in the distributed consensus, it is called a *validator node*.
+Tendermint full nodes (or just *full nodes*), execute a set of
+protocols, e.g., consensus, gossip, fast sync, etc.  When a full node
+actively participates in the distributed consensus, it is called a
+*validator node*.
 
 #### **[TMBC-CORRECT]**:
 We define a predicate *correct(n, t)*, where *n* is a node and *t* is a 
 time point. 
-The predicate *correct(n, t)* is true if and only if the node *n* follows all the protocols until time *t*.
+The predicate *correct(n, t)* is true if and only if the node *n* 
+follows all the protocols until time *t*.
 
 ## Authenticated Byzantine Model
 
@@ -276,9 +281,11 @@ No assumption is made about the internal
 behavior of faulty full nodes.
 
 #### **[TMBC-Auth-Byz]**:
-[TMBC-Sign-NoForge] and [TMBC-FaultyFull].
+The authenticated Byzantine model assumes [TMBC-Sign-NoForge] and
+[TMBC-FaultyFull], that is, faulty nodes are limited in that they
+cannot forge messages [TMBC-Sign-NoForge].
 
-*Remark:* [TMBC-Sign-NoForge]
+
 
 
 ## Validators
@@ -314,49 +321,75 @@ A *validator set* is a set of validator pairs. For a validator set
 *vs*, we write TotalVotingPower(vs) for the sum of the voting powers
 of its validator pairs.
 
+#### **[TMBC-VP-SOUND-VALID-UNIQUE]**:
+For each block in the chain, the set *Validators* contains at most 
+one validator pair for each full node.
+
+#### **[TMBC-VP-SOUND-NEXT-VALID-UNIQUE]**:
+For each block in the chain, the set *NextValidators* contains at 
+most one validator pair for each full node.
+ 
+
+
+## Distributed Definition of Commit and 
+
 **TODO:** Commit - *LastCommit*: the set of signatures of the
 validators that committed the last block.
 
-#### **[TMBC-DAT-COMMIT]**:
-List of signatures
+#### **[TMBC-VOTE]**:
+A vote contains a `prevote` or `precommit` message sent and signed by
+a validator node during the execution of [consensus][arXiv]. Each 
+message contain the following field
+   - `Type`: prevote or precommit
+   - `Height`
+   - `Round`
+   - `BlockID`
+   - `Timestamp`
+   - `ValidatorAddress`
+   - `ValidatorIndex`
+
+
+#### **[TMBC-COMMIT]**:
+A commit is a set of signed votes.
+
+#### **[TMBC-SOUND-DISTR-PossCommit]**:
+For a block *b*, each element *pc* of *PossibleCommit(b)* satisfies:
+  - each vote *v* in *pc* satisfies
+     * *pc* contains only signed votes by validators from *b.Validators*
+     * v.blockID - hash(b)
+	 * v.Height = b.Height *TODO:* complete the checks here
+  - the sum of the voting powers in *pc* is greater than 2/3
+  TotalVotingPower(b.Validators) 
+
+
+#### **[TMBC-SOUND-DISTR-LAST-COMM]**:
+Combining the specialization of *PossibleCommit* from
+[TMBC-SOUND-DISTR-PossCommit] with the abstract definitions
+[TMBC-SOUND-FUNCTIONS] and [TMBC-SOUND-LAST-COMM] we obtain the
+definition of soundness for LastCommit in the distributed setting.
+	 
 
 
 
 
 
-### Blockchain invariants
 
-#### **[TMBC-SOUND-SIGN-SOUND]**:
-The *LastCommit* field of the block at height *h+1* contains only signatures of 
-validators from the block at height *h*. 
 
-#### **[TMBC-SOUND-SIGN-2THIRDS]**:
-The *LastCommit* field of the block at height *h+1* contains
-signatures of validators whose combined voting power at height *h* is
-greater than two-thirds of the total voting power at height *h*.
+## Tendermint failure model
 
-#### **[TMBC-SOUND-VALID-UNIQUE]**:
-The set *Validators* contains at most one validator pair for each full node.
-
-#### **[TMBC-SOUND-NEXT-VALID-UNIQUE]**:
-The set *NextValidators* contains at most one validator pair for each full node.
- 
-
-## Failure model
-
-#### **[TMBC-FM-CONS]**: 
-(Consensus failure model)
-There is a set *C* of validator pairs, such that *C* is a subset of *NextValidators* at height *h*, where: 
-  - The validator pairs in *C* hold more than two-thirds of the total voting power in *NextValidators* at height *h*
-  - Every validator pair in *C* follows the consensus protocol until consensus for height *h+1* is terminated. 
 
 
 
 #### **[TMBC-FM-2THIRDS]**:
-(Tendermint Failure Model)
-If a block *h* is generated at time *bfttime*, then there is a set *C* of validator pairs, such that *C* is a subset of *NextValidators* at height *h*, where:
-  - The validator pairs in *C* hold more than two-thirds of the total voting power in *NextValidators* at height *h*
-  - Every validator in *C* follows *all* protocols until *bfttime + trustingPeriod*
+(Tendermint Failure Model) If a block *h* is in the chain,
+then there exists a subset *CorrV*
+of *h.NextValidators*, such that:
+  - *TotalVotingPower(CorrV) > 2/3
+    TotalVotingPower(h.NextValidators)*; cf. [TMBC-VALIDATOR-Set]
+  - For every validator pair *(n,p)* in *CorrV*, it holds *correct(n,
+    Time + trustingPeriod)*; cf. [TMBC-CORRECT]
+
+
 
 <!--- Formally,
 \[
@@ -365,25 +398,37 @@ If a block *h* is generated at time *bfttime*, then there is a set *C* of valida
 \] -->
 
 *Remark:* The definition of correct [**[TMBC-CORRECT]**](TMBC-CORRECT-link) refers to realtime, while it is used here with *bfttime* and *trustingPeriod*, which are "hardware times". 
-Due to [**[TMBC-TIME]**](TMBC-TIME-link), we do not make a distinction here. 
+Due to [**[TMBC-TIME]**](TMBC-TIME-link), we do not make a distinction
+here. TODO: address time issue
 
 
 
 ### Validation under [TMBC-FM-2THIRDS]
 
-#### **[TMBC-INV-COMMIT]**:
 
-TODO: formalize A correct node does not sign headers off chain.
+#### **[TMBC-INV-CORR-PROC-COMMIT]**:
 
+If a correct validator sends and signs precommit for a blockid of block *b* of height
+*h*, only if `valid(b)`; cf. code line 36 in the [consensus algorithm][arXiv].
 
+#### **[TMBC-INV-CORR-PROC-VALID]**:
 
+If *valid(b)* evaluates to true at a correct validator, then
+*b.Validators = b'.NextValidators* of the block *b'* of height *h - 1*
+of the blockchain; cf. [TMBC-SOUND-NextV].
+
+From [TMBC-FM-2THIRDS] follows that more than two thirds of the voting
+power in *b.Validators* is correct for any block signed by a correct validator.
 
 #### **[TMBC-VAL-COMMIT]**:
 
-TODO: If a commit contains one correct validator, then the commit is
-in Domaincommit. 
+If for a block *b* a commit *c*
+  - contains one correct validator, 
+  - is contained in *PossibleCommit(b)*
+  
+then the block is of the blockchain.
 
-We have to make sure that a set of processes  contains a correct validator
+
 
 #### **[TMBC-VAL-CONTAINS-CORR]**:
 
@@ -423,6 +468,18 @@ then *b* is from the blockchain.
 ## Distributed Problem Statement
 
 ### Design choices
+
+#### **[TMBC-FM-CONS]**: 
+(Consensus failure model)
+There is a set *C* of validator pairs, such that *C* is a subset of *NextValidators* at height *h*, where: 
+  - The validator pairs in *C* hold more than two-thirds of the total voting power in *NextValidators* at height *h*
+  - For every validator pair *(n,p)* in *C*, follows the consensus protocol until consensus for height *h+1* is terminated. 
+
+> - TMBC-VC_AGR - note that correct is temporal property; does that mean we need
+> to define agreement also as a temporal property? It seems so to me.
+> - TMBC-VC-PROG - the same as above, it seems like it should be temporal property
+> that depends on correct predicate. We probably want also to assume that we always
+> make progress within trusted period (that starts once previous height is committed).
 
 > input/output variables used to define the temporal properties. Most likely they come from an ADR
 
