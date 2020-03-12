@@ -331,7 +331,7 @@ most one validator pair for each full node.
  
 
 
-## Distributed Definition of Commit and 
+## Distributed Definition of Commit
 
 **TODO:** Commit - *LastCommit*: the set of signatures of the
 validators that committed the last block.
@@ -373,9 +373,64 @@ definition of soundness for LastCommit in the distributed setting.
 
 
 
+## Commit Invariants
+
+Commit messages are used to establish proof that a certain block is on
+the blockchain. In particular for the light client
+verification. **TODO:** more text.
+
+We now make explicit some invariants a correct validator must ensure.
+We consider a predicate `valid` over blocks as well as `precommit`
+     messages of the [consensus algorithm][arXiv].
+Correct validators use *valid* to ensure the soundness requirements of
+     the blockchain [TMBC-SOUND-?], and send *precommit* messages
+     only for blocks for which *valid* evaluates to true.
+
+#### **[TMBC-INV-CORR-PROC-VALID]**:
+
+There is a predicate `valid` over a block (and the prefix of the
+chain, which we omit in the notation for now).
+In particular, if *valid(b)* evaluates to true at a correct validator,
+     then *b.Validators = b'.NextValidators* of the block *b'* of
+     height *h - 1* of the blockchain;
+
+
+The following invariant is crucial to guarantee the soundness of the chain:
+
+
+#### **[TMBC-INV-CORR-PROC-COMMIT]**:
+
+A correct validator sends and signs precommit for a block *b*, only if `valid(b)`.
+
+
+*Remark:*  Code line 36 in the  [consensus algorithm][arXiv].
+
+
+
+
+
+
+From [TMBC-INV-CORR-PROC-VALID] and [TMBC-INV-CORR-PROC-COMMIT] and
+[TMBC-FM-2THIRDS] follows that more than two thirds of the voting
+power in *b.Validators* is correct for any block signed by a correct
+validator. As a result, a commit that is well-formed (that is, is in
+*PossibleCommit(b)*) and signed by a correct validator is a proof that
+*b* is in the blockchain.
+
+
+#### **[TMBC-VAL-COMMIT]**:
+
+If for a block *b*,  a commit *c*
+  - contains one correct validator, 
+  - is contained in *PossibleCommit(b)*
+  
+then the block *b* is on the blockchain.
+
+
 
 
 ## Tendermint failure model
+
 
 
 
@@ -403,71 +458,38 @@ here. TODO: address time issue
 
 
 
-### Validation under [TMBC-FM-2THIRDS]
-
-
-#### **[TMBC-INV-CORR-PROC-COMMIT]**:
-
-If a correct validator sends and signs precommit for a blockid of block *b* of height
-*h*, only if `valid(b)`; cf. code line 36 in the [consensus algorithm][arXiv].
-
-#### **[TMBC-INV-CORR-PROC-VALID]**:
-
-If *valid(b)* evaluates to true at a correct validator, then
-*b.Validators = b'.NextValidators* of the block *b'* of height *h - 1*
-of the blockchain; cf. [TMBC-SOUND-NextV].
-
-From [TMBC-FM-2THIRDS] follows that more than two thirds of the voting
-power in *b.Validators* is correct for any block signed by a correct validator.
-
-#### **[TMBC-VAL-COMMIT]**:
-
-If for a block *b* a commit *c*
-  - contains one correct validator, 
-  - is contained in *PossibleCommit(b)*
-  
-then the block is of the blockchain.
-
-
 
 #### **[TMBC-VAL-CONTAINS-CORR]**:
 
-Given a set of full nodes *N*, a real-time *t*, a block *tb*, 
-*Est-Trust-At(tb,N,t)* is true if
+Given a (trusted) block *tb* of the blockchain, a set of full nodes *N* contains a correct node at a real-time *t*, if
    - *tb.Time > t - trustingPeriod*
    - the voting power of nodes in *N* in tb.NextValidators is more
-     than 1/3
-
-
-#### **[TMBC-VAL-SKIP]**
-
-Given two blocks *tb* and *b* and a *commit* and a real-time *t*, 
- *skip-proof(tb,b,bcommit,t) = true* if
-   - *proof(b,bcommit) = true*
-   - *Est-Trust-At(tb,bcommit,t)*
-   - tb.Height < b.Height
-
-#### **[TMBC-VAL-VERIF]**
-Given two blocks *tb* and *b* and a *commit*,  
-   - *tb* is a header in the blockchain,
-   - at real-time *now*, the predicate *skip-proof(tb,b,bcommit,now)*
-     evaluates to *true*
- 
-then *b* is from the blockchain.
+     than 1/3 of *TotalVotingPower(tb.NextValidators)*
 
 
 
 
-### Refinements of Validation (from above)
+**Remark:** TODO: this has to go into the verification spec.  
+The light client verification checks [TMBC-VAL-CONTAINS-CORR] and
+[TMBC-VAL-COMMIT] as follows: 
+Given a trusted block *tb* and an untrusted block *ub* with a commit *cub*,
+one has to check that *cub* is in *PossibleCommit(ub)*, and that *cub*
+contains a correct node using *tb*.
 
 
 
-**TODO:** refine validation from above for time
-
+Until now, we have established soundness of the blockchain, and some
+invariants expected from correct validators when observed from the
+outside. Below we describe the internals of the [consensus
+algorithm][arXiv]. For details we refer to the [paper][arXiv] or to a
+later (more complete version) of this specifications. *Remark:* right
+now the goals is to have a formal understanding of the outside view of
+the blockchain.
 
 ## Distributed Problem Statement
 
 ### Design choices
+
 
 #### **[TMBC-FM-CONS]**: 
 (Consensus failure model)
