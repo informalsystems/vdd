@@ -223,7 +223,7 @@ their atoms, they have to wait for a certain period of time, called
 the *unbonding period*.  The unbonding period is a configuration
 parameter of the system.
 
-#### **[TMBC-TIME_PARAMS]**:
+#### **[TMBC-TIME-PARAMS]**:
 A Tendermint blockchain has the following configuration parameters:
  - *unbondingPeriod*: a time duration.
  - *trustingPeriod*: a time duration smaller than *unbondingPeriod*.
@@ -292,8 +292,8 @@ cannot forge messages [TMBC-Sign-NoForge].
 
 In [TMBC-HEADER-Fields], most of the fields are defined for abstract
 domains. Here we will specialize DomainVal and DomainCommit, and
-describe how **TODO:** commit and others  
-are implemented in Tendermint.
+describe how validators and commit are implemented in Tendermint
+consensus.
 
 *Remark:* We observed that in the existing documentation the term
 *validator* refers to both a data structure and a full node that
@@ -333,8 +333,7 @@ most one validator pair for each full node.
 
 ## Distributed Definition of Commit
 
-**TODO:** Commit - *LastCommit*: the set of signatures of the
-validators that committed the last block.
+
 
 #### **[TMBC-VOTE]**:
 A vote contains a `prevote` or `precommit` message sent and signed by
@@ -342,11 +341,8 @@ a validator node during the execution of [consensus][arXiv]. Each
 message contain the following field
    - `Type`: prevote or precommit
    - `Height`
-   - `Round`
-   - `BlockID`
-   - `Timestamp`
-   - `ValidatorAddress`
-   - `ValidatorIndex`
+   - `Round` a positive integer
+   - `BlockID` a Hashvalue of a block (not necessarily a block of the chain)
 
 
 #### **[TMBC-COMMIT]**:
@@ -376,11 +372,10 @@ definition of soundness for LastCommit in the distributed setting.
 ## Commit Invariants
 
 Commit messages are used to establish proof that a certain block is on
-the blockchain. In particular for the light client
-verification. **TODO:** more text.
+the blockchain. 
 
 We now make explicit some invariants a correct validator must ensure.
-We consider a predicate `valid` over blocks as well as `precommit`
+We consider a predicate `valid` over blocks, and `precommit`
      messages of the [consensus algorithm][arXiv].
 Correct validators use *valid* to ensure the soundness requirements of
      the blockchain [TMBC-SOUND-?], and send *precommit* messages
@@ -402,20 +397,22 @@ The following invariant is crucial to guarantee the soundness of the chain:
 
 A correct validator sends and signs precommit for a block *b*, only if `valid(b)`.
 
-
 *Remark:*  Code line 36 in the  [consensus algorithm][arXiv].
 
 
 
 
 
-
-From [TMBC-INV-CORR-PROC-VALID] and [TMBC-INV-CORR-PROC-COMMIT] and
-[TMBC-FM-2THIRDS] follows that more than two thirds of the voting
-power in *b.Validators* is correct for any block signed by a correct
-validator. As a result, a commit that is well-formed (that is, is in
+From [TMBC-INV-CORR-PROC-VALID] and [TMBC-INV-CORR-PROC-COMMIT]
+follows that **more than two thirds of the voting
+power in *b.Validators* is correct for any block *b* signed by a correct
+validator**. As a result, a commit that is well-formed (that is, is in
 *PossibleCommit(b)*) and signed by a correct validator is a proof that
-*b* is in the blockchain.
+*b* is in the blockchain. 
+
+"Signed by a correct validator" means that the validator *n*
+sends *precommit* at time *t* and *correct(n, t)* holds.
+
 
 
 #### **[TMBC-VAL-COMMIT]**:
@@ -442,7 +439,7 @@ of *h.NextValidators*, such that:
   - *TotalVotingPower(CorrV) > 2/3
     TotalVotingPower(h.NextValidators)*; cf. [TMBC-VALIDATOR-Set]
   - For every validator pair *(n,p)* in *CorrV*, it holds *correct(n,
-    Time + trustingPeriod)*; cf. [TMBC-CORRECT]
+    h.Time + trustingPeriod)*; cf. [TMBC-CORRECT]
 
 
 
@@ -452,25 +449,27 @@ of *h.NextValidators*, such that:
 2/3 \sum*{(v,p) \in h.Header.NextV} p
 \] -->
 
-*Remark:* The definition of correct [**[TMBC-CORRECT]**](TMBC-CORRECT-link) refers to realtime, while it is used here with *bfttime* and *trustingPeriod*, which are "hardware times". 
-Due to [**[TMBC-TIME]**](TMBC-TIME-link), we do not make a distinction
-here. TODO: address time issue
+*Remark:* The definition of correct
+[**[TMBC-CORRECT]**](TMBC-CORRECT-link) refers to realtime, while it
+is used here with *Time* and *trustingPeriod*, which are "hardware
+times".  We do not make a distinction here.
 
 
-
+From [TMBC-FM-2THIRDS] we directly derive the following observation:
 
 #### **[TMBC-VAL-CONTAINS-CORR]**:
 
-Given a (trusted) block *tb* of the blockchain, a set of full nodes *N* contains a correct node at a real-time *t*, if
-   - *tb.Time > t - trustingPeriod*
-   - the voting power of nodes in *N* in tb.NextValidators is more
+Given a (trusted) block *tb* of the blockchain, a set of full nodes 
+*N* contains a correct node at a real-time *t*, if
+   - *t - trustingPeriod < tb.Time < t*
+   - the voting power in tb.NextValidators of nodes in *N* is more
      than 1/3 of *TotalVotingPower(tb.NextValidators)*
 
 
 
 
-**Remark:** TODO: this has to go into the verification spec.    
-The light client verification checks [TMBC-VAL-CONTAINS-CORR] and
+
+*Remark:* The light client verification checks [TMBC-VAL-CONTAINS-CORR] and
 [TMBC-VAL-COMMIT] as follows: 
 Given a trusted block *tb* and an untrusted block *ub* with a commit *cub*,
 one has to check that *cub* is in *PossibleCommit(ub)*, and that *cub*

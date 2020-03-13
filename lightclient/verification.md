@@ -16,7 +16,9 @@ The light client implements a read operation of a [header][TMBC-HEADER-link] fro
 As some full nodes may be faulty, this functionality must be implemented in a 
 fault-tolerant way.
 
-For the purpose of this specification, we assume that the blockchain is a list of headers, rather than a
+For the purpose of this specification, we assume that the blockchain
+ is
+ a list of headers, rather than a
 list of blocks, by [**[TMBC-HEADER]**][TMBC-HEADER-link].
 
 In the Tendermint blockchain, the validator set may change with every
@@ -34,6 +36,13 @@ in terms of energy for mobile devices).
 This specification tries to reduce the number of intermediate blocks that need to 
 be checked, by exploiting the guarantees provided by the [security
 model][TMBC-FM-2THIRDS-link].
+
+To do so, verification checks [[TMBC-VAL-CONTAINS-CORR]][TMBC-VAL-CONTAINS-CORR-link] and
+[[TMBC-VAL-COMMIT]][TMBC-VAL-COMMIT-link] as follows: 
+Given a trusted block *tb* and an untrusted block *ub* with a commit *cub*,
+one has to check that *cub* is in *PossibleCommit(ub)*, and that *cub*
+contains a correct node using *tb*.
+
 
 # Part I - External View
 
@@ -480,6 +489,10 @@ Possibly giving inductive invariants that can be used to prove the specification
 [TMBC-FaultyFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-faultyfull
 [TMBC-TIME_PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time_params
 [TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-fm-2thirds
+[TMBC-VAL-CONTAINS-CORR-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-val-contains-corr
+[TMBC-VAL-COMMIT-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-val-commit
+
+
 [TMBC-INV-SIGN-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-sign
 [TMBC-INV-VALID-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-valid
 
