@@ -75,7 +75,6 @@ A header contains the following fields:
 
 
 #### **[TMBC-SEQ]**:
-#### **[TMBC-SEQ-LIST]**:
 
 The Tendermint blockchain is a list *chain* of headers. 
 
