@@ -500,9 +500,11 @@ There is a set *C* of validator pairs, such that *C* is a subset of *NextValidat
 
 We recall that [TMBC-CORRECT] denotes by *correct(n, t)* that full
 node *n* is correct up to time *t* if it follows all the protocols
-up to time *t*. **TODO:** talk about late starter, recovery
-etc. should all be included in correct so that temporal properties
-below are as general as possible.
+up to time *t*. For now we assume that both failure assumptions
+[TMBC-FM-2THIRDS] and [TMBC-FM-CONS] hold.
+
+
+
 
 
 Each correct full node *p* maintains its local copy of the Tendermint
@@ -533,7 +535,7 @@ At all times *t*, for any two full nodes *p* and *q*, with *correct(p,
 For a full node *p*, we substitute *chain* with *chain_p* in the
 soundness properties [TMBC-SOUND-?]. For all times *t* and every full
 node *p*, with *correct(p, t)*, the soundness requirements hold for
-*chain_p*.
+*chain_p(t)*.
 
 
 *Remark:* Validity should make reference to the mempool, e.g., only messages from the
@@ -551,14 +553,33 @@ For all correct full nodes *p* and all times *t* there exists a time
 *t'*, such that *|chain_p(t)| < |chain_p(t')|*.
 
 
+
+*Remark:* In the temporal properties above we use the *correct*
+predicate, in a way that suggests that all full nodes participate in
+Tendermint since the genesis block. However, there are Tendermint
+protocols (state sync, fast sync) that allow nodes to join the system
+later. We will have to define later what it means for these nodes to satisfy
+[TMBC-VC_AGR] and [TMBC-VC_VAL] and [TMBC-VC-PROG]. For instance, they
+may not need to have the complete prefix of *chain* but start at some height.
+
+
 > How is the problem statement linked to the "Sequential Problem statement".
 Simulation, implementation, etc. relations
 
 ### Solving the sequential specification
-TODO: How does the distributed specification map to the sequential one? The argument should arrive at:
+
+**TODO:** How does the distributed specification map to the sequential
+one? For instance, at each time the longest prefix of *chain_p* for
+some *p* defines *chain* in the sequential specification.
 
 #### **[TMBC-CorrFull]**: 
-Every correct Tendermint full node locally stores a prefix of the current list of headers from [**[TMBC-SEQ]**](TMBC-SEQ-link).
+Every correct Tendermint full node locally stores a prefix of the
+current list of headers from [**[TMBC-SEQ]**](TMBC-SEQ-link).
+
+
+
+
+**For the remainder, we refer to the [arXiv paper](arXiv) for now.**
 
 
 ## Definitions
@@ -571,9 +592,6 @@ Some variables, etc.
 ### Data structures
 
 
-
-
-For the remaining data structures, we refer to [arXiv paper](arXiv).
 
 ## Solution
 
