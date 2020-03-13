@@ -525,12 +525,15 @@ reliable and timely, then something good happens eventually.
 ### Safety
 
 #### **[TMBC-VC_AGR]**:
-It is always the case that, for any two correct full nodes *p* and *q*, it holds that *chain_p* is a prefix of *chain_q* or *chain_q* is a prefix of *chain_p*.
+At all times *t*, for any two full nodes *p* and *q*, with *correct(p,
+     t)* and *correct (q, t)* it holds that *chain_p(t)* is a prefix
+     of *chain_q(t)* or *chain_q(t)* is a prefix of *chain_p(t)*.
 
 #### **[TMBC-VC_VAL]**:
-For a correct full node *p*, we substitute *chain* with *chain_p* in
-the soundness properties [TMBC-SOUND-?]. For all correct full nodes at
-all times, the soundness requirements hold for *chain_p*.
+For a full node *p*, we substitute *chain* with *chain_p* in the
+soundness properties [TMBC-SOUND-?]. For all times *t* and every full
+node *p*, with *correct(p, t)*, the soundness requirements hold for
+*chain_p*.
 
 
 *Remark:* Validity should make reference to the mempool, e.g., only messages from the
