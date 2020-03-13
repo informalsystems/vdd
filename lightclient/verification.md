@@ -358,9 +358,9 @@ func VerifyBisection(untrustedHeight int64,
   sh, vs, nextVs, err := QueryFullNode(addr,untrustedHeight)
   if err == nil {
     newTrustedState, err := VerifySingle(sh, vs, nextVs, trustedState)
-    if err == nil {
+    if err == OK {
       return newTrustedState 
-    } else {
+    } else if err = CANNOT_VERIFY{
       compute pivot
       newTrustedState := VerifyBisection(pivot, trustedState, now)
       return VerifyBisection(untrustedHeight, newTrustedState, now)
@@ -442,11 +442,17 @@ based on the local (given) state.
   validator set `untrustedVs`, and moreover, more than two-thirds of the validators 
   signed
 - Expected postcondition: 
-    - Returns a trusted state if:
-        - the untrusted signed header `untrustedSh` is the immediate successor of the signed header 
-    of the trusted state `trustedState`, or
+    - Returns `(trustedState, OK)` if:
+        - the untrusted signed header `untrustedSh` is the immediate successor of the signed header
+    of the trusted state `trustedState`  [TMBC-SOUND-?], or
         - the untrusted signed header `untrustedSh` is a successor of
-        the signed header of the trusted state `trustedState` and the validators that have more than *max(1/3,trustThreshold)* of voting power in the trusted state `trustedState` signed the untrusted signed header `untrustedSh`
+        the signed header of the trusted state `trustedState` and the
+        validators that have more than *max(1/3,trustThreshold)* of
+        voting power in the trusted state `trustedState` signed the
+        untrusted signed header `untrustedSh` 
+		header passes the tests [TMBC-VAL-CONTAINS-CORR] and [TMBC-VAL-COMMIT]
+	- Returns `(trustedState, CANNOT_VERIFY)` if [TMBC-VAL-CONTAINS-CORR] and
+[TMBC-VAL-COMMIT] fails but header is well-formed **TODO: link to invariants**
 - Error condition: 
    - precondition violated
    - the untrusted signed header `untrustedSh` is not a successor of the signed header of the trusted state `trustedState`
