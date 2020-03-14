@@ -1,5 +1,4 @@
 
-
 *** This is the beginning of an unfinished draft. Don't continue reading! ***
 
 # Fastsync
@@ -21,17 +20,22 @@ current state of a Tendermint blockchain. Its typical use case is a
 full node that was disconnected from the system for some time. The
 recovering full node then queries its peers for the blocks that were
 decided on by the Tendermint blockchain during the period the full
-node was disconnected. It then executes the transactions in the block.
+node was disconnected. It then executes the transactions in the block
+in order to catch-up to the current height of the blockchain and the
+corresponding application state.
 
 ## Informal Problem statement
 
 > for the general audience, that is, engineers who want to get an overview over what the component is doing
 from a bird's eye view. 
 
-A full node has as input a prefix of the current blockchain until
-height *h*, and a list of full nodes called *peers* that it knows of.
-The full node reads blocks of the Tendermint blockchain, until it has
-read the most recent block and then terminates.
+A full node has as input a block of the blockchain at height *h* and
+the corresponding application state (or the prefix of the current
+blockchain until height *h*). It has access to a set of full nodes
+called *peers* that it knows of.  The full node uses the peers to read
+blocks of the Tendermint blockchain (in a safe way, that is, checking
+the soundness conditions), until it has read the most recent block and
+then terminates.
 
 
 ## Sequential Problem statement
@@ -40,23 +44,27 @@ read the most recent block and then terminates.
 
 *Fastsync* gets as input a block of height *h* and the corresponding
 application state *s*, and produces as
-outpout a list *l* of blocks and the state when applying the transaction
+output a list *l* of blocks and the application 
+state when applying the transaction
 of the list *l* to *s*.
 
 #### **[FS-Seq-Live]**: 
 *Fastsync* eventually terminates.
+
+*Remark:* this will require timing assumptions on the rate at which a
+block is added to the blockchain, and message and computation delays
+involved in Fastsync. That is, the time it takes fastsync to append a
+block to the list, and do the verification and the computation of the
+application state should be less than *ETIME* from [TMBC-SEQ-APPEND-E].
  
 #### **[FS-Seq-Term]**:
 When *Fastsync* terminates, it outputs a list of all blocks from
 height *h* to the current height *h'* of the blockchain
 [**[TMBC-SEQ]**][TMBC-SEQ-link].
 
-*Remark:* this will require timing assumptions on the rate at which a
-block is added to the blockchain, and message and computation delays
-involved in Fastsync.
 
 #### **[FS-Seq-Inv]**:
-*Fastsync* never stores a header which is not in the blockchain.
+*Fastsync* never stores a header/block which is not in the blockchain.
 
 
 
@@ -72,11 +80,16 @@ correctly
 
 > should have clear formalization in temporal logic.
 
+**TODO:** peer exchange maintains a list of peers (full nodes)
+
 Peers can be faulty, and we do not make any assumption about number or
 ratio of correct/faulty nodes.
 
+Full nodes satisfy [TMBC-Auth-Byz]
+
 #### **[FS-A-Comm]**:
-Communication between Fastsync and a correct full node is reliable and bounded in time.
+Communication between Fastsync and a correct peer is reliable and
+bounded in time.
 
 #### **[FS-A-LCC]**:
 The node executing Fastsync is following the protocol (it is correct).
@@ -97,6 +110,42 @@ They exchange the following messages:
 - BlockRequest
 - BlockReply
 
+The Tendermint Full Node exposes the following functions over Tendermint RPC:
+
+```go
+func Status() (int64, error)
+```
+- Implementation remark
+   - RPC to full node *n*
+- Expected precodnition
+  - none
+- Expected postcondition
+  - if *n* is correct: Returns the current height `height` of the peer
+   if communication is timely (no timeout)
+  - if *n* is faulty: Returns an arbitrary height
+- Error condition
+   * if *n* is correct: timeout
+   * if *n* is faulty: arbitrary error
+
+----
+
+
+ ```go    
+func Block(height int64) (Block, error)
+```
+- Implementation remark
+   - RPC to full node *n*
+- Expected precodnition
+  - header of `height` is less than or equal to height of the peer
+- Expected postcondition
+  - if *n* is correct: Returns the block of height `height`
+  from the blockchain if communication is timely (no timeout)
+  - if *n* is faulty: Returns arbitrary block
+- Error condition
+  - if *n* is correct: precondition violated or timeout 
+  - if *n* is faulty: arbitrary error
+
+----
 
 ### Temporal Properties
 
