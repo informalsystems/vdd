@@ -80,6 +80,7 @@ func Validators(height int64) (ValidatorSet, error)
 
 ----
 
+
 #### **[FN-LuckyCase]**:
 The primary is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
 
