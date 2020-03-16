@@ -208,8 +208,34 @@ if details were omitted.
 
 > Describe solution (in English), decomposition into functions, where communication to other components happens.
 
-Initially, all 
+The protocols is described in terms of functions that are triggered by
+(external) events:
 
+- `QueryStatus()`: regularly (every 10sec) queries all known full nodes
+  for their current height of their local chain [addlink]. It does so
+  by calling `Status(n)` on all known full nodes *n*.
+  
+- `CreateRequest`: regularly checks whether certain blocks have no open
+  request and queries one from a full node. It does so by calling
+  `Block(n,h)` on one full node *n* for a missing height *h*.
+  
+
+The functions `Status` and `Block` are called by asynchronous
+RPC. When they return, the following functions are called:
+
+- `OnStatusResponse(addr Address, height int64)`: The full node with
+  address *addr* returns its current height. This updates the height
+  information about *addr*, and may alsi increase *TargetHeight*
+  
+- `OnBlockResponse(addr Address, b Block)`. The full node with
+  address *addr* returns a block. It is added to *blockstore*. Then
+  the auxiliary function `Execute` is called.
+
+- `Execute()`: Iterates over the *blockstore*. Starts at height until
+  the longest prefix. Checks soundness of
+  block after block, and executes the transactions of a sound block
+ 
+ 
 ```go
 func QueryStatus() {
   for i, s range peerIDs {
@@ -252,7 +278,6 @@ func CreateRequest
 	- *peerIDs* nonempty
 - Expected postcondition
     - Block is called at a peer in peerIDs for a missing height 
-	- if height = TargetHeight: stop everything
 - Error condition
     - if *peerIDs* is empty: no correct peers left; panic
 ----
@@ -284,7 +309,8 @@ func Execute()
 	- state is the one of the blockchain at height *height*
 - Expected postcondition
     - height is updated height of complete prefix that matches the blockchain
-	- state is the one of the blockchain at height *heigt*
+	- state is the one of the blockchain at height *height*
+	- if height = TargetHeight: stop everything
 - Error condition
     - if precondition [b] is violated: there is a bad block *b*; *b*
 	removed from blockstore, node with Address
