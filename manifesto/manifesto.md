@@ -19,7 +19,8 @@ a huge amount of manual work.
 
 Part of the problem is the fact that the verification is often regarded
 as "after the fact" task, that is, used after the software is written.
-In this document we present an approach where verification, software
+In this document we present an approach where verification goes hand in hand with software 
+design and development. Our goal is to improve software
 design and development go hand-in-hand. Our goal is to improve software
 engineering practices (and ultimately the end software product)
 by relying on formal methods. Our approach primarily focuses on
@@ -57,7 +58,7 @@ level problem description.
   - High level English specification of the problem.
   - [Optional] In some cases it might be useful to write TLA+
   specification of temporal properties (in case we want to do TLA+
-  reductions), but this is by default not required
+  refinements), but this is by default not required
 
 #### Verification, Validation, or Proof Obligation
 
@@ -130,7 +131,7 @@ protocol design phase. High level algorithm specification should cover:
 - messages exchanged (minimal set of messages needed to express
 algorithm core algorithm logic)
 - core data structures every process maintains (minimal data structures
-needed to express core algorithm logic)
+needed to express core algorithm logic). Importantly, when there is a trade-off between the clarity and efficiency of a data structure for local computation, choose clarity. The efficiency concerns should be addressed at lower levels.
 - state machine(s) that defines algorithm transitions and
 - protocol invariants.
 
@@ -162,7 +163,7 @@ model weaker or stronger adversaries in a more modular way.
   engineers
 
 ##### Artifacts
-
+-  English description of the protocol. Note that TLA+ protocol specification should be considered as the definitive source of truth. However, English description of the protocol should provide reader with the intuition behind the protocol mechanisms, and therefore reduce the time needed to understand TLA+ specification. Recommended practice is to map TLA+ constructs to the English explanation (either by including text snippets as comments in TLA+ specs, or by referencing parts of the English description).
   - TLA+ specification of the protocol
   - TLA+ specification of properties (expressed in English in the section
   2.1) as invariants and temporal properties
@@ -175,7 +176,7 @@ model weaker or stronger adversaries in a more modular way.
   certainty in the correctness of the specification (that concepts are
   correctly encoded) and also as a mean of generating interesting
   test cases (by the model checker). These properties should be prefixed
-  with Failing, for example ```FailingPeerSetIsNeverEmpty```.
+  with ```Witness```, for example ```FailingPeerSetIsNeverEmpty```. Effectively, we expect a model checker to produce a counterexample to our property. As we do not expect the property to hold true, the model checker produces a witness to the negation of the property. 
 
 ##### Verification, Validation, or Proof Obligation
 
@@ -238,7 +239,7 @@ are:
 - modular design (reduce complexity by splitting implementation into
 smaller modules with clear and simple responsibilities that can be
 designed, implemented, tested and verified in isolation)
-- functional programming (core business logic should be expressed as a
+- reactive programming (core business logic should be expressed as a
 function (for example state machine) which based on input state and events
 generate new state and output events, i.e., avoid side effects like
 state mutation)
@@ -246,6 +247,7 @@ state mutation)
 particular concepts and communication between tasks happen explicitly
 by exchanging events, i.e., avoid communication between different tasks
 over shared data and locks)
+- language-based verification via sound, parametric type systems (see for example  https://www.seas.upenn.edu/~sweirich/papers/foser10.pdf for more details).
 
 #### Artifacts
 
@@ -261,7 +263,7 @@ drive unit and integration tests.
 certainty in the correctness of the specification (that concepts are
 correctly encoded) and also as a mean of generating interesting
 test cases (by the model checker). These properties should be prefixed
-with Failing.
+with Witness.
 
 #### Verification, Validation, or Proof Obligation
 
