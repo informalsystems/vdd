@@ -2,10 +2,11 @@
 
 **Abstract.** Software bugs can be increasingly costly, e.g., blockchain
 technology. At the same time, modern software stacks are quite complex.
-For instance, Byzantine fault tolerant blockchain systems (for example Tendermint) are based on complex fault-tolerant distributed
-protocols, implemented as highly concurrent systems, and overall contain
-thousands lines of code. Therefore, there is lot of space for potential
-bugs: protocol bugs, concurrency bugs, implementation bugs, security bugs, etc.
+For instance, Byzantine fault tolerant blockchain systems (for example Tendermint)
+are based on complex fault-tolerant distributed protocols, implemented
+as highly concurrent systems, and overall contain thousands lines of code.
+Therefore, there is lot of space for potential bugs: protocol bugs,
+concurrency bugs, implementation bugs, security bugs, etc.
 
 As bugs in (some) modern distributed systems have potentially high cost,
 people have started considering computer-aided verification tools and
@@ -14,14 +15,13 @@ those critical systems. However current approaches turn out to be
 impractical (to large scale), either because of tools and methodology
 theoretical limits (completely automated verification methods such as
 model checking hit theoretical limits and undecidability results), or
-because mechanical verification methods (approaches based on interactive theorem provers) require
-a huge amount of manual work.
+because mechanical verification methods (approaches based on interactive
+theorem provers) require a huge amount of manual work.
 
 Part of the problem is the fact that the verification is often regarded
 as "after the fact" task, that is, used after the software is written.
-In this document we present an approach where verification goes hand in hand with software 
-design and development. Our goal is to improve software
-design and development go hand-in-hand. Our goal is to improve software
+In this document we present an approach where verification goes hand in
+hand with software design and development. Our goal is to improve software
 engineering practices (and ultimately the end software product)
 by relying on formal methods. Our approach primarily focuses on
 distributed and concurrent systems, although it might be of interest also
@@ -35,7 +35,7 @@ This process is a collaboration of researchers (protocol and/or verification
 experts) and software engineers. Different steps require different expertise
 in the lead of that step. We make these requirements explicit.
 
-### 1. Problem Statement / Outside view:
+### 1. Problem Statement / Outside view
 
 This part of the specification should present the problem at the very
 high level (if possible using sequential specification). We can think
@@ -58,7 +58,7 @@ level problem description.
   - High level English specification of the problem.
   - [Optional] In some cases it might be useful to write TLA+
   specification of temporal properties (in case we want to do TLA+
-  refinements), but this is by default not required
+  refinements), but this is by default not required.
 
 #### Verification, Validation, or Proof Obligation
 
@@ -66,7 +66,7 @@ level problem description.
 level. In case temporal properties are expressed in TLA+, it can be
 perhaps used in composition with other specifications.
 
-### 2. Protocol Specification / Protocol view:
+### 2. Protocol Specification / Protocol view
 
 This part of the specification should present concrete system model
 in which problem is considered, and an algorithm that solves the problem
@@ -79,8 +79,8 @@ As we focus on (fault-tolerant) distributed and concurrent systems, we
 have to specify protocols that run on unreliable/adversarial
 computers and networks, that refine the problem statement from above.
 
-System model section should therefore contains the assumption we made
-about following aspects:
+System model section should therefore contains the assumptions we made
+regarding the following aspects:
 
 - definitions of processes (process represents unit of execution) involved.
 A process can be a node in a distributed system or a thread (routine)
@@ -111,9 +111,9 @@ solve the problem in the given system model).
 
 ##### Artifacts
 
-  - High-level English specification covering aspects mentioned above (
-  processes, communication channels, synchrony assumptions, safety and
-  liveness properties.
+  - High-level English specification covering aspects mentioned above
+  (processes, communication channels, synchrony assumptions, safety and
+  liveness properties).
 
 ##### Verification, Validation, or Proof Obligation
 
@@ -126,19 +126,22 @@ This part presents an algorithm (protocol) that solves the problem
 in the system model specified in the section 2.1. Algorithm specification
 at this level should be at the higher level of abstractions
 compared to real implementation, and should be seen mainly as part of
-protocol design phase. High level algorithm specification should cover:
+the protocol design phase. High level algorithm specification should cover:
 
 - messages exchanged (minimal set of messages needed to express
 algorithm core algorithm logic)
 - core data structures every process maintains (minimal data structures
-needed to express core algorithm logic). Importantly, when there is a trade-off between the clarity and efficiency of a data structure for local computation, choose clarity. The efficiency concerns should be addressed at lower levels.
+needed to express core algorithm logic). Importantly, when there is a trade-off
+between the clarity and efficiency of a data structure for local computation,
+clarity should be chosen. The efficiency concerns should be addressed at
+lower levels.
 - state machine(s) that defines algorithm transitions and
 - protocol invariants.
 
-High level protocol specifications should be at the higher level of abstractions
-compared to real implementation, and it should not introduce concepts that could differ
-between implementations. For example, high level protocol specifications
-should (if possible) avoid dealing explicitly with timeouts or
+Protocol specifications should be at the higher level of abstractions
+compared to real implementation, and it should not introduce concepts that
+could differ between implementations. For example, high level protocol
+specifications should (if possible) avoid dealing explicitly with timeouts or
 efficiency concerns (batching of messages, flow control logic,
 DDoS protection mechanisms, etc), concurrency aspects, detailed error
 handling, etc. Some of those concerns might be addressed at the lower
@@ -163,10 +166,21 @@ model weaker or stronger adversaries in a more modular way.
   engineers
 
 ##### Artifacts
--  English description of the protocol. Note that TLA+ protocol specification should be considered as the definitive source of truth. However, English description of the protocol should provide reader with the intuition behind the protocol mechanisms, and therefore reduce the time needed to understand TLA+ specification. Recommended practice is to map TLA+ constructs to the English explanation (either by including text snippets as comments in TLA+ specs, or by referencing parts of the English description).
+
+  - English description of the protocol
   - TLA+ specification of the protocol
   - TLA+ specification of properties (expressed in English in the section
   2.1) as invariants and temporal properties
+
+ NOTE: TLA+ protocol specification should be considered as the definitive
+ source of truth. However, English description of the protocol should
+ provide reader with the intuition behind the core protocol mechanisms,
+ and therefore reduce the time needed to understand TLA+ specification.
+ Recommended practice is to map TLA+ constructs to the English explanation
+ (either by including description snippets as comments in TLA+ specs, or
+ by referencing parts of the English description from the comments in
+ TLA+ specification).
+
   - Abstract test scenarios: generation of (relevant) abstract
   execution scenarios (using model checkers) that can be used to
   drive unit and integration tests.
@@ -176,7 +190,10 @@ model weaker or stronger adversaries in a more modular way.
   certainty in the correctness of the specification (that concepts are
   correctly encoded) and also as a mean of generating interesting
   test cases (by the model checker). These properties should be prefixed
-  with ```Witness```, for example ```FailingPeerSetIsNeverEmpty```. Effectively, we expect a model checker to produce a counterexample to our property. As we do not expect the property to hold true, the model checker produces a witness to the negation of the property. 
+  with ```Witness```, for example ```WitnessPeerSetIsNeverEmpty```. Effectively,
+  we expect a model checker to produce a counterexample to our property.
+  As we do not expect the property to hold true, the model checker produces a
+  witness to the negation of the property.
 
 ##### Verification, Validation, or Proof Obligation
 
@@ -193,7 +210,7 @@ distributed systems, code inherently runs on one computer, so we take the
 single node perspective here while the rest of the
 system is modelled as the environment.
 
-The goal of specification at this level (we call it also low level
+The goal of the specification at this level (we call it also low level
 specification) is to be as close as possible to the implementation.
 Being close to the implementation allows discovery of software
 architecture problems and potentially implementation issues.
@@ -247,7 +264,8 @@ state mutation)
 particular concepts and communication between tasks happen explicitly
 by exchanging events, i.e., avoid communication between different tasks
 over shared data and locks)
-- language-based verification via sound, parametric type systems (see for example  https://www.seas.upenn.edu/~sweirich/papers/foser10.pdf for more details).
+- language-based verification via sound, parametric type systems (see for example
+https://www.seas.upenn.edu/~sweirich/papers/foser10.pdf for more details).
 
 #### Artifacts
 
