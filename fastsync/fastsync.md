@@ -190,12 +190,19 @@ if details were omitted.
 - *startState*: state corresponding to startBlock.Height
 
 #### Variables
+- *height*: initially *startBlock.Height*
+- *state*: initially *startState*
 - *peerHeigts*: stores for each peer the height it reported. initially 0
-- *pendingBlocks*: stores for each block which peer was
+- *pendingBlocks*: stores for each height which peer was
   queried. initially nil
-- *receivedBlocks*: stores for each block which peer returned it
+- *receivedBlocks*: stores for each height which peer returned it
 - *blockstore*: stores for each height greater than
-  *startBlock.Height*, the block of that height
+    *startBlock.Height*, the block of that height
+
+#### Definitions
+- *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*  
+  *Remark:* it is only computed over peers that are not considered
+  faulty, yet
 
 ### Outline
 
@@ -221,54 +228,70 @@ func QueryStatus() {
 
 ----
 
-
 ```go
 func OnStatusResponse(addr Address, height int64)
 ```
+- Comments
+    - 
+- Expected precondition
+    - *peerHeights(addr) <= height* ?
+- Expected postcondition
+    - *peerHeights(addr) = height*
+- Error condition
+    - if precondition is violated: remove *addr* from *peerIDs*
+----
+
+
+```go
+func CreateRequest
+```
+- Comments
+    - calls function `Block` remotely (asynchronously)
+- Expected precondition
+    - *height < TargetHeight*
+	- *peerIDs* nonempty
+- Expected postcondition
+    - Block is called at a peer in peerIDs for a missing height 
+	- if height = TargetHeight: stop everything
+- Error condition
+    - if *peerIDs* is empty: no correct peers left; panic
+----
+
 
 ```go
 func OnBlockResponse(addr Address, b Block)
 ```
 - Comments
-    - 
+    - it calls `Execute`
 - Expected precondition
-    - peerIDs initialized and non-empty
+    - *pendingblocks(b.Height) = addr*
+	- *b* satisfies basic soundness?
 - Expected postcondition
-    - if we arrived at maximum height, another round of status
-      request. if nothing changes terminate
-	- if someone did not respond, kick them out
+    - *receivedBlocks(b.Height) = addr*
+	- *blockstore(b.Height) = b*
 - Error condition
-    - fails if precondition is violated
-
+    - if precondition is violated: remove *addr* from *peerIDs*
 ----
 
-
-
+TODO next:
 ```go
-func check
-```
+func Execute()
 ```
 - Comments
-    - 
+    - none
 - Expected precondition
-    - peerIDs initialized and non-empty
+    - [b] *receivedBlocks* are all from the blockchain
+	- state is the one of the blockchain at height *height*
 - Expected postcondition
-    - if we arrived at maximum height, another round of status
-      request. if nothing changes terminate
-	- if someone did not respond, kick them out
+    - height is updated height of complete prefix that matches the blockchain
+	- state is the one of the blockchain at height *heigt*
 - Error condition
-    - fails if precondition is violated
-
+    - if precondition [b] is violated: there is a bad block *b*; *b*
+	removed from blockstore, node with Address
+	receivedBlocks(b.Height) removed from peerIDs
 ----
 
-asyncronous RPC status request to all in peerIDs
-  pendingBlocks <-  peers asked
 
-onStatusResponse
-  set peerHeights
-
-onBlockResponse
-  update blockStore, receivedBlocks, height try to execute
 
 
 
