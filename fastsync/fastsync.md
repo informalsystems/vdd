@@ -59,8 +59,11 @@ application state should be less than *ETIME* from [TMBC-SEQ-APPEND-E].
  
 #### **[FS-Seq-Term]**:
 When *Fastsync* terminates, it outputs a list of all blocks from
-height *h* to the current height *h'* of the blockchain
-[**[TMBC-SEQ]**][TMBC-SEQ-link].
+height *h* to the current height *h'* of the blockchain,
+[**[TMBC-SEQ]**][TMBC-SEQ-link].  
+Upon termination the application state is the one that corresponds to
+*h'*.
+
 
 
 #### **[FS-Seq-Inv]**:
@@ -85,7 +88,7 @@ correctly
 Peers can be faulty, and we do not make any assumption about number or
 ratio of correct/faulty nodes.
 
-Full nodes satisfy [TMBC-Auth-Byz]
+Full nodes satisfy [TMBC-Auth-Byz] [TMBC-FM-2THIRDS]
 
 #### **[FS-A-Comm]**:
 Communication between Fastsync and a correct peer is reliable and
@@ -103,17 +106,15 @@ TODO: message passing vs. rpc
 
 > input/output variables used to define the temporal properties. Most likely they come from an ADR
 
-They exchange the following messages:
-
-- StatusRequest
-- StatusReply
-- BlockRequest
-- BlockReply
 
 The Tendermint Full Node exposes the following functions over Tendermint RPC:
 
+*Remark:* we will have asynchronous RPCs
+
+*Remark:* This will go to full node spec.
+
 ```go
-func Status() (int64, error)
+func Status(addr Address) (int64, error)
 ```
 - Implementation remark
    - RPC to full node *n*
@@ -131,7 +132,7 @@ func Status() (int64, error)
 
 
  ```go    
-func Block(height int64) (Block, error)
+func Block(addr Address, height int64) (Block, error)
 ```
 - Implementation remark
    - RPC to full node *n*
@@ -173,9 +174,105 @@ Some variables, etc.
 algorithm here. If existing: link to Tendermint data structures, and mentioned
 if details were omitted. 
 
+#### Fastsync has the following configuration parameters:
+- *trustingPeriod*: a time duration [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
+- *clockDrift*: a time duration. Correction parameter dealing with
+  only approximately synchronized clocks.
+  
+
+#### Interface to peer exchange
+- *peerIDs*: peer addresses provided by peer exchange
+
+**Question1:** if a peer is removed does peer exchange figure that our?
+
+#### Inputs
+- *startBlock*: block of height Fastsync starts from
+- *startState*: state corresponding to startBlock.Height
+
+#### Variables
+- *peerHeigts*: stores for each peer the height it reported. initially 0
+- *pendingBlocks*: stores for each block which peer was
+  queried. initially nil
+- *receivedBlocks*: stores for each block which peer returned it
+- *blockstore*: stores for each height greater than
+  *startBlock.Height*, the block of that height
+
 ### Outline
 
 > Describe solution (in English), decomposition into functions, where communication to other components happens.
+
+Initially, all 
+
+```go
+func QueryStatus() {
+  for i, s range peerIDs {
+    sh := Status(s)
+  }
+}
+```
+- Comments
+    - 
+- Expected precondition
+    - peerIDs initialized and non-empty
+- Expected postcondition
+    - 
+- Error condition
+    - fails if precondition is violated
+
+----
+
+
+```go
+func OnStatusResponse(addr Address, height int64)
+```
+
+```go
+func OnBlockResponse(addr Address, b Block)
+```
+- Comments
+    - 
+- Expected precondition
+    - peerIDs initialized and non-empty
+- Expected postcondition
+    - if we arrived at maximum height, another round of status
+      request. if nothing changes terminate
+	- if someone did not respond, kick them out
+- Error condition
+    - fails if precondition is violated
+
+----
+
+
+
+```go
+func check
+```
+```
+- Comments
+    - 
+- Expected precondition
+    - peerIDs initialized and non-empty
+- Expected postcondition
+    - if we arrived at maximum height, another round of status
+      request. if nothing changes terminate
+	- if someone did not respond, kick them out
+- Error condition
+    - fails if precondition is violated
+
+----
+
+asyncronous RPC status request to all in peerIDs
+  pendingBlocks <-  peers asked
+
+onStatusResponse
+  set peerHeights
+
+onBlockResponse
+  update blockStore, receivedBlocks, height try to execute
+
+
+
+
 
 ### Details
 
@@ -185,6 +282,11 @@ if details were omitted.
 > - Expected precondition
 > - Expected postcondition
 > - Error condition
+
+
+
+
+
 
 
 ## Correctness arguments
