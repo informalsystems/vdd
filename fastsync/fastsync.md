@@ -289,8 +289,17 @@ RPC. When they return, the following functions are called:
   block. If the longest prefix reaches *TargetHeight* it terminates
   fastsync.
   
-### Function definitions
- 
+
+
+### Details
+
+> Function signatures followed by pseudocode (optional) and a list of features (required):
+> - Implementation remarks (optional)
+>   - e.g. (local/remote) function called in the body of this function
+> - Expected precondition
+> - Expected postcondition
+> - Error condition
+
 ```go
 func QueryStatus() {
   for i, s range peerIDs {
@@ -361,39 +370,28 @@ func OnBlockResponse(addr Address, b Block)
 	*pendingblocks(b.Height) to nil;
 ----
 
-TODO next:
 ```go
 func Execute()
 ```
 - Comments
     - none
 - Expected precondition
-    - [b] *receivedBlocks* are all from the blockchain
+    - [goodblocks]: *receivedBlocks* are all from the blockchain
 	- state is the one of the blockchain at height *height*
 - Expected postcondition
     - height is updated height of complete prefix that matches the blockchain
 	- state is the one of the blockchain at height *height*
 	- if height = TargetHeight: stop everything
 - Error condition
-    - if precondition [b] is violated: there is a bad block *b*; *b*
+    - if precondition [goodblocks] is violated: there is a bad block *b*; *b*
 	removed from blockstore, node with Address
-	receivedBlocks(b.Height) removed from peerIDs
+	receivedBlocks(b.Height) removed from peerIDs;
 ----
 
 
 
 
 
-
-
-### Details
-
-> Function signatures followed by pseudocode (optional) and a list of features (required):
-> - Implementation remarks (optional)
->   - e.g. (local/remote) function called in the body of this function
-> - Expected precondition
-> - Expected postcondition
-> - Error condition
 
 
 
