@@ -62,7 +62,7 @@ application state should be less than *ETIME* from [TMBC-SEQ-APPEND-E].
 Let *bh* be the height of the blockchain at the time *Fastsync* starts.
 When *Fastsync* terminates, it outputs a list of all blocks from
 height *h* to some height *t >= bh*,
-[**[TMBC-SEQ]**][TMBC-SEQ-link].
+[**[TMBC-SEQ]**](TMBC-SEQ-link).
 
 
 
@@ -88,12 +88,15 @@ correctly
 
 *Fastsync* has access to a list of peers (full nodes) called *peerIDs*
 
+#### **[FS-A-PEER]**:
 Peers can be faulty, and we do not make any assumption about number or
 ratio of correct/faulty nodes.
 
-Full nodes satisfy [TMBC-Auth-Byz] [TMBC-FM-2THIRDS]
+#### **[FS-A-VAL]**:
+The system satisfies [TMBC-Auth-Byz] and [TMBC-FM-2THIRDS]. Thus, there is a
+blockchain that satisfies the soundness requirements [TMBC-SOUND-?].
 
-#### **[FS-A-Comm]**:
+#### **[FS-A-COMM]**:
 Communication between Fastsync and a correct peer is reliable and
 bounded in time.
 
@@ -106,6 +109,14 @@ The node executing Fastsync is following the protocol (it is correct).
 ### Design choices
 
 > input/output variables used to define the temporal properties. Most likely they come from an ADR
+
+As we do not put assumptions on the existence of a correct full node
+in *peerIDs*. Under this assumption we cannot guarantee the properties
+described in the sequential specification above. Thus, in the
+distributed setting, we consider two kinds of termination:
+
+#### **[FS-DISTR-TERM]**:
+*Fastsync* may terminate normally or aborts.
 
 
 The Tendermint Full Node exposes the following functions over Tendermint RPC:
@@ -149,28 +160,9 @@ func Block(addr Address, height int64) (Block, error)
 
 ### Temporal Properties
 
-*Fastsync* may terminate successfully or aborts.
-
-> safety specifications / invariants in English 
 
 
-
-**TODO:** invariant in case there is no correct peer successful case
-and abort case
-
-
-
-#### **[FS-VC-Inv]**:
-Let *t* be the maximum height of a correct peer at the time *Fastsync*
-starts. 
-Upon termination, the application state is the one that corresponds to
-the blockchain at height *t*.
-
-
-> liveness specifications in English. Possibly with timing/fairness requirements:
-e.g., if the component is connected to a correct full node and communication is
-reliable and timely, then something good happens eventually. 
-
+We sometimes consider the following (fairness) constraints:
 
 #### **[FS-CORR-PEER]**:
 The set *peerID* contains one correct full node.
@@ -179,9 +171,45 @@ The set *peerID* contains one correct full node.
 The peer on which the RPC is called is correct and no timeout occurs
 at the caller. 
 
-#### **[FS-VC-LIFE]**:
 
 
+
+> safety specifications / invariants in English 
+
+
+
+#### **[FS-VC-NONABORT]**:
+Under [FS-CORR-PEER] and [FS-LUCKY-CASE], *Fastsync* never aborts.
+
+*Remark:* together with [FS-VC-TERM] below that means it will
+terminate normally.
+
+
+#### **[FS-VC-INV]**:
+If *FastSync* terminates normally at height *t*, then the
+application state is the one that corresponds to the blockchain at
+height *t*.
+
+
+#### **[FS-VC-CORR-INV]**:
+Under [FS-CORR-PEER] and [FS-LUCKY-CASE], let *t* be the maximum
+height of a correct peer in *peerIDs* at the time *Fastsync*
+starts. If *FastSync* terminates normally, it is at some height *t' >=
+t*.
+
+
+
+> liveness specifications in English. Possibly with timing/fairness requirements:
+e.g., if the component is connected to a correct full node and communication is
+reliable and timely, then something good happens eventually. 
+
+
+
+#### **[FS-VC-TERM]**:
+*Fastsync* eventually terminates normally or it eventually aborts.
+
+#### **[FS-VC-NONAB]**:
+Under [FS-CORR-PEER] and [FS-LUCKY-CASE], *Fastsync* does not abort.
 
 > How is the problem statement linked to the "Sequential Problem statement". 
 Simulation, implementation, etc. relations 
@@ -237,11 +265,11 @@ The protocols is described in terms of functions that are triggered by
 
 - `QueryStatus()`: regularly (every 10sec) queries all known full nodes
   for their current height of their local chain [addlink]. It does so
-  by calling `Status(n)` on all known full nodes *n*.
+  by calling `Status(n)` remotely on all known full nodes *n*.
   
 - `CreateRequest`: regularly checks whether certain blocks have no open
   request and queries one from a full node. It does so by calling
-  `Block(n,h)` on one full node *n* for a missing height *h*.
+  `Block(n,h)` remotely on one full node *n* for a missing height *h*.
   
 
 The functions `Status` and `Block` are called by asynchronous
@@ -249,7 +277,7 @@ RPC. When they return, the following functions are called:
 
 - `OnStatusResponse(addr Address, height int64)`: The full node with
   address *addr* returns its current height. This updates the height
-  information about *addr*, and may alsi increase *TargetHeight*
+  information about *addr*, and may also increase *TargetHeight*
   
 - `OnBlockResponse(addr Address, b Block)`. The full node with
   address *addr* returns a block. It is added to *blockstore*. Then
@@ -261,12 +289,12 @@ RPC. When they return, the following functions are called:
   block. If the longest prefix reaches *TargetHeight* it terminates
   fastsync.
   
- 
+### Function definitions
  
 ```go
 func QueryStatus() {
   for i, s range peerIDs {
-    sh := Status(s)
+    call asynchronously Status(s)
   }
 }
 ```
