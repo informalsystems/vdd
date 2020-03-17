@@ -315,9 +315,12 @@ func OnStatusResponse(addr Address, height int64)
 - Comments
     - 
 - Expected precondition
-    - *peerHeights(addr) <= height* ?
+    - *peerHeights(addr) <= height*  
+	  **TODO:** If messages can be re-ordered this precondition should
+      be removed.
 - Expected postcondition
     - *peerHeights(addr) = height*
+	- (*Remark:* *TargetHeight* is updated)
 - Error condition
     - if precondition is violated: remove *addr* from *peerIDs*
 ----
@@ -332,9 +335,13 @@ func CreateRequest
     - *height < TargetHeight*
 	- *peerIDs* nonempty
 - Expected postcondition
-    - Block is called at a peer in peerIDs for a missing height 
+    - Function `Block` is called remotely at a peer *addr* in peerIDs 
+	  for a missing height  
+	  *Remark:* different implementations may have different
+      strategies to balance the load over the peers
+    - *pendingblocks(b.Height) = addr*
 - Error condition
-    - if *peerIDs* is empty: no correct peers left; panic
+    - if *peerIDs* is empty: no correct peers left;  abort.
 ----
 
 
@@ -350,7 +357,8 @@ func OnBlockResponse(addr Address, b Block)
     - *receivedBlocks(b.Height) = addr*
 	- *blockstore(b.Height) = b*
 - Error condition
-    - if precondition is violated: remove *addr* from *peerIDs*
+    - if precondition is violated: remove *addr* from *peerIDs*; reset
+	*pendingblocks(b.Height) to nil;
 ----
 
 TODO next:
