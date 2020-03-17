@@ -18,11 +18,13 @@ will be used.
 Fastsync is a protocol that is used by a full node to catchup to the
 current state of a Tendermint blockchain. Its typical use case is a
 full node that was disconnected from the system for some time. The
-recovering full node then queries its peers for the blocks that were
-decided on by the Tendermint blockchain during the period the full
-node was disconnected. It then executes the transactions in the block
-in order to catch-up to the current height of the blockchain and the
-corresponding application state.
+recovering full node locally has a copy of a prefix of the blockchain,
+and the corresponding application state that is slightly outdated. It
+then queries its peers for the blocks that were decided on by the
+Tendermint blockchain during the period the full node was
+disconnected. After receiving these blocks, it executes the
+transactions in the block in order to catch-up to the current height
+of the blockchain and the corresponding application state.
 
 ## Informal Problem statement
 
@@ -31,11 +33,11 @@ from a bird's eye view.
 
 A full node has as input a block of the blockchain at height *h* and
 the corresponding application state (or the prefix of the current
-blockchain until height *h*). It has access to a set of full nodes
-called *peers* that it knows of.  The full node uses the peers to read
-blocks of the Tendermint blockchain (in a safe way, that is, checking
-the soundness conditions), until it has read the most recent block and
-then terminates.
+blockchain until height *h*). It has access to a set *peerIDs* of full
+nodes called *peers* that it knows of.  The full node uses the peers
+to read blocks of the Tendermint blockchain (in a safe way, that is,
+it checks the soundness conditions), until it has read the most recent
+block and then terminates.
 
 
 ## Sequential Problem statement
@@ -43,10 +45,9 @@ then terminates.
 > should be English and precise. will be accompanied with a TLA spec.
 
 *Fastsync* gets as input a block of height *h* and the corresponding
-application state *s*, and produces as
-output a list *l* of blocks and the application 
-state when applying the transaction
-of the list *l* to *s*.
+application state *s*, and produces as output a list *l* of blocks
+starting at height *h* to some height *t*, and the application state
+when applying the transaction of the list *l* to *s*.
 
 #### **[FS-Seq-Live]**: 
 *Fastsync* eventually terminates.
@@ -58,16 +59,18 @@ block to the list, and do the verification and the computation of the
 application state should be less than *ETIME* from [TMBC-SEQ-APPEND-E].
  
 #### **[FS-Seq-Term]**:
+Let *bh* be the height of the blockchain at the time *Fastsync* starts.
 When *Fastsync* terminates, it outputs a list of all blocks from
-height *h* to the current height *h'* of the blockchain,
-[**[TMBC-SEQ]**][TMBC-SEQ-link].  
-Upon termination the application state is the one that corresponds to
-*h'*.
+height *h* to some height *t >= bh*,
+[**[TMBC-SEQ]**][TMBC-SEQ-link].
+
 
 
 
 #### **[FS-Seq-Inv]**:
-*Fastsync* never stores a header/block which is not in the blockchain.
+Upon termination, the application state is the one that corresponds to
+the blockchain at height *t*.
+
 
 
 
@@ -83,7 +86,7 @@ correctly
 
 > should have clear formalization in temporal logic.
 
-**TODO:** peer exchange maintains a list of peers (full nodes)
+*Fastsync* has access to a list of peers (full nodes) called *peerIDs*
 
 Peers can be faulty, and we do not make any assumption about number or
 ratio of correct/faulty nodes.
@@ -96,8 +99,6 @@ bounded in time.
 
 #### **[FS-A-LCC]**:
 The node executing Fastsync is following the protocol (it is correct).
-
-TODO: message passing vs. rpc
 
 
 ## Distributed Problem Statement
@@ -127,7 +128,6 @@ func Status(addr Address) (int64, error)
 - Error condition
    * if *n* is correct: timeout
    * if *n* is faulty: arbitrary error
-
 ----
 
 
@@ -145,18 +145,43 @@ func Block(addr Address, height int64) (Block, error)
 - Error condition
   - if *n* is correct: precondition violated or timeout 
   - if *n* is faulty: arbitrary error
-
 ----
 
 ### Temporal Properties
 
+*Fastsync* may terminate successfully or aborts.
+
 > safety specifications / invariants in English 
+
+
+
+**TODO:** invariant in case there is no correct peer successful case
+and abort case
+
+
+
+#### **[FS-VC-Inv]**:
+Let *t* be the maximum height of a correct peer at the time *Fastsync*
+starts. 
+Upon termination, the application state is the one that corresponds to
+the blockchain at height *t*.
+
 
 > liveness specifications in English. Possibly with timing/fairness requirements:
 e.g., if the component is connected to a correct full node and communication is
 reliable and timely, then something good happens eventually. 
 
-should have clear formalization in temporal logic.
+
+#### **[FS-CORR-PEER]**:
+The set *peerID* contains one correct full node.
+
+#### **[FS-LUCKY-CASE]**:
+The peer on which the RPC is called is correct and no timeout occurs
+at the caller. 
+
+#### **[FS-VC-LIFE]**:
+
+
 
 > How is the problem statement linked to the "Sequential Problem statement". 
 Simulation, implementation, etc. relations 
@@ -168,11 +193,6 @@ Simulation, implementation, etc. relations
 > some math that allows to write specifications and pseudo code solution below.
 Some variables, etc. 
 
-## Solution
-
-> Basic data structures. Simplified, so that we can focus on the distributed
-algorithm here. If existing: link to Tendermint data structures, and mentioned
-if details were omitted. 
 
 #### Fastsync has the following configuration parameters:
 - *trustingPeriod*: a time duration [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
@@ -180,10 +200,7 @@ if details were omitted.
   only approximately synchronized clocks.
   
 
-#### Interface to peer exchange
-- *peerIDs*: peer addresses provided by peer exchange
 
-**Question1:** if a peer is removed does peer exchange figure that our?
 
 #### Inputs
 - *startBlock*: block of height Fastsync starts from
@@ -192,6 +209,7 @@ if details were omitted.
 #### Variables
 - *height*: initially *startBlock.Height*
 - *state*: initially *startState*
+- *peerIDs*: peer addresses 
 - *peerHeigts*: stores for each peer the height it reported. initially 0
 - *pendingBlocks*: stores for each height which peer was
   queried. initially nil
@@ -199,10 +217,16 @@ if details were omitted.
 - *blockstore*: stores for each height greater than
     *startBlock.Height*, the block of that height
 
-#### Definitions
+#### Macro
 - *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*  
   *Remark:* it is only computed over peers that are not considered
   faulty, yet
+
+## Solution
+
+> Basic data structures. Simplified, so that we can focus on the distributed
+algorithm here. If existing: link to Tendermint data structures, and mentioned
+if details were omitted. 
 
 ### Outline
 
@@ -233,7 +257,10 @@ RPC. When they return, the following functions are called:
 
 - `Execute()`: Iterates over the *blockstore*. Starts at height until
   the longest prefix. Checks soundness of
-  block after block, and executes the transactions of a sound block
+  block after block, and executes the transactions of a sound
+  block. If the longest prefix reaches *TargetHeight* it terminates
+  fastsync.
+  
  
  
 ```go
@@ -347,3 +374,30 @@ of the problem statement
 # References
 
 > links to other specifications/ADRs this document refers to
+
+
+[block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockcha
+in.md
+[blockchain]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md
+[TMBC-HEADER-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-header
+[TMBC-SEQ-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq
+[TMBC-CorrFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-corrfull
+[TMBC-Sign-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-sign
+[TMBC-FaultyFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-faultyfull
+[TMBC-TIME_PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time_params
+[TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-fm-2thirds
+[TMBC-INV-SIGN-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-sign
+[TMBC-INV-VALID-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-valid
+
+[LCV-VC-LIVE-link]: https://github.com/informalsystems/VDD/tree/master/lightclient/verification.md#lcv-vc-live
+
+[lightclient]: https://github.com/interchainio/tendermint-rs/blob/e2cb9aca0b95430fca2eac154edddc9588038982/docs/architecture/adr-002-lite-client.md
+[failuredetector]: https://github.com/informalsystems/VDD/blob/master/liteclient/failuredetector.md
+[fullnode]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md
+
+[FN-LuckyCase-link]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md#fn-luckycase
+
+[blockchain-validator-set]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md#data-structures
+[fullnode-data-structures]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md#data-structures
+
+[FN-ManifestFaulty-link]: https://github.com/tendermint/spec/blob/master/spec/blockchain/fullnode.md#fn-manifestfaulty
