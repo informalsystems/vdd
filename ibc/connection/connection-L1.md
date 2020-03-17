@@ -33,12 +33,13 @@ Properties that should hold:
 
 #### Expected Expertise
 
-- **lead:** distributed algorithm designer
+- **lead:** distributed algorithm designer: Adi
 - **input/feedback:** distributed systems engineers
 
 #### Artifacts
 
-  - High level English specification of the problem.
+  - High level English specification of the problem:
+  ibc-rs/docs/spec/connection/L1_2.md
 
 #### Verification, Validation, or Proof Obligation
 
@@ -132,7 +133,7 @@ a correct process B, then the connection is eventually established.
 
 ##### Expected Expertise
 
-  - **lead:** distributed algorithm designer
+  - **lead:** distributed algorithm designer: Adi
   - **input/feedback:** distributed systems engineers,
   verification engineers
 
@@ -140,7 +141,7 @@ a correct process B, then the connection is eventually established.
 
   - High-level English specification covering aspects mentioned above
   (processes, communication channels, synchrony assumptions, safety and
-  liveness properties).
+  liveness properties): ibc-rs/docs/spec/connection/L1_2.md
 
 ##### Verification, Validation, or Proof Obligation
 
@@ -263,17 +264,16 @@ function connOpenTry(
 
 ##### Expected Expertise
 
-  - **lead:** distributed algorithm designer and/or verification engineer
+  - **lead:** Adi, Zarko
   - **input/feedback:** verification engineers and distributed systems
   engineers
 
 ##### Artifacts
 
-  - English description of the protocol
-  - TLA+ specification of the protocol
+  - English description of the protocol: ibc-rs/docs/spec/connection/L1_2.md
+  - TLA+ specification of the protocol: ibc-rs/docs/spec/connection/L2.tla
   - TLA+ specification of properties (expressed in English in the section
-  2.1) as invariants and temporal properties
-  - Abstract test scenarios
+  2.1) as invariants and temporal properties: ibc-rs/docs/spec/connection/L2.tla
 
 ##### Verification, Validation, or Proof Obligation
 
@@ -297,7 +297,7 @@ multiple nodes (roles):
 
 - IBC connection module
 - Relayer
-- Light client
+- IBC light client module
 
 IBC connection module implements core connection handshake protocol
 from the endpoint view point. It is a deterministic state machine
@@ -322,18 +322,19 @@ it as part of this protocol as an oracle that provides some services.
 
 #### Expected Expertise
 
-- **lead:** distributed systems engineer
+- **lead: Ilina
 - **input/feedback:** distributed protocol designer, verification engineer
 
 #### Artifacts
 
-- Code of the IBC connection module
+- Code of the IBC connection module (currently Go implementation)
 - TLA+ specification of the IBC connection module (multi connection support,
-data store, light client management, error handling, etc)
+data store, light client management, error handling, etc):
+ibc-rs/docs/spec/connection/L3.tla
 - TLA+ specification of properties introduced at the
 implementation level (for example concurrency related) expressed as
-invariants and temporal properties
-- Abstract test scenarios
+invariants and temporal properties:
+ibc-rs/docs/spec/connection/L3.tla
 
 #### Verification, Validation, or Proof Obligation
 
