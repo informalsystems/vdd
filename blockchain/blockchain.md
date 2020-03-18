@@ -408,7 +408,7 @@ The following invariant is crucial to guarantee the soundness of the chain:
 
 A correct validator sends and signs precommit for a block *b*, only if `valid(b)`.
 
-*Remark:*  Code line 36 in the  [consensus algorithm][arXiv].
+*Remark:* Follows from code line 36 in the  [consensus algorithm][arXiv].
 
 
 
@@ -421,7 +421,7 @@ validator**. As a result, a commit that is well-formed (that is, is in
 *PossibleCommit(b)*) and signed by a correct validator is a proof that
 *b* is in the blockchain. 
 
-"Signed by a correct validator" means that the validator *n*
+*Remark:* "Signed by a correct validator" means that the validator *n*
 sends *precommit* at time *t* and *correct(n, t)* holds.
 
 
@@ -492,9 +492,10 @@ Until now, we have established soundness of the blockchain, and some
 invariants expected from correct validators when observed from the
 outside. Below we describe the internals of the [consensus
 algorithm][arXiv]. For details we refer to the [paper][arXiv] or to a
-later (more complete version) of this specifications. *Remark:* right
-now the goals is to have a formal understanding of the outside view of
-the blockchain.
+later (more complete version) of this specifications.  
+*Remark:* right
+now the goal is to have a formal understanding of the outside view of
+the blockchain in order to be able to specify other protocols.
 
 ## Distributed Problem Statement
 
@@ -548,9 +549,10 @@ node *p*, with *correct(p, t)*, the soundness requirements hold for
 *chain_p(t)*.
 
 
-*Remark:* Validity should make reference to the mempool, e.g., only messages from the
-  mempool + we will need a spec for the mempool. For now I leave it like that
-  as the light client and fastsync do not care about that.
+*Remark:* Validity [TMBC-VC_VAL] should make reference to the mempool,
+e.g., only messages from the mempool are added to Data + we will need
+a spec for the mempool. For now I leave it like that as the light
+client and fastsync do not care about that.
   
 *Remark:* Additional application specific soundness requirements might
 also need to hold.
@@ -559,8 +561,8 @@ also need to hold.
 
 ### Liveness
 #### **[TMBC-VC-PROG]**: 
-For all correct full nodes *p* and all times *t* there exists a time
-*t'*, such that *|chain_p(t)| < |chain_p(t')|*.
+For all full nodes *p* and all times *t*, there exists a time *t'*,
+such that if if *correct(p, t')*, then *|chain_p(t)| < |chain_p(t')|*.
 
 
 
