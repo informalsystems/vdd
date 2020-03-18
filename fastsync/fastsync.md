@@ -23,7 +23,7 @@ and the corresponding application state that is slightly outdated. It
 then queries its peers for the blocks that were decided on by the
 Tendermint blockchain during the period the full node was
 disconnected. After receiving these blocks, it executes the
-transactions in the block in order to catch-up to the current height
+transactions in the blocks in order to catch-up to the current height
 of the blockchain and the corresponding application state.
 
 ## Informal Problem statement
@@ -86,7 +86,8 @@ correctly
 
 > should have clear formalization in temporal logic.
 
-*Fastsync* has access to a list of peers (full nodes) called *peerIDs*
+*Fastsync* has access to a set *peerIDs* of IDs (public keys) of peers
+(full nodes). 
 
 #### **[FS-A-PEER]**:
 Peers can be faulty, and we do not make any assumption about number or
@@ -110,14 +111,15 @@ The node executing Fastsync is following the protocol (it is correct).
 
 > input/output variables used to define the temporal properties. Most likely they come from an ADR
 
-As we do not put assumptions on the existence of a correct full node
+We do not put assumptions on the existence of a correct full node
 in *peerIDs*. Under this assumption we cannot guarantee the properties
-described in the sequential specification above. Thus, in the
-distributed setting, we consider two kinds of termination:
+described in the sequential specification above. Thus, in the (unreliable)
+distributed setting, we consider two kinds of termination (normal and abort):
 
 #### **[FS-DISTR-TERM]**:
 *Fastsync* may terminate normally or aborts.
 
+#### Remote Functions
 
 The Tendermint Full Node exposes the following functions over Tendermint RPC:
 
@@ -129,16 +131,18 @@ The Tendermint Full Node exposes the following functions over Tendermint RPC:
 func Status(addr Address) (int64, error)
 ```
 - Implementation remark
-   - RPC to full node *n*
+   - RPC to full node *addr*
 - Expected precodnition
   - none
 - Expected postcondition
-  - if *n* is correct: Returns the current height `height` of the peer
+  - if *addr* is correct: Returns the current height `height` of the peer
    if communication is timely (no timeout)
-  - if *n* is faulty: Returns an arbitrary height
+  - if *addr* is faulty: Returns an arbitrary height
 - Error condition
-   * if *n* is correct: timeout
-   * if *n* is faulty: arbitrary error
+   * if *addr* is correct: timeout  
+   **TODO:** we assume communication is reliable and timely. Should we
+   keep this?
+   * if *addr* is faulty: arbitrary error
 ----
 
 
@@ -146,16 +150,16 @@ func Status(addr Address) (int64, error)
 func Block(addr Address, height int64) (Block, error)
 ```
 - Implementation remark
-   - RPC to full node *n*
+   - RPC to full node *addr*
 - Expected precodnition
   - header of `height` is less than or equal to height of the peer
 - Expected postcondition
-  - if *n* is correct: Returns the block of height `height`
+  - if *addr* is correct: Returns the block of height `height`
   from the blockchain if communication is timely (no timeout)
-  - if *n* is faulty: Returns arbitrary block
+  - if *addr* is faulty: Returns arbitrary block
 - Error condition
-  - if *n* is correct: precondition violated or timeout 
-  - if *n* is faulty: arbitrary error
+  - if *addr* is correct: precondition violated or timeout 
+  - if *addr* is faulty: arbitrary error
 ----
 
 ### Temporal Properties
@@ -208,11 +212,12 @@ reliable and timely, then something good happens eventually.
 #### **[FS-VC-TERM]**:
 *Fastsync* eventually terminates normally or it eventually aborts.
 
-#### **[FS-VC-NONAB]**:
-Under [FS-CORR-PEER] and [FS-LUCKY-CASE], *Fastsync* does not abort.
+
 
 > How is the problem statement linked to the "Sequential Problem statement". 
 Simulation, implementation, etc. relations 
+
+
 
 ## Definitions
 
@@ -223,7 +228,12 @@ Some variables, etc.
 
 
 #### Fastsync has the following configuration parameters:
-- *trustingPeriod*: a time duration [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
+- *trustingPeriod*: a time duration
+  [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).  
+  **TODO:** Right now I largely ignore that. I put that into
+  assumption [FS-A-INIT] below.  We should fix what we assume
+  here, e.g., startBlock is "recent" and clock of fastsyncing node is
+  synchronized to real-time.
 - *clockDrift*: a time duration. Correction parameter dealing with
   only approximately synchronized clocks.
   
@@ -231,8 +241,14 @@ Some variables, etc.
 
 
 #### Inputs
-- *startBlock*: block of height Fastsync starts from
-- *startState*: state corresponding to startBlock.Height
+- *startBlock*: the block Fastsync starts from
+- *startState*: application state corresponding to *startBlock.Height*
+
+#### **[FS-A-INIT]**:
+- *startBlock* is from the blockchain, and within *trustingPeriod*
+(possible with some extra margin to ensure termination before
+*trustingPeriod* expired)
+- *startState* is the application state of the blockchain at Height *startBlock.Height*.
 
 #### Variables
 - *height*: initially *startBlock.Height*
@@ -264,7 +280,7 @@ The protocols is described in terms of functions that are triggered by
 (external) events:
 
 - `QueryStatus()`: regularly (every 10sec) queries all known full nodes
-  for their current height of their local chain [addlink]. It does so
+  for their current height of their local chain [TMBC-LOCAL-CHAIN]. It does so
   by calling `Status(n)` remotely on all known full nodes *n*.
   
 - `CreateRequest`: regularly checks whether certain blocks have no open
@@ -276,7 +292,7 @@ The functions `Status` and `Block` are called by asynchronous
 RPC. When they return, the following functions are called:
 
 - `OnStatusResponse(addr Address, height int64)`: The full node with
-  address *addr* returns its current height. This updates the height
+  address *addr* returns its current height. The function updates the height
   information about *addr*, and may also increase *TargetHeight*
   
 - `OnBlockResponse(addr Address, b Block)`. The full node with
@@ -287,7 +303,7 @@ RPC. When they return, the following functions are called:
   the longest prefix. Checks soundness of
   block after block, and executes the transactions of a sound
   block. If the longest prefix reaches *TargetHeight* it terminates
-  fastsync.
+  *Fastsync*.
   
 
 
@@ -301,28 +317,23 @@ RPC. When they return, the following functions are called:
 > - Error condition
 
 ```go
-func QueryStatus() {
-  for i, s range peerIDs {
-    call asynchronously Status(s)
-  }
-}
+func QueryStatus()
 ```
 - Comments
-    - 
+    - none
 - Expected precondition
     - peerIDs initialized and non-empty
 - Expected postcondition
-    - 
+    - call asynchronously `Status(n)` at all peers *n* in *peerIDs*.
 - Error condition
     - fails if precondition is violated
-
 ----
 
 ```go
 func OnStatusResponse(addr Address, height int64)
 ```
 - Comments
-    - 
+    - none
 - Expected precondition
     - *peerHeights(addr) <= height*  
 	  **TODO:** If messages can be re-ordered this precondition should
@@ -345,10 +356,10 @@ func CreateRequest
 	- *peerIDs* nonempty
 - Expected postcondition
     - Function `Block` is called remotely at a peer *addr* in peerIDs 
-	  for a missing height  
+	  for a missing height *h*  
 	  *Remark:* different implementations may have different
       strategies to balance the load over the peers
-    - *pendingblocks(b.Height) = addr*
+    - *pendingblocks(h) = addr*
 - Error condition
     - if *peerIDs* is empty: no correct peers left;  abort.
 ----
@@ -361,13 +372,14 @@ func OnBlockResponse(addr Address, b Block)
     - it calls `Execute`
 - Expected precondition
     - *pendingblocks(b.Height) = addr*
-	- *b* satisfies basic soundness?
+	- *b* satisfies basic soundness  
+	**TODO:** should this be checked here?
 - Expected postcondition
     - *receivedBlocks(b.Height) = addr*
 	- *blockstore(b.Height) = b*
 - Error condition
     - if precondition is violated: remove *addr* from *peerIDs*; reset
-	*pendingblocks(b.Height) to nil;
+	*pendingblocks(b.Height)* to nil;
 ----
 
 ```go
@@ -381,7 +393,7 @@ func Execute()
 - Expected postcondition
     - height is updated height of complete prefix that matches the blockchain
 	- state is the one of the blockchain at height *height*
-	- if height = TargetHeight: stop everything
+	- if height = TargetHeight: **terminate normally**
 - Error condition
     - if precondition [goodblocks] is violated: there is a bad block *b*; *b*
 	removed from blockstore, node with Address
