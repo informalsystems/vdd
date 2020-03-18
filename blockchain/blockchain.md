@@ -4,20 +4,25 @@
 
 > Rough outline of what the component is doing and why. 2-3 paragraphs
 
-A blockchain is a growing list of sets of transactions, denoted by *chain*. 
-If several processes in a distributed system have access to the blockchain, they can (1) provide transactions as input and (2) use the chain list to execute these transactions in order. 
+A blockchain is a growing list of sets of transactions, denoted by
+*chain*.  If several processes in a distributed system have access to
+the blockchain, they can (1) provide transactions as input and (2) use
+*chain* to execute these transactions in order.
 
-The *chain* list itself should be implemented in a reliable way, which introduces the need for fault-tolerance and distribution.
-The Tendermint protocols implement the blockchain over an unreliable (Byzantine) distributed system. 
-More precisely, a Tendermint system consists of many full nodes that each maintain a local copy of the (prefix of the current) *chain* list.
+The *chain* list itself should be implemented in a reliable way, which
+introduces the need for fault-tolerance and distribution.  The
+Tendermint protocols implement the blockchain over an unreliable
+(Byzantine) distributed system.  More precisely, a Tendermint system
+consists of many so-called [full nodes][fullnode] that each maintain a
+local copy of the (prefix of the current) *chain* list.
 
-In this specification, we are only concerned with the *chain* lists. 
-They are maintained at so-called [full nodes][fullnode], and are the
-result of the execution of the Tendermint consensus protocol,
-described in the [ArXiv paper][arXiv], and are called *decision* in
-this paper. 
-The Tendermint consensus implements a loop with iterator *h* (height). 
-In each iteration, upon deciding on the transactions to be put into the *chain* list, a new *chain* list entry is created.
+In this specification, we are only concerned with the *chain* lists.
+They are maintained at the full nodes, and are the result of the
+execution of the Tendermint consensus protocol, described in the
+[ArXiv paper][arXiv], and are called *decision* in this paper.  The
+Tendermint consensus implements a loop with iterator *h* (height).  In
+each iteration, upon deciding on the transactions to be put into the
+*chain* list, a new *chain* list entry is created.
 
 
 # Part I - Outside view
@@ -30,10 +35,13 @@ spec. Possible interactions, possible use cases, etc.
 > should give the reader the understanding in what environment this component
 will be used.
 
-This specification is central in the collection of Tendermint protocols. 
-The behavior of protocols like [fastsync][fastsync], or the [light client][lightclient] will be defined with respect to this specification. 
-E.g., the light client implements a read operation of the *chain* list entry of some height *h*. 
-It is thus crucial to understand what data is stored in this *chain* list entry, and what are the precise semantics of a read operation in a faulty environment.
+This specification is central in the collection of Tendermint
+protocols.  The behavior of protocols like [fastsync][fastsync], or
+the [light client][lightclient] will be defined with respect to this
+specification.  E.g., the light client implements a read operation of
+the *chain* list entry of some height *h*.  It is thus crucial to
+understand what data is stored in this *chain* list entry, and what
+are the precise semantics of a read operation in a faulty environment.
 
 
 ## Informal Problem statement
@@ -48,11 +56,12 @@ A blockchain provides a growing sequence of sets of transactions.
 > should be English and precise. will be accompanied with a TLA spec.
 
 #### **[TMBC-HEADER]**:
-A set of blockchain transactions is stored in a data structure called *block*, which 
-contains a field called *header*. (The data structure *block* is defined [here][block]). 
-As the header contains hashes to the relevant fields of the block, for the purpose of this
-specification, we will assume that the blockchain is a list of headers, rather than a
-list of blocks. 
+A set of blockchain transactions is stored in a data structure called
+*block*, which contains a field called *header*. (The data structure
+*block* is defined [here][block]).  As the header contains hashes to
+the relevant fields of the block, for the purpose of this
+specification, we will assume that the blockchain is a list of
+headers, rather than a list of blocks. 
 
 #### **[TMBC-HASH-UNIQUENESS]**:
 We assume that every hash in the header identifies the data it hashes. 
@@ -111,7 +120,7 @@ case the blockchain does not grow.
  For all *i < len(chain)*: *chain[i].Height + 1 = chain[i+1].Height*
 
 *Remark:* We do not write *chain[i].Height = i* to allow that a chain
-can be started at some arbitrary height, e.g., when the is social
+can be started at some arbitrary height, e.g., when there is social
 consensus to restart a chain from a given height/block.
 
 *Remark:* Was called [TMBC-SOUND-NO-HOLES]
@@ -150,20 +159,22 @@ The system provides the following functions:
   application. Do we need to talk about the application in this spec?
 
 - `proof(b,commit)`: a predicate: true iff 
-     * *b* is part of the *chain*
-	 * *commit* is in PossibleCommit(b.Height), cf. [TMBC-SOUND-PossCommit].
+     * *b* is part of the *chain*, that is, there is an *i* such that
+       *chain[i] = b*
+	 * *commit* is in PossibleCommit(b), cf. [TMBC-SOUND-PossCommit].
 
-*Remark.* Observe that *proof* refers to the *chain*. It thus depend on
-the execution, which changes quantification. For instance, we say
-"there exists a function *hash* such that for all runs", while we
-say "for each run there exists a function *proof*". The consequence is
-that *hash* is a predetermined function (implemented), while *proof*
-will have to be computed during the run as a function of the
-*chain*. The challenge in a distributed system is to locally compute
-*proof* without necessarily having complete knowledge of *chain*. In
-the context of the light client, we even want to infer knowledge about
-*chain* from the outcomes of the local computation of *proof*. We will
-use digital signatures for that.
+*Remark.* Observe that *proof* refers to the *chain*. It thus depend
+on the execution, which results in a different quantifier order. For
+instance, we say "there exists a function *hash* such that for all
+runs", while we say "for each run there exists a function
+*proof*". The consequence is that *hash* is a predetermined function
+(implemented), while *proof* will have to be computed during the run
+as a function of the *chain*. The challenge in a distributed system is
+to locally compute *proof* without necessarily having complete
+knowledge of *chain*. In the context of the light client, we even want
+to infer knowledge about *chain* from the outcomes of the local
+computation of *proof*. We will use digital signatures for that. We
+will introduce them below when we introduce the distributed aspects.
 
 
 
@@ -175,7 +186,7 @@ Given two blocks *b* and *b'*:
 #### **[TMBC-SOUND-CHAIN]**:
  For all *i < len(chain)*: *match-hash(chain[i], chain[i+1])*
  
-#### **[TMBC-SOUND-LAST-COMM]*:
+#### **[TMBC-SOUND-LAST-COMM]**:
 For all *i < len(chain)*: *match-proof(chain[i], chain[i+1])*
 
 
@@ -240,7 +251,7 @@ actively participates in the distributed consensus, it is called a
 We define a predicate *correct(n, t)*, where *n* is a node and *t* is a 
 time point. 
 The predicate *correct(n, t)* is true if and only if the node *n* 
-follows all the protocols until time *t*.
+follows all the protocols (at least) until time *t*.
 
 ## Authenticated Byzantine Model
 
@@ -266,10 +277,10 @@ that we can at least use for verification.
   to the pair *(data, addr)* such that *sd = sign_addr(data)*.
 
 #### **[TMBC-Sign-NoForge]**:
-For all runs *r*, for all nodes *p* and *q* with address *aq*, for all
-*sd* from SignedData, if *p*
-sends a message that contains *sd* from *SignedData(aq)* in run *r*,
-then *q* has sent a message containing *sd* earlier in run *r*.
+For all runs *r*, for all nodes *p* and *q*, for all
+*sdq* from SignedData, if *aq* is the address of *q* and *p*
+sends a message that contains *sdq* from *SignedData(aq)* in run *r*,
+then *q* has sent a message containing *sdq* earlier in run *r*.
 
 *Remark:* [TMBC-Sign-NoForge] can be written as invariant over the
 message history.
@@ -305,9 +316,9 @@ the context.
 #### **[TMBC-VALIDATOR-Pair]**:
 
 Given a full node, a 
-*validator pair* is a pair *(public key, voting power)*, where 
-  - *Address* is the address (public key) of the full node, 
-  - *voting power* is an integer (representing the full node's
+*validator pair* is a pair *(address, voting_power)*, where 
+  - *address* is the address (public key) of a full node, 
+  - *voting_power* is an integer (representing the full node's
   voting power in a certain consensus instance).
   
 *Remark:* In the Golang implementation the data type for *validator
@@ -317,7 +328,7 @@ pair* is called `Validator`
 #### **[TMBC-VALIDATOR-Set]**:
 
 A *validator set* is a set of validator pairs. For a validator set
-*vs*, we write TotalVotingPower(vs) for the sum of the voting powers
+*vs*, we write *TotalVotingPower(vs)* for the sum of the voting powers
 of its validator pairs.
 
 #### **[TMBC-VP-SOUND-VALID-UNIQUE]**:
@@ -337,9 +348,9 @@ most one validator pair for each full node.
 #### **[TMBC-VOTE]**:
 A vote contains a `prevote` or `precommit` message sent and signed by
 a validator node during the execution of [consensus][arXiv]. Each 
-message contain the following field
+message contain the following fields
    - `Type`: prevote or precommit
-   - `Height`
+   - `Height`: positive integer
    - `Round` a positive integer
    - `BlockID` a Hashvalue of a block (not necessarily a block of the chain)
 
@@ -352,9 +363,10 @@ For a block *b*, each element *pc* of *PossibleCommit(b)* satisfies:
   - each vote *v* in *pc* satisfies
      * *pc* contains only signed votes by validators from *b.Validators*
      * v.blockID - hash(b)
-	 * v.Height = b.Height *TODO:* complete the checks here
+	 * v.Height = b.Height  
+	 **TODO:** complete the checks here
   - the sum of the voting powers in *pc* is greater than 2/3
-  TotalVotingPower(b.Validators) 
+  *TotalVotingPower(b.Validators)*
 
 
 #### **[TMBC-SOUND-DISTR-LAST-COMM]**:
