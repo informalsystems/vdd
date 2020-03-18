@@ -503,7 +503,7 @@ up to time *t*. For now we assume that both failure assumptions
 
 
 
-
+#### **[TMBC-LOCAL-CHAIN]**:
 
 Each correct full node *p* maintains its local copy of the Tendermint
 blockchain, denoted by *chain_p*.
