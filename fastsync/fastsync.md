@@ -281,7 +281,7 @@ The protocol is described in terms of functions that are triggered by
 
 - `QueryStatus()`: regularly (every 10sec) queries all known full nodes
   for their current height [TMBC-LOCAL-CHAIN]. It does so
-  by calling `Status(n)` remotely on all known full nodes *n*.
+  by calling `Status(n)` remotely on all peers *n*.
   
 - `CreateRequest`: regularly checks whether certain blocks have no open
   request and queries one from a full node. It does so by calling
