@@ -14,15 +14,16 @@ introduces the need for fault-tolerance and distribution.  The
 Tendermint protocols implement the blockchain over an unreliable
 (Byzantine) distributed system.  More precisely, a Tendermint system
 consists of many so-called [full nodes][fullnode] that each maintain a
-local copy of the (prefix of the current) *chain* list.
+local copy of (a prefix of) the current *chain*.
 
 In this specification, we are only concerned with the *chain* lists.
 They are maintained at the full nodes, and are the result of the
 execution of the Tendermint consensus protocol, described in the
-[ArXiv paper][arXiv], and are called *decision* in this paper.  The
-Tendermint consensus implements a loop with iterator *h* (height).  In
-each iteration, upon deciding on the transactions to be put into the
-*chain* list, a new *chain* list entry is created.
+[ArXiv paper][arXiv]. The list *chain* is called *decision* in the
+paper, and the paper does not consider internals of what is stored in
+decision. The Tendermint consensus implements a loop with iterator
+*h* (height).  In each iteration, upon deciding on the transactions to
+be put into the *chain*, a new *chain* list entry is created.
 
 
 # Part I - Outside view
@@ -90,24 +91,31 @@ The Tendermint blockchain is a list *chain* of headers.
 ### Appending a block
 
 #### **[TMBC-SEQ-GROW]**: 
+
 During operation, new headers may be appended to the list one by one.
+
+
+
+In the following, *ETIME* and *LTIME* define the earliest and latest
+times at which a new block is added. We are not fixing these times
+here. Rather, they should serve as defining constraints for temporal
+properties of other protocols. For instance, we might instantiate
+these times by setting *ETIME* to infinity, when we say that
+*Fastsync* terminates in the case the blockchain does not grow.
 
 #### **[TMBC-SEQ-APPEND-E]**: 
 If a header is appended at time *t* then no additional header will be
-appended before time *t + ETIME*
+appended before time *t + ETIME*.
 
 
 #### **[TMBC-SEQ-APPEND-L]**: 
 If a header is appended at time *t* then the next header will be
-appended before time *t + LTIME*
+appended before time *t + LTIME*.
 
 #### **[TMBC-SEQ-APPEND-ELEL]**: 
 *ETIME <= LTIME*
 
-*Remark:* *ETIME* and *LTIME* define the earliest and latest times at
-which a new block is added. We might later parameterize by setting
-*ETIME* to infinity, e.g., when we say that fastsync terminates in the
-case the blockchain does not grow.
+ 
 
 
 
@@ -119,14 +127,14 @@ case the blockchain does not grow.
 #### **[TMBC-SOUND-INC-HEIGHT]**:
  For all *i < len(chain)*: *chain[i].Height + 1 = chain[i+1].Height*
 
-*Remark:* We do not write *chain[i].Height = i* to allow that a chain
+*Remark:* We do not write *chain[i].Height = i*, to allow that a chain
 can be started at some arbitrary height, e.g., when there is social
 consensus to restart a chain from a given height/block.
 
-*Remark:* Was called [TMBC-SOUND-NO-HOLES]
+
 
 #### **[TMBC-SOUND-INC-TIME]**:
- For all *i < len(chain)*: *chain[i].Time < chain[i+1].Time*
+For all *i < len(chain)*: *chain[i].Time < chain[i+1].Time*
 
 
 #### **[TMBC-SOUND-NextV]**:
@@ -138,8 +146,8 @@ For all *i < len(chain)*: *chain[i+1].Validators = chain[i].NextValidators*
 ###  Functions, Domains, and more soundness conditions
 
 #### **[TMBC-SOUND-PossCommit]**:
-There is a function PossibleCommit that maps a block (header) to a set
-of values  in DomainCommit.
+There is a function *PossibleCommit* that maps a block (header) to a set
+of values  in DomainCommit, cf. [TMBC-HEADER-Fields].
 
 <!---
 There is a function PossibleCommit that maps for *0 < i <= len(chain)*, 
@@ -147,16 +155,16 @@ chain[i-1] to a set of values in DomainCommit.
 -->
 
 
-#### **[TMBC-SOUND-FUNCTIONS]**:
+#### **[TMBC-SOUNDNESS-FUNCTIONS]**:
 The system provides the following functions:
 
 - `hash`: We assume that every hash identifies the data it hashes
 
-- `execute`: used for state machine replication. maps Data
-  (transactions) and a state to a new state. It is a function
+- `execute`: used for state machine replication. maps *Data*
+  (transactions) and an *application state* to a new state. It is a function
   (deterministic transitions).  
   **TODO:** it is provided by the
-  application. Do we need to talk about the application in this spec?
+  application. Do we need to talk about applications in this spec?
 
 - `proof(b,commit)`: a predicate: true iff 
      * *b* is part of the *chain*, that is, there is an *i* such that
@@ -177,7 +185,7 @@ computation of *proof*. We will use digital signatures for that. We
 will introduce them below when we introduce the distributed aspects.
 
 
-
+#### **[TMBC-SOUNDNESS-PREDICATES]**:
 Given two blocks *b* and *b'*:
 
 - `match-hash(b,b')` iff *hash(b) = b'.LastBlockID*
@@ -221,8 +229,9 @@ correctly
 ## Timing, nodes, and correctness assumptions
 
 In a Tendermint system, the nodes that choose to interact with each
-other collectively implement the *chain* list in a distributed manner
-by executing a protocol.  The Tendermint protocols should ensure that
+other collectively compute the list *chain* in a distributed manner
+by executing the [consensus protocol][arXiv]. 
+The Tendermint protocols should ensure that
 the participating nodes cannot benefit by deviating from the expected
 behavior.  As a result, the nodes should be motivated (incentivized)
 to follow the protocol.  This is achieved by requiring the nodes to
@@ -266,19 +275,21 @@ another message and forwarded. In the distributed algorithm literature
 (e.g., [[DLS88]][DLS]), this model is called **authenticated
 Byzantine**.  Similar to Nancy Lynch when writing her book on
 distributed algorithms, "we do not know of a nice formal definition"
-for Byzantine failures with authentication.  So, let's try something
-that we can at least use for verification.
+for Byzantine failures with authentication.  So, we give an
+axiomatization that is sufficient for verification.
 
 #### **[TMBC-Sign]**:
 - For each node with address *addr*, there is a function *sign_addr*
   that maps *Data* to a domain *SignedData(addr)*.
-- SignedData is the disjoint union of *SignedData(addr)* over all *addr*.
-- There is a function *check* that maps SignedData *sd*
+- *SignedDataDomain* is the disjoint union of *SignedData(addr)* over
+  all *addr*. We call an element of *SignedDataDomain* signed data.
+- There is a function *check* that maps signed data *sd*
   to the pair *(data, addr)* such that *sd = sign_addr(data)*.
 
 #### **[TMBC-Sign-NoForge]**:
 For all runs *r*, for all nodes *p* and *q*, for all
-*sdq* from SignedData, if *aq* is the address of *q* and *p*
+*sdq* from SignedDataDomain, if *aq* is the address of *q* and *p*
+(different from *q*)
 sends a message that contains *sdq* from *SignedData(aq)* in run *r*,
 then *q* has sent a message containing *sdq* earlier in run *r*.
 
@@ -301,9 +312,9 @@ cannot forge messages [TMBC-Sign-NoForge].
 ## Validators
 
 In [TMBC-HEADER-Fields], most of the fields are defined for abstract
-domains. Here we will specialize DomainVal and DomainCommit, and
-describe how validators and commit are implemented in Tendermint
-consensus.
+domains. Here we will specialize DomainVal and DomainCommit to the
+distributed setting, and describe how validators and commit are
+implemented in Tendermint consensus.
 
 *Remark:* We observed that in the existing documentation the term
 *validator* refers to both a data structure and a full node that
@@ -362,7 +373,7 @@ A commit is a set of signed votes.
 For a block *b*, each element *pc* of *PossibleCommit(b)* satisfies:
   - each vote *v* in *pc* satisfies
      * *pc* contains only signed votes by validators from *b.Validators*
-     * v.blockID - hash(b)
+     * v.blockID = hash(b)
 	 * v.Height = b.Height  
 	 **TODO:** complete the checks here
   - the sum of the voting powers in *pc* is greater than 2/3
@@ -385,19 +396,20 @@ definition of soundness for LastCommit in the distributed setting.
 Commit messages are used to establish proof that a certain block is on
 the blockchain. 
 
-We now make explicit some invariants a correct validator must ensure.
-We consider a predicate `valid` over blocks, and `precommit`
-     messages of the [consensus algorithm][arXiv].
-Correct validators use *valid* to ensure the soundness requirements of
+We now make explicit some invariants a correct validator node must ensure.
+We us from the [consensus algorithm][arXiv]
+the predicate `valid` over blocks, and `precommit`
+     messages.
+Correct validator nodes use *valid* to ensure the soundness requirements of
      the blockchain [TMBC-SOUND-?], and send *precommit* messages
      only for blocks for which *valid* evaluates to true.
 
 #### **[TMBC-INV-CORR-PROC-VALID]**:
 
 There is a predicate `valid` over a block (and the prefix of the
-chain, which we omit in the notation for now).
-In particular, if *valid(b)* evaluates to true at a correct validator,
-     then *b.Validators = b'.NextValidators* of the block *b'* of
+chain, which we omit in the notation).
+In particular, if *valid(b)* evaluates to true at a correct validator node,
+     then *b.Validators = pred'.NextValidators* of the block *pred* of
      height *h - 1* of the blockchain;
 
 
@@ -406,7 +418,7 @@ The following invariant is crucial to guarantee the soundness of the chain:
 
 #### **[TMBC-INV-CORR-PROC-COMMIT]**:
 
-A correct validator sends and signs precommit for a block *b*, only if `valid(b)`.
+A correct validator node sends and signs precommit for a block *b*, only if `valid(b)`.
 
 *Remark:* Follows from code line 36 in the  [consensus algorithm][arXiv].
 
@@ -417,11 +429,12 @@ A correct validator sends and signs precommit for a block *b*, only if `valid(b)
 From [TMBC-INV-CORR-PROC-VALID] and [TMBC-INV-CORR-PROC-COMMIT]
 follows that **more than two thirds of the voting
 power in *b.Validators* is correct for any block *b* signed by a correct
-validator**. As a result, a commit that is well-formed (that is, is in
-*PossibleCommit(b)*) and signed by a correct validator is a proof that
+validator node**. As a result, a commit that is well-formed (that is, is in
+*PossibleCommit(b)*) and signed by a correct validator node is a proof that
 *b* is in the blockchain. 
 
-*Remark:* "Signed by a correct validator" means that the validator *n*
+*Remark:* "Signed by a correct validator node" means that the
+validator node *n*
 sends *precommit* at time *t* and *correct(n, t)* holds.
 
 
@@ -429,7 +442,8 @@ sends *precommit* at time *t* and *correct(n, t)* holds.
 #### **[TMBC-VAL-COMMIT]**:
 
 If for a block *b*,  a commit *c*
-  - contains one correct validator, 
+  - contains at least one validator pair *(v,p)* such that *v* is a correct
+    validator node, and
   - is contained in *PossibleCommit(b)*
   
 then the block *b* is on the blockchain.
@@ -437,14 +451,14 @@ then the block *b* is on the blockchain.
 
 
 
-## Tendermint failure model
+## Tendermint failure model (a.k.a. Tendermint Security Model)
 
 
 
 
 
 #### **[TMBC-FM-2THIRDS]**:
-(Tendermint Failure Model) If a block *h* is in the chain,
+If a block *h* is in the chain,
 then there exists a subset *CorrV*
 of *h.NextValidators*, such that:
   - *TotalVotingPower(CorrV) > 2/3
@@ -491,10 +505,9 @@ contains a correct node using *tb*.
 Until now, we have established soundness of the blockchain, and some
 invariants expected from correct validators when observed from the
 outside. Below we describe the internals of the [consensus
-algorithm][arXiv]. For details we refer to the [paper][arXiv] or to a
-later (more complete version) of this specifications.  
-*Remark:* right
-now the goal is to have a formal understanding of the outside view of
+algorithm][arXiv]. For details we refer to the [paper][arXiv].  
+*Remark:* For
+now the goal of this specification is to have a formal understanding of the outside view of
 the blockchain in order to be able to specify other protocols.
 
 ## Distributed Problem Statement
