@@ -279,7 +279,7 @@ if details were omitted.
 The protocol is described in terms of functions that are triggered by
 (external) events:
 
-- `QueryStatus()`: regularly (every 10sec) queries all known full nodes
+- `QueryStatus()`: regularly (every 10sec) queries all nodes from peerIDs set
   for their current height [TMBC-LOCAL-CHAIN]. It does so
   by calling `Status(n)` remotely on all peers *n*.
   
