@@ -46,22 +46,18 @@ block and then terminates.
 
 *Fastsync* gets as input a block of height *h* and the corresponding
 application state *s*, and produces as output a list *l* of blocks
-starting at height *h* to some height *t*, and the application state
+starting at height *h* to some height *terminationHeight*,
+and the application state
 when applying the transaction of the list *l* to *s*.
 
 #### **[FS-Seq-Live]**: 
 *Fastsync* eventually terminates.
 
-*Remark:* this will require timing assumptions on the rate at which a
-block is added to the blockchain, and message and computation delays
-involved in Fastsync. That is, the time it takes fastsync to append a
-block to the list, and do the verification and the computation of the
-application state should be less than *ETIME* from [TMBC-SEQ-APPEND-E].
  
 #### **[FS-Seq-Term]**:
 Let *bh* be the height of the blockchain at the time *Fastsync* starts.
 When *Fastsync* terminates, it outputs a list of all blocks from
-height *h* to some height *t >= bh*,
+height *h* to some height *terminationHeight >= bh*,
 [**[TMBC-SEQ]**](TMBC-SEQ-link).
 
 
@@ -69,7 +65,7 @@ height *h* to some height *t >= bh*,
 
 #### **[FS-Seq-Inv]**:
 Upon termination, the application state is the one that corresponds to
-the blockchain at height *t*.
+the blockchain at height *terminationHeight*.
 
 
 
@@ -86,8 +82,9 @@ correctly
 
 > should have clear formalization in temporal logic.
 
-*Fastsync* has access to a set *peerIDs* of IDs (public keys) of peers
-(full nodes). 
+We consider a node *FS* that performs *Fastsync*.
+It has access to a set *peerIDs* of IDs (public keys) of peers (full
+     nodes).
 
 #### **[FS-A-PEER]**:
 Peers can be faulty, and we do not make any assumption about number or
@@ -98,11 +95,14 @@ The system satisfies [TMBC-Auth-Byz] and [TMBC-FM-2THIRDS]. Thus, there is a
 blockchain that satisfies the soundness requirements [TMBC-SOUND-?].
 
 #### **[FS-A-COMM]**:
-Communication between Fastsync and a correct peer is reliable and
-bounded in time.
+Communication between *FS* and all correct peers is reliable and
+bounded in time: there is a message end-to-end delay *Delta* such that
+if a message is sent at time *t*, then it will be received and
+processes by time *t + Delta*. (This implies that we need a timeout of
+at least *2 Delta* for RPCs).
 
 #### **[FS-A-LCC]**:
-The node executing Fastsync is following the protocol (it is correct).
+The node *FS* executing Fastsync is following the protocol (it is correct).
 
 
 ## Distributed Problem Statement
@@ -118,6 +118,7 @@ distributed setting, we consider two kinds of termination (normal and abort):
 
 #### **[FS-DISTR-TERM]**:
 *Fastsync* may terminate normally or aborts.
+
 
 #### Remote Functions
 
@@ -171,9 +172,6 @@ We sometimes consider the following (fairness) constraints:
 #### **[FS-CORR-PEER]**:
 The set *peerID* contains one correct full node.
 
-#### **[FS-LUCKY-CASE]**:
-The peer on which the RPC is called is correct and no timeout occurs
-at the caller. 
 
 
 
@@ -183,23 +181,20 @@ at the caller.
 
 
 #### **[FS-VC-NONABORT]**:
-Under [FS-CORR-PEER] and [FS-LUCKY-CASE], *Fastsync* never aborts.
-
-*Remark:* together with [FS-VC-TERM] below that means it will
-terminate normally.
+Under [FS-CORR-PEER], *Fastsync* never aborts. (Together with
+[FS-VC-TERM] below that means it will terminate normally.)
 
 
 #### **[FS-VC-INV]**:
-If *FastSync* terminates normally at height *t*, then the
+If *FastSync* terminates normally at height *terminationHeight*, then the
 application state is the one that corresponds to the blockchain at
-height *t*.
+height *terminationHeight*.
 
 
 #### **[FS-VC-CORR-INV]**:
-Under [FS-CORR-PEER] and [FS-LUCKY-CASE], let *t* be the maximum
-height of a correct peer in *peerIDs* at the time *Fastsync*
-starts. If *FastSync* terminates normally, it is at some height *t' >=
-t*.
+Under [FS-CORR-PEER], let *t* be the maximum height of a correct peer
+in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
+normally, it is at some height *terminationHeight >= t*.
 
 
 
@@ -261,10 +256,26 @@ Some variables, etc.
 - *blockstore*: stores for each height greater than
     *startBlock.Height*, the block of that height
 
-#### Macro
+#### Auxiliary Function
 - *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*  
-  *Remark:* it is only computed over peers that are not considered
-  faulty, yet
+
+
+#### **[FS-VAR-STATE-INV]**:
+It is always the case that the state corresponds to the state of the
+blockchain of that height, that is, *state = chain[height].AppState*
+[TMBC-SEQ]. 
+
+#### **[FS-VAR-PEER-INV]**:
+It is always the case that the set *peerIDs* only contains nodes that
+have not yet misbehaved (by sending wrong data or timing out).
+
+
+
+#### **[FS-VAR-PEER-INV]**:
+If a peer never misbehaves, it is never removed from *peerIDs*. It
+follows that under [FS-CORR-PEER], *peerIDs* is always non-empty.
+
+
 
 ## Solution
 
@@ -319,8 +330,6 @@ RPC. When they return, the following functions are called:
 ```go
 func QueryStatus()
 ```
-- Comments
-    - none
 - Expected precondition
     - peerIDs initialized and non-empty
 - Expected postcondition
@@ -332,8 +341,6 @@ func QueryStatus()
 ```go
 func OnStatusResponse(addr Address, height int64)
 ```
-- Comments
-    - none
 - Expected precondition
     - *peerHeights(addr) <= height*  
 	  **TODO:** If messages can be re-ordered this precondition should
@@ -349,8 +356,6 @@ func OnStatusResponse(addr Address, height int64)
 ```go
 func CreateRequest
 ```
-- Comments
-    - calls function `Block` remotely (asynchronously)
 - Expected precondition
     - *height < TargetHeight*
 	- *peerIDs* nonempty
@@ -368,13 +373,12 @@ func CreateRequest
 ```go
 func OnBlockResponse(addr Address, b Block)
 ```
-- Comments
-    - it calls `Execute`
 - Expected precondition
     - *pendingblocks(b.Height) = addr*
 	- *b* satisfies basic soundness  
 	**TODO:** should this be checked here?
 - Expected postcondition
+    - it function `Execute` has been executed without error
     - *receivedBlocks(b.Height) = addr*
 	- *blockstore(b.Height) = b*
 - Error condition
