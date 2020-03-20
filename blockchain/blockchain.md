@@ -550,12 +550,12 @@ reliable and timely, then something good happens eventually.
 
 ### Safety
 
-#### **[TMBC-VC_AGR]**:
+#### **[TMBC-VC-AGR]**:
 At all times *t*, for any two full nodes *p* and *q*, with *correct(p,
      t)* and *correct (q, t)* it holds that *chain_p(t)* is a prefix
      of *chain_q(t)* or *chain_q(t)* is a prefix of *chain_p(t)*.
 
-#### **[TMBC-VC_VAL]**:
+#### **[TMBC-VC-VAL]**:
 For a full node *p*, we substitute *chain* with *chain_p* in the
 soundness properties [TMBC-SOUND-?]. For all times *t* and every full
 node *p*, with *correct(p, t)*, the soundness requirements hold for
@@ -573,11 +573,27 @@ also need to hold.
 
 
 ### Liveness
-#### **[TMBC-VC-PROG]**: 
-For all full nodes *p* and all times *t*, there exists a time *t'*,
-such that if if *correct(p, t')*, then *|chain_p(t)| < |chain_p(t')|*.
+
+The following is an abstract liveness property that states that a
+correct full nodes infinitely often append new blocks to the
+chain. This can be defined only for full nodes that are correct
+forever (as one needs infinite traces). 
 
 
+#### **[TMBC-VC-LIVE]**: 
+For all full nodes *p*, with *correct(p, infinity)*, for all times
+*t*, there exists a time *t'*, such that *|chain_p(t)| <
+|chain_p(t')|*.
+
+
+The following property is formally not a liveness property (as it can
+be violated on a finite prefix) but is a progress property of practical
+relevance: 
+
+#### **[TMBC-VC-PROG]**:
+For all full nodes *p*, and all times *t'*: If *correct(p, t')*,
+then for all times *t < t' - LTIME* it holds that *|chain_p(t)| <
+|chain_p(t + LTIME)|*.
 
 *Remark:* In the temporal properties above we use the *correct*
 predicate, in a way that suggests that all full nodes participate in
