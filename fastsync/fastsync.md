@@ -276,7 +276,7 @@ if details were omitted.
 
 > Describe solution (in English), decomposition into functions, where communication to other components happens.
 
-The protocols is described in terms of functions that are triggered by
+The protocol is described in terms of functions that are triggered by
 (external) events:
 
 - `QueryStatus()`: regularly (every 10sec) queries all known full nodes
