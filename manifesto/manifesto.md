@@ -4,22 +4,21 @@
 technology. At the same time, modern software stacks are quite complex.
 For instance, Byzantine fault tolerant blockchain systems (for example Tendermint)
 are based on complex fault-tolerant distributed protocols, implemented
-as highly concurrent systems, and overall contain thousands lines of code.
+as highly concurrent systems, and overall contain thousands of lines of code.
 Therefore, there is lot of space for potential bugs: protocol bugs,
 concurrency bugs, implementation bugs, security bugs, etc.
 
-As bugs in (some) modern distributed systems have potentially high cost,
+As bugs in (some) modern distributed systems may have high cost,
 people have started considering computer-aided verification tools and
 methodologies as a way to increase correctness and verifiability of
 those critical systems. However current approaches turn out to be
-impractical (to large scale), either because of tools and methodology
-theoretical limits (completely automated verification methods such as
-model checking hit theoretical limits and undecidability results), or
-because mechanical verification methods (approaches based on interactive
-theorem provers) require a huge amount of manual work.
+impractical, especially at larger scale:
+completely automated verification methods such as model checking hits 
+theoretical limits and undecidability results, while mechanical verification
+methods based on interactive provers require a huge amount of manual work.
 
 Part of the problem is the fact that the verification is often regarded
-as "after the fact" task, that is, used after the software is written.
+as an "after the fact" task, that is, used after the software is written.
 In this document we present an approach where verification goes hand in
 hand with software design and development. Our goal is to improve software
 engineering practices (and ultimately the end software product)
@@ -30,10 +29,10 @@ outside those domains.
 ## Development Work Flow
 
 In this section we discuss the steps, deliverables and responsibilities
-in the process of designing and developing distributed/concurrent system.
+in the process of designing and developing distributed/concurrent systems.
 This process is a collaboration of researchers (protocol and/or verification
 experts) and software engineers. Different steps require different expertise
-in the lead of that step. We make these requirements explicit.
+to lead that step. We make these requirements explicit.
 
 ### 1. Problem Statement / Outside view
 
@@ -68,8 +67,8 @@ perhaps used in composition with other specifications.
 
 ### 2. Protocol Specification / Protocol view
 
-This part of the specification should present concrete system model
-in which problem is considered, and an algorithm that solves the problem
+This part of the specification should present a concrete system model
+in which the problem is considered, and an algorithm that solves the problem
 in the given model. It contains two parts: 1) system model specification
 and 2) algorithm (protocol) specification.
 
@@ -79,7 +78,7 @@ As we focus on (fault-tolerant) distributed and concurrent systems, we
 have to specify protocols that run on unreliable/adversarial
 computers and networks, that refine the problem statement from above.
 
-System model section should therefore contains the assumptions we made
+System model section should therefore contain assumptions made
 regarding the following aspects:
 
 - definitions of processes (process represents unit of execution) involved.
@@ -100,7 +99,7 @@ speed), partially synchronous (system in between synchronous and
 asynchronous, i.e., system is eventually synchronous, or transitions between
 periods of asynchrony and synchrony).
 - safety and liveness properties of the problem in the given model
-(these are the properties that an algorithm must fulfil to be able to
+(these are the properties that an algorithm must fulfill to be able to
 solve the problem in the given system model).
 
 ##### Expected Expertise
@@ -124,12 +123,12 @@ solve the problem in the given system model).
 
 This part presents an algorithm (protocol) that solves the problem
 in the system model specified in the section 2.1. Algorithm specification
-at this level should be at the higher level of abstractions
-compared to real implementation, and should be seen mainly as part of
+at this level should be at a higher level of abstraction
+than a real implementation, and should be seen mainly as part of
 the protocol design phase. High level algorithm specification should cover:
 
 - messages exchanged (minimal set of messages needed to express
-algorithm core algorithm logic)
+core algorithm logic)
 - core data structures every process maintains (minimal data structures
 needed to express core algorithm logic). Importantly, when there is a trade-off
 between the clarity and efficiency of a data structure for local computation,
@@ -138,8 +137,8 @@ lower levels.
 - state machine(s) that defines algorithm transitions and
 - protocol invariants.
 
-Protocol specifications should be at the higher level of abstractions
-compared to real implementation, and it should not introduce concepts that
+Protocol specifications should be at a higher level of abstraction
+than real implementations, and they should not introduce concepts that
 could differ between implementations. For example, high level protocol
 specifications should (if possible) avoid dealing explicitly with timeouts or
 efficiency concerns (batching of messages, flow control logic,
@@ -147,10 +146,10 @@ DDoS protection mechanisms, etc), concurrency aspects, detailed error
 handling, etc. Some of those concerns might be addressed at the lower
 specification levels, and some would just appear at the implementation level.
 
-Depending on the protocol type, we might need to model complete
+Depending on the protocol type, we might need to model a complete
 distributed system with a set of processes and communication channels
-between them (for example consensus) as safety and liveness properties
-are global (it is about all correct processes). In other cases, where
+between them (for example consensus), as safety and liveness properties
+are global (ie they are about all correct processes). In other cases, where
 protocol is more single node oriented (for example fast sync, state sync,
 light client, etc), it might be sufficient modelling a single node
 (that is service consumer) and all other processes represent the environment.
@@ -225,7 +224,7 @@ the one from the section 2.2), new concepts and mechanisms
 consequence of programming language environment, and detailed error
 handling logic.
 - multiple state machines in case a node implementation actually compose
-of multiple concurrent processes (tasks). In this case in addition to
+of multiple concurrent processes (tasks). In this case, in addition to
 the elements already mentioned (the single task case), we also need to
 model concurrency architecture of the solution, defining additional
 invariants and temporal properties for the concurrency architecture
@@ -240,11 +239,11 @@ complete solution that would correspond to the overall node implementation.
 - **lead:** distributed systems engineer
 - **input/feedback:** distributed protocol designer, verification engineer
 
-Note that at this stage of development we expect engineers to have a lead
+Note that at this stage of development we expect engineers to lead
 by proposing implementation informed by the high level specification
-(the section 2) and formal specification and verification should be seen
-as a supportive tools to discover implementation level design issues,
-discover bugs, generate interesting abstract test scenarios; in general
+(section 2), and formal specification and verification should be seen
+as supportive tools to discover implementation level design issues,
+discover bugs, and generate interesting abstract test scenarios; in general
 to increase confidence in the code correctness.
 
 Although in general, engineers are not constrained in the way system
