@@ -13,7 +13,7 @@ people have started considering computer-aided verification tools and
 methodologies as a way to increase correctness and verifiability of
 those critical systems. However current approaches turn out to be
 impractical, especially at larger scale:
-completely automated verification methods such as model checking hits 
+completely automated verification methods such as model checking hit
 theoretical limits and undecidability results, while mechanical verification
 methods based on interactive provers require a huge amount of manual work.
 
