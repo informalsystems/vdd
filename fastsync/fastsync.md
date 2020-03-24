@@ -393,7 +393,7 @@ func Execute()
     - none
 - Expected precondition
     - [goodblocks]: *receivedBlocks* are all from the blockchain
-	- state is the one of the blockchain at height *height*
+	- application state is the one of the blockchain at height *height*
 - Expected postcondition
     - height is updated height of complete prefix that matches the blockchain
 	- state is the one of the blockchain at height *height*
