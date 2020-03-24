@@ -217,10 +217,11 @@ func Commit(addr Address, height int64) (SignedHeader, error)
    * if *n* is faulty: arbitrary error
 
 #### **[FN-LuckyCase]**:
-The  full node on which the procedure is called remotely is correct and no timeout occurs at the receiver on `Commit`.
+The full node on which the RPC is called is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
 
-#### **[FN-ManifestFaulty]**
+#### **[FN-ManifestFaulty]** 
 The  full node on which the procedure is called remotely is faulty and a faulty header is received.
+
 
 ----
 
@@ -278,7 +279,8 @@ Report_and_Stop(sh)
 #### From the verifier
 
 ```go
-VerifyHeaderAtHeight (untrustedHeight int64,
+
+VerifyHeaderAtHeight(untrustedHeight int64,
                           trustedState TrustedState,
 			              addr Address) (TrustedState, error)
 ```
@@ -307,7 +309,7 @@ VerifyHeaderAtHeight (untrustedHeight int64,
   the signed header of `trustedState`:
     - is the header at height `untrustedHeight` of the blockchain, and 
     - was generated after *endTime - trustingPeriod* 
-	- corresponds to `return (trustedState,
+    - corresponds to `return (trustedState,
       ErrHeaderNotWithinTrustedPeriod)` in current verification spec.
 - Error conditions
   - precondition violated 

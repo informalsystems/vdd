@@ -122,6 +122,7 @@ func Block(addr Address, height int64) (Block, error)
 
 
 #### **[FN-LuckyCase]**:
+
 The callee is correct and no timeout occurs at the caller before the
 remote function returns.
 

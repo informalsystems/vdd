@@ -1,6 +1,8 @@
 **VDD example for high-level English spec** 
 
 
+TODO: check that reliable communication is defined properly
+TODO: authentication
 
 
 # Core Verification
