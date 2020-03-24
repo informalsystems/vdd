@@ -133,7 +133,7 @@ func Status(addr Address) (int64, error)
 ```
 - Implementation remark
    - RPC to full node *addr*
-- Expected precodnition
+- Expected precondition
   - none
 - Expected postcondition
   - if *addr* is correct: Returns the current height `height` of the peer
