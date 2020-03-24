@@ -9,21 +9,21 @@ A blockchain is a growing list of sets of transactions, denoted by
 the blockchain, they can (1) provide transactions as input and (2) use
 *chain* to execute these transactions in order.
 
-The *chain* list itself should be implemented in a reliable way, which
+The *chain* itself should be implemented in a reliable way, which
 introduces the need for fault-tolerance and distribution.  The
 Tendermint protocols implement the blockchain over an unreliable
 (Byzantine) distributed system.  More precisely, a Tendermint system
 consists of many so-called [full nodes][fullnode] that each maintain a
 local copy of (a prefix of) the current *chain*.
 
-In this specification, we are only concerned with the *chain* lists.
-They are maintained at the full nodes, and are the result of the
+In this specification, we are only concerned with the *chain*.
+They are maintained at the (correct) full nodes, and are the result of the
 execution of the Tendermint consensus protocol, described in the
-[ArXiv paper][arXiv]. The list *chain* is called *decision* in the
+[ArXiv paper][arXiv]. The  *chain* is called *decision* in the
 paper, and the paper does not consider internals of what is stored in
 decision. The Tendermint consensus implements a loop with iterator
 *h* (height).  In each iteration, upon deciding on the transactions to
-be put into the *chain*, a new *chain* list entry is created.
+be put into the *chain*, a new *chain* entry is created.
 
 
 # Part I - Outside view
@@ -40,8 +40,8 @@ This specification is central in the collection of Tendermint
 protocols.  The behavior of protocols like [fastsync][fastsync], or
 the [light client][lightclient] will be defined with respect to this
 specification.  E.g., the light client implements a read operation of
-the *chain* list entry of some height *h*.  It is thus crucial to
-understand what data is stored in this *chain* list entry, and what
+the *chain* entry of some height *h*.  It is thus crucial to
+understand what data is stored in this *chain* entry, and what
 are the precise semantics of a read operation in a faulty environment.
 
 
@@ -96,8 +96,9 @@ During operation, new headers may be appended to the list one by one.
 
 
 
-In the following, *ETIME* and *LTIME* define the earliest and latest
-times at which a new block is added. We are not fixing these times
+In the following, *ETIME* and *LTIME* are a lower and upper bounds,
+respectively, on the time interval between the times at which two
+successor blocks are added. We are not fixing these times
 here. Rather, they should serve as defining constraints for temporal
 properties of other protocols. For instance, we might instantiate
 these times by setting *ETIME* to infinity, when we say that
@@ -229,7 +230,7 @@ correctly
 ## Timing, nodes, and correctness assumptions
 
 In a Tendermint system, the nodes that choose to interact with each
-other collectively compute the list *chain* in a distributed manner
+other collectively compute the  *chain* in a distributed manner
 by executing the [consensus protocol][arXiv]. 
 The Tendermint protocols should ensure that
 the participating nodes cannot benefit by deviating from the expected
@@ -257,9 +258,9 @@ actively participates in the distributed consensus, it is called a
 *validator node*.
 
 #### **[TMBC-CORRECT]**:
-We define a predicate *correct(n, t)*, where *n* is a node and *t* is a 
+We define a predicate *correctUntil(n, t)*, where *n* is a node and *t* is a 
 time point. 
-The predicate *correct(n, t)* is true if and only if the node *n* 
+The predicate *correctUntil(n, t)* is true if and only if the node *n* 
 follows all the protocols (at least) until time *t*.
 
 ## Authenticated Byzantine Model
@@ -357,7 +358,7 @@ most one validator pair for each full node.
 
 
 #### **[TMBC-VOTE]**:
-A vote contains a `prevote` or `precommit` message sent and signed by
+A *vote* contains a `prevote` or `precommit` message sent and signed by
 a validator node during the execution of [consensus][arXiv]. Each 
 message contain the following fields
    - `Type`: prevote or precommit
@@ -367,12 +368,16 @@ message contain the following fields
 
 
 #### **[TMBC-COMMIT]**:
-A commit is a set of signed votes.
+A commit is a set of votes.
+
+**TODO:** clarify whether `prevote` or `precommit` are equivalent in
+the Commit.
 
 #### **[TMBC-SOUND-DISTR-PossCommit]**:
 For a block *b*, each element *pc* of *PossibleCommit(b)* satisfies:
   - each vote *v* in *pc* satisfies
-     * *pc* contains only signed votes by validators from *b.Validators*
+     * *pc* contains only votes (cf. [TMBC-VOTE])
+	 by validators from *b.Validators*
      * v.blockID = hash(b)
 	 * v.Height = b.Height  
 	 **TODO:** complete the checks here
@@ -435,7 +440,7 @@ validator node**. As a result, a commit that is well-formed (that is, is in
 
 *Remark:* "Signed by a correct validator node" means that the
 validator node *n*
-sends *precommit* at time *t* and *correct(n, t)* holds.
+sends *precommit* at time *t* and *correctUntil(n, t)* holds.
 
 
 
@@ -463,14 +468,14 @@ then there exists a subset *CorrV*
 of *h.NextValidators*, such that:
   - *TotalVotingPower(CorrV) > 2/3
     TotalVotingPower(h.NextValidators)*; cf. [TMBC-VALIDATOR-Set]
-  - For every validator pair *(n,p)* in *CorrV*, it holds *correct(n,
+  - For every validator pair *(n,p)* in *CorrV*, it holds *correctUntil(n,
     h.Time + trustingPeriod)*; cf. [TMBC-CORRECT]
 
 
 
 <!--- Formally,
 \[
-\sum*{(v,p) \in h.Header.NextV \wedge correct(v,h.Header.bfttime + trustingPeriod)} p >
+\sum*{(v,p) \in h.Header.NextV \wedge correctUntil(v,h.Header.bfttime + trustingPeriod)} p >
 2/3 \sum*{(v,p) \in h.Header.NextV} p
 \] -->
 
@@ -522,7 +527,7 @@ There is a set *C* of validator pairs, such that *C* is a subset of *NextValidat
   - For every validator pair *(n,p)* in *C*, follows the consensus protocol until consensus for height *h+1* is terminated. 
 
 
-We recall that [TMBC-CORRECT] denotes by *correct(n, t)* that full
+We recall that [TMBC-CORRECT] denotes by *correctUntil(n, t)* that full
 node *n* is correct up to time *t* if it follows all the protocols
 up to time *t*. For now we assume that both failure assumptions
 [TMBC-FM-2THIRDS] and [TMBC-FM-CONS] hold.
@@ -531,7 +536,7 @@ up to time *t*. For now we assume that both failure assumptions
 
 #### **[TMBC-LOCAL-CHAIN]**:
 
-Each correct full node *p* maintains its local copy of the Tendermint
+Each correct full node *p* maintains its local copy of a prefix the Tendermint
 blockchain, denoted by *chain_p*.
 
 
@@ -551,14 +556,14 @@ reliable and timely, then something good happens eventually.
 ### Safety
 
 #### **[TMBC-VC-AGR]**:
-At all times *t*, for any two full nodes *p* and *q*, with *correct(p,
-     t)* and *correct (q, t)* it holds that *chain_p(t)* is a prefix
+At all times *t*, for any two full nodes *p* and *q*, with *correctUntil(p,
+     t)* and *correctUntil(q, t)* it holds that *chain_p(t)* is a prefix
      of *chain_q(t)* or *chain_q(t)* is a prefix of *chain_p(t)*.
 
 #### **[TMBC-VC-VAL]**:
 For a full node *p*, we substitute *chain* with *chain_p* in the
 soundness properties [TMBC-SOUND-?]. For all times *t* and every full
-node *p*, with *correct(p, t)*, the soundness requirements hold for
+node *p*, with *correctUntil(p, t)*, the soundness requirements hold for
 *chain_p(t)*.
 
 
@@ -581,7 +586,7 @@ forever (as one needs infinite traces).
 
 
 #### **[TMBC-VC-LIVE]**: 
-For all full nodes *p*, with *correct(p, infinity)*, for all times
+For all full nodes *p*, with *correctUntil(p, infinity)*, for all times
 *t*, there exists a time *t'*, such that *|chain_p(t)| <
 |chain_p(t')|*.
 
@@ -591,11 +596,11 @@ be violated on a finite prefix) but is a progress property of practical
 relevance: 
 
 #### **[TMBC-VC-PROG]**:
-For all full nodes *p*, and all times *t'*: If *correct(p, t')*,
+For all full nodes *p*, and all times *t'*: If *correctUntil(p, t')*,
 then for all times *t < t' - LTIME* it holds that *|chain_p(t)| <
 |chain_p(t + LTIME)|*.
 
-*Remark:* In the temporal properties above we use the *correct*
+*Remark:* In the temporal properties above we use the *correctUntil*
 predicate, in a way that suggests that all full nodes participate in
 Tendermint since the genesis block. However, there are Tendermint
 protocols (state sync, fast sync) that allow nodes to join the system
