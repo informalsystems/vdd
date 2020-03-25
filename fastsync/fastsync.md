@@ -36,7 +36,8 @@ the corresponding application state (or the prefix of the current
 blockchain until height *h*). It has access to a set *peerIDs* of full
 nodes called *peers* that it knows of.  The full node uses the peers
 to read blocks of the Tendermint blockchain (in a safe way, that is,
-it checks the soundness conditions), until it has read the most recent
+it checks the sound
+ness conditions), until it has read the most recent
 block and then terminates.
 
 
@@ -58,7 +59,7 @@ when applying the transaction of the list *l* to *s*.
 Let *bh* be the height of the blockchain at the time *Fastsync* starts.
 When *Fastsync* terminates, it outputs a list of all blocks from
 height *h* to some height *terminationHeight >= bh*,
-[**[TMBC-SEQ]**](TMBC-SEQ-link).
+[**[TMBC-SEQ]**][TMBC-SEQ-link].
 
 
 
@@ -90,12 +91,12 @@ It has access to a set *peerIDs* of IDs (public keys) of peers (full
 #### **[FS-A-PEER]**:
 Peers can be faulty, and we do not make any assumption about number or
 ratio of correct/faulty nodes. Faulty processes may be Byzantine
-according to
-[TMBC-Auth-Byz]. 
+according to [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link].
+
 
 #### **[FS-A-VAL]**:
-The system satisfies [TMBC-Auth-Byz] and [TMBC-FM-2THIRDS]. Thus, there is a
-blockchain that satisfies the soundness requirements [TMBC-SOUND-?].
+The system satisfies [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link] and [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]. Thus, there is a
+blockchain that satisfies the soundness requirements [**[TMBC-SOUND-?]**][blockchain].
 
 #### **[FS-A-COMM]**:
 Communication between *FS* and all correct peers is reliable and
@@ -142,10 +143,10 @@ func Status(addr Address) (int64, error)
 - Expected postcondition
   - if *addr* is correct: Returns the current height `height` of the
     peer. [FS-A-COMM]
-  - if *addr* is faulty: Returns an arbitrary height. [TMBC-Auth-Byz]
+  - if *addr* is faulty: Returns an arbitrary height. [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link]
 - Error condition
    * if *addr* is correct: none. By [FS-A-COMM] we assume communication is reliable and timely.
-   * if *addr* is faulty: arbitrary error (including timeout). [TMBC-Auth-Byz]
+   * if *addr* is faulty: arbitrary error (including timeout). [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link]
 ----
 
 
@@ -159,10 +160,10 @@ func Block(addr Address, height int64) (Block, error)
 - Expected postcondition
   - if *addr* is correct: Returns the block of height `height`
   from the blockchain. [FS-A-COMM]
-  - if *addr* is faulty: Returns arbitrary block [TMBC-Auth-Byz]
+  - if *addr* is faulty: Returns arbitrary block [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link]
 - Error condition
   - if *addr* is correct: precondition violated. [FS-A-COMM]
-  - if *addr* is faulty: arbitrary error (including timeout). [TMBC-Auth-Byz]
+  - if *addr* is faulty: arbitrary error (including timeout). [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link]
 ----
 
 ### Temporal Properties
@@ -194,7 +195,7 @@ height *terminationHeight*.
 
 
 #### **[FS-VC-CORR-INV]**:
-Under [FS-CORR-PEER], let *t* be the maximum height of a correct peer [TMBC-CorrFull]
+Under [FS-CORR-PEER], let *t* be the maximum height of a correct peer [**[TMBC-CorrFull]**][TMBC-CorrFull-link]
 in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
 normally, it is at some height *terminationHeight >= t*.
 
@@ -226,14 +227,7 @@ Some variables, etc.
 
 #### Fastsync has the following configuration parameters:
 - *trustingPeriod*: a time duration
-  [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).  
-  **TODO:** Right now I largely ignore that. I put that into
-  assumption [FS-A-INIT] below.  We should fix what we assume
-  here, e.g., startBlock is "recent" and clock of fastsyncing node is
-  synchronized to real-time.
-  only approximately synchronized clocks.
-  
-
+  [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
 
 
 #### Inputs
@@ -266,7 +260,7 @@ Some variables, etc.
 #### **[FS-VAR-STATE-INV]**:
 It is always the case that the state corresponds to the state of the
 blockchain of that height, that is, *state = chain[height].AppState*
-[TMBC-SEQ]. 
+[**[TMBC-SEQ]**][TMBC-SEQ-link].
 
 #### **[FS-VAR-PEER-INV]**:
 It is always the case that the set *peerIDs* only contains nodes that
@@ -458,6 +452,8 @@ of the problem statement
 [TMBC-TIME_PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time_params
 
 [TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-fm-2thirds
+
+[TMBC-Auth-Byz-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-auth-byz
 
 [TMBC-INV-SIGN-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-sign
 
