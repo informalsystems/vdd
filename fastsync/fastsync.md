@@ -89,7 +89,9 @@ It has access to a set *peerIDs* of IDs (public keys) of peers (full
 
 #### **[FS-A-PEER]**:
 Peers can be faulty, and we do not make any assumption about number or
-ratio of correct/faulty nodes.
+ratio of correct/faulty nodes. Faulty processes may be Byzantine
+according to
+[TMBC-Auth-Byz]. 
 
 #### **[FS-A-VAL]**:
 The system satisfies [TMBC-Auth-Byz] and [TMBC-FM-2THIRDS]. Thus, there is a
@@ -98,10 +100,11 @@ blockchain that satisfies the soundness requirements [TMBC-SOUND-?].
 #### **[FS-A-COMM]**:
 Communication between *FS* and all correct peers is reliable and
 bounded in time: there is a message end-to-end delay *Delta* such that
-if a message is sent at time *t* by a correct process to a correct process, then it will be received and
-processes by time *t + Delta*. This implies that we need a timeout of
-at least *2 Delta* for remote procedure calls to ensure that the
-response of a correct peer arrives before the timeout expires.
+if a message is sent at time *t* by a correct process to a correct
+process, then it will be received and processes by time *t +
+Delta*. This implies that we need a timeout of at least *2 Delta* for
+remote procedure calls to ensure that the response of a correct peer
+arrives before the timeout expires.
 
 #### **[FS-A-LCC]**:
 The node *FS* executing Fastsync is following the protocol (it is correct).
@@ -247,7 +250,7 @@ Some variables, etc.
 #### Variables
 - *height*: initially *startBlock.Height*
 - *state*: initially *startState*
-- *peerIDs*: peer addresses 
+- *peerIDs*: peer addresses
 - *peerHeigts*: stores for each peer the height it reported. initially 0
 - *pendingBlocks*: stores for each height which peer was
   queried. initially nil for each height
@@ -270,7 +273,11 @@ blockchain of that height, that is, *state = chain[height].AppState*
 It is always the case that the set *peerIDs* only contains nodes that
 have not yet misbehaved (by sending wrong data or timing out).
 
-
+#### **[FS-VAR-PEER-SHRINK]**:
+No address is ever added to *peerIDs*. (This means that in the current
+solution we are forced
+to abort if *peerIDs* is empty. If in the future address might be
+added, we may change the termination condition.)
 
 #### **[FS-VAR-PEER-INV]**:
 If a peer never misbehaves, it is never removed from *peerIDs*. It
@@ -350,10 +357,11 @@ func OnStatusResponse(addr Address, height int64)
     - *peerHeights(addr) = height*
 	- *TargetHeight* is updated
 - Error condition
-    - if precondition is violated: remove *addr* from *peerIDs*
+    - if precondition is violated: *addr* not in *peerIDs* (that is,
+      *addr* is removed from *peerIDs*)
 - Timeout condition
     - if `OnStatusResponse(addr, h)` was not invoked within *2 Delta* after
-	`Status(addr)`  was called: remove *addr* from *peerIDs*
+	`Status(addr)`  was called:  *addr* not in *peerIDs*
 ----
 
 
@@ -387,11 +395,11 @@ func OnBlockResponse(addr Address, b Block)
     - *receivedBlocks(b.Height) = addr*
 	- *blockstore(b.Height) = b*
 - Error condition
-    - if precondition is violated: remove *addr* from *peerIDs*; reset
+    - if precondition is violated: *addr* not in *peerIDs*; reset
 	*pendingblocks(b.Height)* to nil;
 - Timeout condition
     - if `OnBlockResponse(addr, b)` was not invoked within *2 Delta* after
-	`Block(addr,h)` was called for *b.Height = h*: remove *addr* from *peerIDs*
+	`Block(addr,h)` was called for *b.Height = h*: *addr* not in *peerIDs*
 ----
 
 ```go
@@ -408,8 +416,8 @@ func Execute()
 	- if height = TargetHeight: **terminate normally**
 - Error condition
     - if precondition [goodblocks] is violated: there is a bad block *b*; *b*
-	removed from blockstore, node with Address
-	receivedBlocks(b.Height) removed from peerIDs;
+	not in *blockstore*; node with Address
+	receivedBlocks(b.Height) not in peerIDs
 ----
 
 
