@@ -82,6 +82,7 @@ correctly
 
 > should have clear formalization in temporal logic.
 
+#### **[FS-A-NODE]**:
 We consider a node *FS* that performs *Fastsync*.
 It has access to a set *peerIDs* of IDs (public keys) of peers (full
      nodes).
@@ -97,9 +98,10 @@ blockchain that satisfies the soundness requirements [TMBC-SOUND-?].
 #### **[FS-A-COMM]**:
 Communication between *FS* and all correct peers is reliable and
 bounded in time: there is a message end-to-end delay *Delta* such that
-if a message is sent at time *t*, then it will be received and
-processes by time *t + Delta*. (This implies that we need a timeout of
-at least *2 Delta* for RPCs).
+if a message is sent at time *t* by a correct process to a correct process, then it will be received and
+processes by time *t + Delta*. This implies that we need a timeout of
+at least *2 Delta* for remote procedure calls to ensure that the
+response of a correct peer arrives before the timeout expires.
 
 #### **[FS-A-LCC]**:
 The node *FS* executing Fastsync is following the protocol (it is correct).
@@ -117,7 +119,7 @@ described in the sequential specification above. Thus, in the (unreliable)
 distributed setting, we consider two kinds of termination (normal and abort):
 
 #### **[FS-DISTR-TERM]**:
-*Fastsync* may terminate normally or aborts.
+*Fastsync* may *terminate normally* or it  *aborts*.
 
 
 #### Remote Functions
@@ -126,7 +128,6 @@ The Tendermint Full Node exposes the following functions over Tendermint RPC:
 
 *Remark:* we will have asynchronous RPCs
 
-*Remark:* This will go to full node spec.
 
 ```go
 func Status(addr Address) (int64, error)
@@ -136,14 +137,12 @@ func Status(addr Address) (int64, error)
 - Expected precondition
   - none
 - Expected postcondition
-  - if *addr* is correct: Returns the current height `height` of the peer
-   if communication is timely (no timeout)
-  - if *addr* is faulty: Returns an arbitrary height
+  - if *addr* is correct: Returns the current height `height` of the
+    peer. [FS-A-COMM]
+  - if *addr* is faulty: Returns an arbitrary height. [TMBC-Auth-Byz]
 - Error condition
-   * if *addr* is correct: timeout  
-   **TODO:** we assume communication is reliable and timely. Should we
-   keep this?
-   * if *addr* is faulty: arbitrary error
+   * if *addr* is correct: none. By [FS-A-COMM] we assume communication is reliable and timely.
+   * if *addr* is faulty: arbitrary error (including timeout). [TMBC-Auth-Byz]
 ----
 
 
@@ -156,11 +155,11 @@ func Block(addr Address, height int64) (Block, error)
   - header of `height` is less than or equal to height of the peer
 - Expected postcondition
   - if *addr* is correct: Returns the block of height `height`
-  from the blockchain if communication is timely (no timeout)
-  - if *addr* is faulty: Returns arbitrary block
+  from the blockchain. [FS-A-COMM]
+  - if *addr* is faulty: Returns arbitrary block [TMBC-Auth-Byz]
 - Error condition
-  - if *addr* is correct: precondition violated or timeout 
-  - if *addr* is faulty: arbitrary error
+  - if *addr* is correct: precondition violated. [FS-A-COMM]
+  - if *addr* is faulty: arbitrary error (including timeout). [TMBC-Auth-Byz]
 ----
 
 ### Temporal Properties
@@ -192,7 +191,7 @@ height *terminationHeight*.
 
 
 #### **[FS-VC-CORR-INV]**:
-Under [FS-CORR-PEER], let *t* be the maximum height of a correct peer
+Under [FS-CORR-PEER], let *t* be the maximum height of a correct peer [TMBC-CorrFull]
 in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
 normally, it is at some height *terminationHeight >= t*.
 
@@ -251,10 +250,12 @@ Some variables, etc.
 - *peerIDs*: peer addresses 
 - *peerHeigts*: stores for each peer the height it reported. initially 0
 - *pendingBlocks*: stores for each height which peer was
-  queried. initially nil
-- *receivedBlocks*: stores for each height which peer returned it
+  queried. initially nil for each height
+- *receivedBlocks*: stores for each height which peer returned
+  it. initially nil
 - *blockstore*: stores for each height greater than
-    *startBlock.Height*, the block of that height
+    *startBlock.Height*, the block of that height. initially nil for
+    all heights
 
 #### Auxiliary Function
 - *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*  
@@ -290,12 +291,13 @@ if details were omitted.
 The protocol is described in terms of functions that are triggered by
 (external) events:
 
-- `QueryStatus()`: regularly (every 10sec) queries all nodes from peerIDs set
+- `QueryStatus()`: regularly (currently every 10sec; necessarily
+  interval greater than *2 Delta*) queries all nodes from peerIDs set
   for their current height [TMBC-LOCAL-CHAIN]. It does so
   by calling `Status(n)` remotely on all peers *n*.
   
 - `CreateRequest`: regularly checks whether certain blocks have no open
-  request and queries one from a full node. It does so by calling
+  request. If a block does not have an open request, it requests one from a full node. It does so by calling
   `Block(n,h)` remotely on one full node *n* for a missing height *h*.
   
 
@@ -304,19 +306,20 @@ RPC. When they return, the following functions are called:
 
 - `OnStatusResponse(addr Address, height int64)`: The full node with
   address *addr* returns its current height. The function updates the height
-  information about *addr*, and may also increase *TargetHeight*
+  information about *addr*, and may also increase *TargetHeight*.
   
 - `OnBlockResponse(addr Address, b Block)`. The full node with
   address *addr* returns a block. It is added to *blockstore*. Then
   the auxiliary function `Execute` is called.
 
 - `Execute()`: Iterates over the *blockstore*. Starts at height until
-  the longest prefix. Checks soundness of
-  block after block, and executes the transactions of a sound
-  block. If the longest prefix reaches *TargetHeight* it terminates
-  *Fastsync*.
+  the longest prefix. Checks soundness of block after block, and
+  executes the transactions of a sound block and updates *state*. If
+  the longest prefix reaches *TargetHeight* it terminates *Fastsync*.
   
 
+If in the course of the execution *peerIDs* becomes empty (this is
+only possible if [FS-CORR-PEER] is violated), then *FastSync* does **abort**.
 
 ### Details
 
@@ -342,14 +345,15 @@ func QueryStatus()
 func OnStatusResponse(addr Address, height int64)
 ```
 - Expected precondition
-    - *peerHeights(addr) <= height*  
-	  **TODO:** If messages can be re-ordered this precondition should
-      be removed.
+    - *peerHeights(addr) <= height*
 - Expected postcondition
     - *peerHeights(addr) = height*
-	- (*Remark:* *TargetHeight* is updated)
+	- *TargetHeight* is updated
 - Error condition
     - if precondition is violated: remove *addr* from *peerIDs*
+- Timeout condition
+    - if `OnStatusResponse(addr, h)` was not invoked within *2 Delta* after
+	`Status(addr)`  was called: remove *addr* from *peerIDs*
 ----
 
 
@@ -366,7 +370,8 @@ func CreateRequest
       strategies to balance the load over the peers
     - *pendingblocks(h) = addr*
 - Error condition
-    - if *peerIDs* is empty: no correct peers left;  abort.
+    - if *peerIDs* is empty: no correct peers left;  abort. Not
+	possible under  [FS-CORR-PEER].
 ----
 
 
@@ -384,6 +389,9 @@ func OnBlockResponse(addr Address, b Block)
 - Error condition
     - if precondition is violated: remove *addr* from *peerIDs*; reset
 	*pendingblocks(b.Height)* to nil;
+- Timeout condition
+    - if `OnBlockResponse(addr, b)` was not invoked within *2 Delta* after
+	`Block(addr,h)` was called for *b.Height = h*: remove *addr* from *peerIDs*
 ----
 
 ```go
