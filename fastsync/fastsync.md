@@ -231,7 +231,6 @@ Some variables, etc.
   assumption [FS-A-INIT] below.  We should fix what we assume
   here, e.g., startBlock is "recent" and clock of fastsyncing node is
   synchronized to real-time.
-- *clockDrift*: a time duration. Correction parameter dealing with
   only approximately synchronized clocks.
   
 
@@ -343,7 +342,7 @@ func QueryStatus()
 - Expected precondition
     - peerIDs initialized and non-empty
 - Expected postcondition
-    - call asynchronously `Status(n)` at all peers *n* in *peerIDs*.
+    - call asynchronously `Status(n)` at each peer *n* in *peerIDs*.
 - Error condition
     - fails if precondition is violated
 ----
