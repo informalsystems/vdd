@@ -1,6 +1,4 @@
 
-*** This is the beginning of an unfinished draft. Comments are welcome! ***
-
 # Fastsync
 
 > Rough outline of what the component is doing and why. 2-3 paragraphs 
@@ -36,8 +34,7 @@ the corresponding application state (or the prefix of the current
 blockchain until height *h*). It has access to a set *peerIDs* of full
 nodes called *peers* that it knows of.  The full node uses the peers
 to read blocks of the Tendermint blockchain (in a safe way, that is,
-it checks the sound
-ness conditions), until it has read the most recent
+it checks the soundness conditions), until it has read the most recent
 block and then terminates.
 
 
@@ -85,8 +82,13 @@ correctly
 
 #### **[FS-A-NODE]**:
 We consider a node *FS* that performs *Fastsync*.
-It has access to a set *peerIDs* of IDs (public keys) of peers (full
-     nodes).
+
+#### **[FS-A-PEER-IDS]**:
+*FS* has access to a set *peerIDs* of IDs (public keys) of peers (full
+     nodes). During execution of *Fastsync* another protocol (outside
+     of this specification) may add new IDs to *peerIDs*.
+
+
 
 #### **[FS-A-PEER]**:
 Peers can be faulty, and we do not make any assumption about number or
@@ -153,7 +155,7 @@ func Status(addr Address) (int64, error)
 ----
 
 
- ```go    
+ ```go
 func Block(addr Address, height int64) (Block, error)
 ```
 - Implementation remark
@@ -173,10 +175,14 @@ func Block(addr Address, height int64) (Block, error)
 
 
 
-We sometimes consider the following (fairness) constraints:
+We sometimes consider the following (fairness) constraint:
+
 
 #### **[FS-CORR-PEER]**:
-The set *peerID* contains one correct full node.
+At all times, the set *peerID* contains at least one correct full node.
+
+#### **[FS-ALL-CORR-PEER]**:
+At all times, the set *peerID* contains only correct full node.
 
 
 
@@ -186,9 +192,8 @@ The set *peerID* contains one correct full node.
 
 
 
-#### **[FS-VC-NONABORT]**:
-Under [FS-CORR-PEER], *Fastsync* never aborts. (Together with
-[FS-VC-TERM] below that means it will terminate normally.)
+#### **[FS-VC-ALL-CORR-NONABORT]**:
+Under [FS-ALL-CORR-PEER], *Fastsync* never aborts.
 
 
 #### **[FS-VC-INV]**:
@@ -198,7 +203,8 @@ height *terminationHeight*.
 
 
 #### **[FS-VC-CORR-INV]**:
-Under [FS-CORR-PEER], let *t* be the maximum height of a correct peer [**[TMBC-CorrFull]**][TMBC-CorrFull-link]
+Under [FS-CORR-PEER], let *t* be the maximum 
+height of a correct peer [**[TMBC-CorrFull]**][TMBC-CorrFull-link]
 in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
 normally, it is at some height *terminationHeight >= t*.
 
@@ -209,10 +215,8 @@ e.g., if the component is connected to a correct full node and communication is
 reliable and timely, then something good happens eventually. 
 
 
-
-#### **[FS-VC-TERM]**:
-*Fastsync* eventually terminates normally or it eventually aborts.
-
+#### **[FS-VC-ALL-CORR-TERM]**:
+Under [FS-ALL-CORR-PEER], *Fastsync* eventually terminates normally.
 
 
 > How is the problem statement linked to the "Sequential Problem statement". 
@@ -228,19 +232,14 @@ Simulation, implementation, etc. relations
 Some variables, etc. 
 
 
-#### Fastsync has the following configuration parameters:
-- *trustingPeriod*: a time duration
-  [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
 
 
 #### Inputs
 - *startBlock*: the block Fastsync starts from
 - *startState*: application state corresponding to *startBlock.Height*
 
-#### **[FS-A-INIT]**:
-- *startBlock* is from the blockchain, and within *trustingPeriod*
-(possible with some extra margin to ensure termination before
-*trustingPeriod* expired)
+#### **[FS-A-V2-INIT]**:
+- *startBlock* is from the blockchain
 - *startState* is the application state of the blockchain at Height *startBlock.Height*.
 
 #### Variables
@@ -260,6 +259,22 @@ Some variables, etc.
 - *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*  
 
 
+```go
+func CommitMatchesBlock(a Block, b Block) Boolean
+```
+- Implementation remark
+    - implements the check from
+     [**[TMBC-SOUND-DISTR-PossCommit]**][TMBC-SOUND-DISTR-PossCommit--link],
+     that is, that  *b.Commit* is a valid commit for block *a*
+- Expected precondition
+    - **TODO:** a and b match
+- Expected postcondition
+    - *true* if precondition holds
+	- *false* if precondition is violated
+- Error condition
+    - none
+----
+
 #### **[FS-VAR-STATE-INV]**:
 It is always the case that the state corresponds to the state of the
 blockchain of that height, that is, *state = chain[height].AppState*
@@ -269,15 +284,7 @@ blockchain of that height, that is, *state = chain[height].AppState*
 It is always the case that the set *peerIDs* only contains nodes that
 have not yet misbehaved (by sending wrong data or timing out).
 
-#### **[FS-VAR-PEER-SHRINK]**:
-No address is ever added to *peerIDs*. (This means that in the current
-solution we are forced
-to abort if *peerIDs* is empty. If in the future address might be
-added, we may change the termination condition.)
 
-#### **[FS-VAR-PEER-INV]**:
-If a peer never misbehaves, it is never removed from *peerIDs*. It
-follows that under [FS-CORR-PEER], *peerIDs* is always non-empty.
 
 
 
@@ -295,7 +302,7 @@ The protocol is described in terms of functions that are triggered by
 (external) events:
 
 - `QueryStatus()`: regularly (currently every 10sec; necessarily
-  interval greater than *2 Delta*) queries all nodes from peerIDs set
+  interval greater than *2 Delta*) queries all nodes from *peerIDs*
   for their current height [TMBC-LOCAL-CHAIN]. It does so
   by calling `Status(n)` remotely on all peers *n*.
   
@@ -321,8 +328,7 @@ RPC. When they return, the following functions are called:
   the longest prefix reaches *TargetHeight* it terminates *Fastsync*.
   
 
-If in the course of the execution *peerIDs* becomes empty (this is
-only possible if [FS-CORR-PEER] is violated), then *FastSync* does **abort**.
+**TODO:** discuss what happens if *peerIDs* is empty
 
 ### Details
 
@@ -398,6 +404,9 @@ func OnBlockResponse(addr Address, b Block)
 	`Block(addr,h)` was called for *b.Height = h*: *addr* not in *peerIDs*
 ----
 
+
+**TODO:**  explain two subsequent checked
+
 ```go
 func Execute()
 ```
@@ -419,19 +428,14 @@ func Execute()
 
 
 
-
-
-
-
-
-
-
-
 ## Correctness arguments
 
 > Proof sketches of why we believe the solution satisfies the problem statement.
 Possibly giving inductive invariants that can be used to prove the specifications
 of the problem statement 
+
+
+
 
 # References
 
@@ -459,6 +463,8 @@ of the problem statement
 [TMBC-Auth-Byz-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-auth-byz
 
 [TMBC-INV-SIGN-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-sign
+
+[TMBC-SOUND-DISTR-PossCommit--link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-sound-distr-posscommit
 
 [TMBC-INV-VALID-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-valid
 
