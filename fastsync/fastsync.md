@@ -256,7 +256,7 @@ Some variables, etc.
     all heights
 
 #### Auxiliary Function
-- *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*  
+- *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*
 
 
 ```go
@@ -405,7 +405,102 @@ func OnBlockResponse(addr Address, b Block)
 ----
 
 
-**TODO:**  explain two subsequent checked
+
+```go
+func Execute()
+```
+- Comments
+    - none
+- Expected precondition
+	- application state is the one of the blockchain at height *height*
+- Expected postcondition
+    - **[FS-V2-Verif]** for any two blocks *a* and *b* from *receivedBlocks*, with
+	  *a.Height + 1 = b.Height*: if *CommitMatchesBlock (a,b) = false*, then
+	  *a* and *b* not in *blockstore*; nodes with Address 
+	  receivedBlocks(a.Height) and receivedBlocks(b.Height) not in peerIDs
+	- height is updated height of complete prefix that matches the blockchain
+	- state is the one of the blockchain at height *height*
+	- **[FS-V2-TERM]** if height = TargetHeight: **terminate normally**
+- Error condition
+    - none
+----
+
+## Analysis
+
+####  **[FS-ISSUE-KILL]**:
+If two blocks are not matching, the rule [FS-V2-Verif] dismisses both
+blocks and removes the peers that provided these blocks from
+*peerIDs*. If block *a* was correct and provided by a correct peer *p*,
+and block b was faulty and provided by a faulty peer, the protocol
+- removes the correct peer *p*, although it might be useful to
+  download blocks from it in the future
+- removes *a*, so that a fresh copy of *a* needs to be downloaded
+  again from another peer
+  
+By [FS-A-PEER] we do not put a restriction on the number
+  of faulty peers, so that faulty peers can make *FS* to remove all
+  correct peers from *peerIDs*
+
+
+####  **[FS-ISSUE-NON-TERM]**:
+
+By [FS-A-PEER-IDS], peers may be added to *peerIDs*. By [FS-A-PEER],
+we do not put a restriction on the number of faulty peers, so that it
+is possible that faulty peers are added to *peerIDs* at arbitrary
+rate.  Every time `QueryStatus()` is called, *FS* invokes `Status(n)`
+for a faulty node *n*. This node may return an arbitrary height, in
+particular one that is greater than the current height of the
+blockchain. As a result, it is possible that permanently
+*TargetHeight* is greater than the height of the blockchain, so that
+the termination condition in [FS-V2-TERM] is never reached.
+
+
+### Consequence
+
+Due to [FS-ISSUE-KILL] and [FS-ISSUE-NON-TERM], the temporal
+properties that are relevant for termination, namely, 
+[FS-VC-ALL-CORR-TERM] and [FS-VC-ALL-CORR-NONABORT], need to be
+restricted to the case where all peers are correct
+[FS-ALL-CORR-PEER]. In a fault tolerance context this is problematic,
+as it means that faulty peers can prevent *FastSync* from termination.
+
+## Possible Fix
+
+### Temporal Properties
+
+#### **[FS-VC-NONABORT]**:
+Under [FS-CORR-PEER], *Fastsync* never aborts. (Together with
+[FS-VC-TERM] below that means it will terminate normally.)
+
+#### **[FS-VC-TERM]**:
+*Fastsync* eventually terminates normally or it eventually aborts.
+
+
+### Definitions
+
+#### Fastsync has the following configuration parameters:
+- *trustingPeriod*: a time duration
+  [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
+
+#### **[FS-A-INIT]**:
+- *startBlock* is from the blockchain, and within *trustingPeriod*
+(possible with some extra margin to ensure termination before
+*trustingPeriod* expired)
+- *startState* is the application state of the blockchain at Height
+  *startBlock.Height*.  
+
+[FS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
+allow us to use the established trust to understand precisely which
+peer reported an invalid block in order to ensure the following
+invariant:
+  
+  
+#### **[FS-VAR-PEER-INV]**:
+If a peer never misbehaves, it is never removed from *peerIDs*. It
+follows that under [FS-CORR-PEER], *peerIDs* is always non-empty.
+
+
+**TODO:** explain sequential checks
 
 ```go
 func Execute()
@@ -425,15 +520,7 @@ func Execute()
 	receivedBlocks(b.Height) not in peerIDs
 ----
 
-
-
-
-## Correctness arguments
-
-> Proof sketches of why we believe the solution satisfies the problem statement.
-Possibly giving inductive invariants that can be used to prove the specifications
-of the problem statement 
-
+> I think that I have some idea how we can capture fast-sync safety property in a model with adding peers and continuos status requests. The idea is to say that in case correct process terminates at some time t, then he downloaded/executed at least all blocks that are advertised(received status messages) by correct processes until time t-T1, where T1 is terminationTimeout (plus maybe some additional Delta). So we essentially say that you can’t terminate if you haven’t fetched all correct processes advertised. This is main safety property and termination property will need to be specified by constraining addPeer messages. I think  that protocol also needs to be organised more synchronously as a sequence of rounds, where a round is basically what we currently have in TLA+ spec.
 
 
 
