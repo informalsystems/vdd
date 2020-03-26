@@ -1,6 +1,3 @@
-
-*** This is the beginning of an unfinished draft. Comments are welcome! ***
-
 # Fastsync
 
 > Rough outline of what the component is doing and why. 2-3 paragraphs 
