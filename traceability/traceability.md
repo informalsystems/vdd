@@ -232,6 +232,11 @@ and links to the source locations of their definitions.
 **TRC-GRAPH.1::BUILD.1**, we can check that every tag is defined only once. The
 continuous integration tool should report the violations of **TRC-UNIQ.1**.
 
+**[TRC-REV.1::INC.1::TOOL.1]**  In order to manage change, the tool should check whether the content corresponding to a tag (English, TLA+, code) has changed since the last commit. The tool should suggest to update to a new version number. The user then decides whether a new version number is necessary. If the version number is updated, the tool should show all references to the old tag. For each of these, the user has to decide to update the references to the new version, or keep them to the old one. This functionality should be available to the user to check the current working branch, but the functionality should also be part of CI.
+Also if a new version is introduced, perhaps we can collect the old versions in a way that is easily accessible. The information about all tags is already in the repo, but we should make it easily accessible.
+
+
+
 **[TRC-UNIQ.1::BRANCHES.1]** The approach of **TRC-UNIQ.1::DUPS.1** will report
 false positives, if a git repository contains multiple branches. Indeed,
 multiple branches may contain the definitions of the same tag that is defined
