@@ -93,7 +93,6 @@ Peers can be faulty, and we do not make any assumption about number or
 ratio of correct/faulty nodes. Faulty processes may be Byzantine
 according to [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link].
 
-
 #### **[FS-A-VAL]**:
 The system satisfies [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link] and [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]. Thus, there is a
 blockchain that satisfies the soundness requirements [**[TMBC-SOUND-?]**][blockchain].
@@ -128,7 +127,11 @@ distributed setting, we consider two kinds of termination (normal and abort):
 
 #### Remote Functions
 
-The Tendermint Full Node exposes the following functions over Tendermint RPC:
+The Tendermint Full Node exposes the following functions over
+Tendermint RPC. The "Expected precondition" are only expected for
+correct peers (as no assumption is made on internals of faulty
+processes [FS-A-PEER]).
+
 
 *Remark:* we will have asynchronous RPCs
 
