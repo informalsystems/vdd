@@ -218,7 +218,7 @@ is, there is a requirement `FOO.2`, but no requirement `FOO.1`. In this case,
 the tool could report that the function `bar()` implements the outdated requirement
 `FOO.1`.
 
-**[TRC-GITHUB-REF.1::IMPL.1]** When collecting the tags in the process
+**[TRC-GITHUB-REF.1::IMPL.1]** When collecting the tags in the process of
 **TRC-GRAPH.1::BUILD.1**, we can record the source location of every tag.
 Having the source locations, it is easy to replace a reference to every tag
 with a hyperlink (yeah!) to the source location.
