@@ -1,4 +1,4 @@
-*** This is the beginning of an unfinished draft. Don't continue reading! ***
+*** This is the beginning of an unfinished draft. Comments welcome! ***
 
 # Tendermint Full Node API
 
@@ -45,6 +45,8 @@ from a bird's eye view.
 
 The Tendermint Full Node exposes the following functions over Tendermint RPC:
 
+### For the Light Client
+
 ```go
 func Commit(height int64) (SignedHeader, error)
 ```
@@ -80,11 +82,54 @@ func Validators(height int64) (ValidatorSet, error)
 
 ----
 
+
+### For Fastsync
+
+```go
+func Status(addr Address) (int64, error)
+```
+- Implementation remark
+   - RPC to full node *addr*
+- Expected precodnition
+  - none
+- Expected postcondition
+  - if *addr* is correct: Returns the current height `height` of the peer
+   if communication is timely (no timeout)
+  - if *addr* is faulty: Returns an arbitrary height
+- Error condition
+   * if *addr* is correct: timeout  
+   **TODO:** we assume communication is reliable and timely. Should we
+   keep this?
+   * if *addr* is faulty: arbitrary error
+----
+
+
+ ```go    
+func Block(addr Address, height int64) (Block, error)
+```
+- Implementation remark
+   - RPC to full node *addr*
+- Expected precodnition
+  - header of `height` is less than or equal to height of the peer
+- Expected postcondition
+  - if *addr* is correct: Returns the block of height `height`
+  from the blockchain if communication is timely (no timeout)
+  - if *addr* is faulty: Returns arbitrary block
+- Error condition
+  - if *addr* is correct: precondition violated or timeout 
+  - if *addr* is faulty: arbitrary error
+----
+
+
 #### **[FN-LuckyCase]**:
-The full node on which the RPC is called is correct and no timeout occurs at the receiver on `Commit` and `Validators`.
+
+The callee is correct and no timeout occurs at the caller before the
+remote function returns.
 
 #### **[FN-ManifestFaulty]**
-The  full node on which the RPC is called is faulty and a faulty header is received.
+The callee is faulty and the returned data violates the expected
+postcondition for a correct callee (e.g., a faulty header is received
+in `Commit`).
 
 
 
