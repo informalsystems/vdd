@@ -53,7 +53,7 @@ classify logical units that should be tagged. These are:
    etc.
 
  * **TLA+ operators**. We should tag the top-level operators, that is, the operators
- that that do not have parents in the call graph.
+ that do not have parents in the call graph.
 
  * **Implementation methods**. We should tag the principle functions and data structures.
  The main point is not to tag every single piece of code, but to tag the code that
@@ -238,4 +238,3 @@ multiple branches may contain the definitions of the same tag that is defined
 in a common git commit.  In this case, the tag analyser should analyse the
 commit history. By doing so the analyser can test, whether the potential
 duplicates belong to the same commit, and thus are uniquely defined.
-
