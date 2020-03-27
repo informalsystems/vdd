@@ -640,8 +640,9 @@ Observations:
   smallest height received from *p*.
 
 3. Assume whenever a block does not have an open request, `CreateRequest` is
-  called immediately, which calls `Block(n)` on a peer. Say this
-  happens at time *t*. There are two cases: 
+   called immediately, which calls `Block(n)` on a peer. Say this
+   happens at time *t*. There are two cases: 
+  
    - by t + 2 Delta a block is added to *blockStore*
    - at t + 2 Delta `Block(n)` timed out and *n* is removed from
        peer.
