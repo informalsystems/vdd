@@ -637,39 +637,43 @@ Observations:
   
 2. By `SequentialVerify`, if a faulty peer *p* reports multiple faulty
   blocks, *p* will be removed upon trying to check the block with the
-  smallest of such peers.
+  smallest height received from *p*.
 
-3. whenever a block does not have an open request, `CreateRequest` is
+3. Assume whenever a block does not have an open request, `CreateRequest` is
   called immediately, which calls `Block(n)` on a peer. Say this
   happens at time *t*. There are two cases: 
    - by t + 2 Delta a block is added to *blockStore*
    - at t + 2 Delta `Block(n)` timed out and *n* is removed from
        peer.
 	   
-4. Let *goodheight* be the height at time begin
-
-5. Let *f* be the number of faulty peers in *peerIDs*; *f = fmax* at
-   time begin
+4. Let *f* be the number of faulty peers in *peerIDs*;  
+   *f = fmax* at
+   time *begin*
 	   
-6. Let t_i be the sequence of times `OnBlockResponse(addr,b)` is
+5. Let t_i be the sequence of times `OnBlockResponse(addr,b)` is
    invoked or times out with *b.Height = height + 1*.
    
-7. By 3., 
+6. By 3., 
    - *t_1 <= begin + 2 Delta* 
    - *t_{i+1} <= t_1 + 2 Delta* 
 
-8.  By an inductive argument we prove for *i > 0* that
-   - height(t_{i+1}) > height(t_i), or
-   - f(t_{i+1}) < f(t_i))  
-   - Argument: if the peers is faulty and does not return a block the
-     peer is removed, if it is faulty and return a faulty block `SequentialVerify`
+7.  By an inductive argument we prove for *i > 0* that
+   - *height(t_{i+1}) > height(t_i)*, or
+   - *f(t_{i+1}) < f(t_i))* and *height(t_{i+1}) = height(t_i)*  
+   - Argument: if the peers is faulty and does not return a block, the
+     peer is removed, if it is faulty and returns a faulty block 
+	 `SequentialVerify`
      removes the peer. If the returned block is OK, height is
      increased.
 	 
-9. By 2. and 8. faulty peers can delay incrementing the time at most
+8. By 2. and 7., faulty peers can delay incrementing the height at most
    *fmax* times where each time costs *2 Delta*. We have additional *2
    Delta* initial offset plus *2 Delta* to get all missing blocks
-   after the last fault showed itself.
+   after the last fault showed itself. (This assumes that an arbitrary
+   number of blocks can be obtained and checked within one round-trip
+   2 Delta; which either needs conservative estimation of Delta, or
+   more refined analysis). Thus we reach the *targetHeight* and
+   terminate by end.
    
 **TODO:** re-check argument.
    
