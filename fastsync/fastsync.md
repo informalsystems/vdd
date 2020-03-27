@@ -256,6 +256,8 @@ Some variables, etc.
     all heights
 
 #### Auxiliary Function
+
+#### **[FS-FUNC-TARGET]**:
 - *TargetHeight = max {peerHeigts(addr): addr in peerIDs}*
 
 
@@ -481,7 +483,7 @@ it will terminate normally.)
 *Fastsync* eventually terminates normally or it eventually aborts.
 
 
-### Solution
+### Solution for [FS-ISSUE-KILL]
 
 To avoid [FS-ISSUE-KILL], we observe that
 [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link] ensures that from the
@@ -548,7 +550,8 @@ func SequentialVerify {
 			    height = bnew.Height;
 			}
 			else {
-			    blockstore.Remove(bnew);
+			    blockstore.RemoveFromPeer(receivedBlocks(bnew.Height));
+				// we remove all blocks received from the faulty peer
 			    peerIDs.Remove(receivedBlocks(bnew.Height));
 				exit;
 			}
@@ -569,6 +572,9 @@ func SequentialVerify {
 ----
 
 
+Then `Execute` just consists in calling `SequentialVerify` and then
+updating the application state to the (new) height.
+
 ```go
 func Execute()
 ```
@@ -586,10 +592,87 @@ func Execute()
 ----
 
 
-[FS-ISSUE-NON-TERM]
+### Solution for [FS-ISSUE-NON-TERM]
 
-> I think that I have some idea how we can capture fast-sync safety property in a model with adding peers and continuos status requests. The idea is to say that in case correct process terminates at some time t, then he downloaded/executed at least all blocks that are advertised(received status messages) by correct processes until time t-T1, where T1 is terminationTimeout (plus maybe some additional Delta). So we essentially say that you can’t terminate if you haven’t fetched all correct processes advertised. This is main safety property and termination property will need to be specified by constraining addPeer messages. I think  that protocol also needs to be organised more synchronously as a sequence of rounds, where a round is basically what we currently have in TLA+ spec.
+As discussed above, the advantageous termination requirement is the
+combination of [FS-VC-NONABORT] and [FS-VC-TERM], that is, *Fastsync*
+should terminate normally in case there is at least one correct
+peer in *peerIDs*.
 
+#### **[FS-SOLUTION-TERM-BOUND]**:
+
+A simple way to achieve this is to assume that there is an a priori
+fixed upper bound *t* on the number of faulty peers. Then, we could
+change the definition of *TargetHeight*: instead of picking the
+maximum received height [FS-FUNC-TARGET], *TargetHeight* could be the
+"fault-tolerant maximum", that is the t+1 largest height reported by
+peers. This ensures that the *TargetHeight* is less than or equal to a
+height reported by a correct peer and the scenario in
+[FS-ISSUE-NON-TERM] can be avoided.
+
+The downside of this is that *t* is "hard-coded" into the solution,
+and if the assumption on *t* is violated liveness also is violated.
+
+
+#### **[FS-SOLUTION-TERM-GOOD]**:
+
+Here we assume that during a finite good period no new faulty peers
+are added to *peerIDs*. 
+
+#### **[FS-A-GOOD-PERIOD]**:
+
+A time interval *[begin,end]* is *good period* if:
+
+- *fmax* is the number of faulty peers in *peerIDs* at time *begin*
+- *end >= 2 Delta (f+3)*
+- no faulty peer is added before time *end*
+
+
+#### **[FS-A-GOOD-PERIOD-FASTSYNC]**:
+
+Observations: 
+
+1. If a faulty peer *p* reports a faulty block, `SequentialVerify` will
+  eventually remove *p* from *peerIDs*
+  
+2. By `SequentialVerify`, if a faulty peer *p* reports multiple faulty
+  blocks, *p* will be removed upon trying to check the block with the
+  smallest of such peers.
+
+3. whenever a block does not have an open request, `CreateRequest` is
+  called immediately, which calls `Block(n)` on a peer. Say this
+  happens at time *t*. There are two cases: 
+   - by t + 2 Delta a block is added to *blockStore*
+   - at t + 2 Delta `Block(n)` timed out and *n* is removed from
+       peer.
+	   
+4. Let *goodheight* be the height at time begin
+
+5. Let *f* be the number of faulty peers in *peerIDs*; *f = fmax* at
+   time begin
+	   
+6. Let t_i be the sequence of times `OnBlockResponse(addr,b)` is
+   invoked or times out with *b.Height = height + 1*.
+   
+7. By 3., 
+   - *t_1 <= begin + 2 Delta* 
+   - *t_{i+1} <= t_1 + 2 Delta* 
+
+8.  By an inductive argument we prove for *i > 0* that
+   - height(t_{i+1}) > height(t_i), or
+   - f(t_{i+1}) < f(t_i))  
+   - Argument: if the peers is faulty and does not return a block the
+     peer is removed, if it is faulty and return a faulty block `SequentialVerify`
+     removes the peer. If the returned block is OK, height is
+     increased.
+	 
+9. By 2. and 8. faulty peers can delay incrementing the time at most
+   *fmax* times where each time costs *2 Delta*. We have additional *2
+   Delta* initial offset plus *2 Delta* to get all missing blocks
+   after the last fault showed itself.
+   
+**TODO:** re-check argument.
+   
 
 
 # References
