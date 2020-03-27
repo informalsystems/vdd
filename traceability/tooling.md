@@ -70,6 +70,10 @@ employed:
 * **Test artifacts**, which, when executed successfully, automatically verify
   that specific acceptance criteria are met.
 
+This is illustrated in the following diagram.
+
+![High-Level Domain Analysis](./tooling_domain.png)
+
 ### Versioning
 
 It seems as though most requirements management tooling implements their own
