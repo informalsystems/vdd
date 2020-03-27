@@ -95,6 +95,22 @@ requirements:
 
 ## Desired User Experience
 
+The requirements traceability tooling needs to support the following users:
+
+* **Clients**, who
+  * define the requirements for their project,
+  * want to know how the project is progressing and
+  * want to know whether their requirements have been met.
+* **Researchers**, who
+  * write problem, system and protocol specifications (in English),
+  * implement and validate models of specifications (e.g. in TLA+), and
+  * implement and validate models (e.g. in TLA+) that correspond to
+    implementation code.
+* **Engineers**, who
+  * implement software according to the requirements, models and acceptance
+    criteria, and
+  * write tests according to the requirements and acceptance criteria.
+
 ## Implementation Recommendations
 
 [1]: https://en.wikipedia.org/wiki/Requirements_management
