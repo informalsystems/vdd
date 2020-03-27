@@ -468,57 +468,125 @@ as it means that faulty peers can prevent *FastSync* from termination.
 
 ### Temporal Properties
 
+Instead of the limited termination properties [FS-VC-ALL-CORR-TERM]
+and [FS-VC-ALL-CORR-NONABORT], a fault-tolerant solution shall satisfy
+the following two properties:
+
 #### **[FS-VC-NONABORT]**:
-Under [FS-CORR-PEER], *Fastsync* never aborts. (Together with
-[FS-VC-TERM] below that means it will terminate normally.)
+If there is one correct process in *peerIDs* [FS-CORR-PEER],
+*Fastsync* never aborts. (Together with [FS-VC-TERM] below that means
+it will terminate normally.)
 
 #### **[FS-VC-TERM]**:
 *Fastsync* eventually terminates normally or it eventually aborts.
 
 
-### Definitions
+### Solution
+
+To avoid [FS-ISSUE-KILL], we observe that
+[**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link] ensures that from the
+point a block was created, we assume that more than two thirds of the
+validator nodes are correct until the *trustingPeriod* expires.  Under
+this assumption, assume, the trusting period of *startBlock* is not
+expired by the time *FastSync* checks a block *b* with height
+*startBlock.Height = 1*.
+If *CommitMatchesBlock (startBlock,b) = false*, it is clear that
+*startBlock* is OK, and the peer *p* that provided *b* is faulty. Only
+peer *b* should be removed. That is, if we sequentially verify blocks
+starting with *startBlock*, we will never remove a correct peer from
+*peerIDs* and we will be able to ensure the following invariant:
+
+
+#### **[FS-VAR-PEER-INV]**:
+If a peer never misbehaves, it is never removed from *peerIDs*. It
+follows that under [FS-CORR-PEER], *peerIDs* is always non-empty.
+To perform these checks, we suggest to change the protocol as follows
+
 
 #### Fastsync has the following configuration parameters:
 - *trustingPeriod*: a time duration
   [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
+
+[FS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
+allow us to use the established trust to understand precisely which
+peer reported an invalid block in order to ensure the following
+invariant:
 
 #### **[FS-A-INIT]**:
 - *startBlock* is from the blockchain, and within *trustingPeriod*
 (possible with some extra margin to ensure termination before
 *trustingPeriod* expired)
 - *startState* is the application state of the blockchain at Height
-  *startBlock.Height*.  
+  *startBlock.Height*.
+- *startHeight = startBlock.Height*
 
-[FS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
-allow us to use the established trust to understand precisely which
-peer reported an invalid block in order to ensure the following
-invariant:
-  
-  
-#### **[FS-VAR-PEER-INV]**:
-If a peer never misbehaves, it is never removed from *peerIDs*. It
-follows that under [FS-CORR-PEER], *peerIDs* is always non-empty.
+#### Additional Variables
+- *trustedBlockstore*: stores for each height greater than
+    *startBlock.Height*, the block of that height. initially it
+    contains only *startBlock*
 
 
-**TODO:** explain sequential checks
+#### **[FS-VAR-TRUST-INV]**:
+Let *b(i)* be the block in *trustedBlockstore*
+with b(i).Height = i. It holds that
+for *startHeight <= i < height*, 
+*CommitMatchesBlock (b(i),b(i+1)) = true*.
+
+
+
+Then we propose to update the function `Execute`. To do so, we first
+define the following helper function:
+
+
+```go
+func SequentialVerify {
+	for i, bnew range receivedBlocks {
+	    // We assume receivedBlocks is iterates in order of block Heights
+		if bnew.Height == height + 1 {
+		    if CommitMatchesBlock (b(height), bnew) == true {
+			    trustedBlockstore.Add(bnew);
+			    height = bnew.Height;
+			}
+			else {
+			    blockstore.Remove(bnew);
+			    peerIDs.Remove(receivedBlocks(bnew.Height));
+				exit;
+			}
+		}
+	}
+}
+```
+- Comments
+    - none
+- Expected precondition
+	- [FS-VAR-TRUST-INV]
+- Expected postcondition
+    - [FS-VAR-TRUST-INV]
+	- there is no block *bnew* with *bnew.Height = height + 1* in
+      *blockstore*
+- Error condition
+    - none 
+----
+
 
 ```go
 func Execute()
 ```
 - Comments
-    - none
+    - first `SequentialVerify` is executed
 - Expected precondition
-    - [goodblocks]: *receivedBlocks* are all from the blockchain
 	- application state is the one of the blockchain at height *height*
 - Expected postcondition
-    - height is updated height of complete prefix that matches the blockchain
+    - there is no block *bnew* with *bnew.Height = height + 1* in
+      *blockstore*
 	- state is the one of the blockchain at height *height*
 	- if height = TargetHeight: **terminate normally**
 - Error condition
-    - if precondition [goodblocks] is violated: there is a bad block *b*; *b*
-	not in *blockstore*; node with Address
-	receivedBlocks(b.Height) not in peerIDs
+    - none 
 ----
+
+
+[FS-ISSUE-NON-TERM]
 
 > I think that I have some idea how we can capture fast-sync safety property in a model with adding peers and continuos status requests. The idea is to say that in case correct process terminates at some time t, then he downloaded/executed at least all blocks that are advertised(received status messages) by correct processes until time t-T1, where T1 is terminationTimeout (plus maybe some additional Delta). So we essentially say that you can’t terminate if you haven’t fetched all correct processes advertised. This is main safety property and termination property will need to be specified by constraining addPeer messages. I think  that protocol also needs to be organised more synchronously as a sequence of rounds, where a round is basically what we currently have in TLA+ spec.
 
