@@ -17,7 +17,7 @@ spec. Possible interactions, possible use cases, etc.
 > should give the reader the understanding in what environment this component
 will be used. 
 ---->
-Fastsync is a protocol that is used by a full node to catchup to the
+Fastsync is a protocol that is used by a full node to catch-up to the
 current state of a Tendermint blockchain. Its typical use case is a
 full node that was disconnected from the system for some time. The
 recovering full node locally has a copy of a prefix of the blockchain,
@@ -176,7 +176,7 @@ func Block(addr Address, height int64) (Block, error)
 ```
 - Implementation remark
    - RPC to full node *addr*
-- Expected precodnition
+- Expected precondition
   - header of `height` is less than or equal to height of the peer
 - Expected postcondition
   - if *addr* is correct: Returns the block of height `height`
@@ -673,7 +673,7 @@ A time interval *[begin,end]* is *good period* if:
 
 #### **[FS-A-GOOD-PERIOD-FASTSYNC]**:
 
-Arguemts: 
+Arguments: 
 
 1. If a faulty peer *p* reports a faulty block, `SequentialVerify` will
   eventually remove *p* from *peerIDs*
@@ -710,14 +710,14 @@ Arguemts:
    `SequentialVerify` removes the peer (b). If the returned block is OK,
    height is increased (a).
 	 
-8. By 2. and 7., faulty peers can delay incrementing the height at most
-   *fmax* times, where each time "costs" *2 Delta*. We have additional *2
-   Delta* initial offset (3a) plus *2 Delta* to get all missing blocks
-   after the last fault showed itself. (This assumes that an arbitrary
-   number of blocks can be obtained and checked within one round-trip
-   2 Delta; which either needs conservative estimation of Delta, or
-   a more refined analysis). Thus we reach the *targetHeight* and
-   terminate by time *end*.
+8. By 2. and 7., faulty peers can delay incrementing the height at
+   most *fmax* times, where each time "costs" *2 Delta* seconds. We
+   have additional *2 Delta* initial offset (3a) plus *2 Delta* to get
+   all missing blocks after the last fault showed itself. (This
+   assumes that an arbitrary number of blocks can be obtained and
+   checked within one round-trip 2 Delta; which either needs
+   conservative estimation of Delta, or a more refined analysis). Thus
+   we reach the *targetHeight* and terminate by time *end*.
 
 
 # References
