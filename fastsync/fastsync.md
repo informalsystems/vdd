@@ -282,7 +282,7 @@ Some variables, etc.
 #### Auxiliary Functions
 
 #### **[FS-FUNC-TARGET]**:
-- *TargetHeight = max {peerHeigts(addr): addr in peerIDs} union {startBlock.height}*
+- *TargetHeight = max {peerHeigts(addr): addr in peerIDs} union {height}*
 
 #### **[FS-FUNC-MATCH]**:
 
