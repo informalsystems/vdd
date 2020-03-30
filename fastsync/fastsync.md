@@ -667,11 +667,9 @@ specification.
 A time interval *[begin,end]* is *good period* if:
 
 - *fmax* is the number of faulty peers in *peerIDs* at time *begin*
-- *end >= 2 Delta (fmax + 3)*
+- *end >= begin + 2 Delta (fmax + 3)*
 - no faulty peer is added before time *end*
 
-
-#### **[FS-A-GOOD-PERIOD-FASTSYNC]**:
 
 Arguments: 
 
