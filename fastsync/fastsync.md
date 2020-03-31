@@ -668,6 +668,13 @@ func Execute()
 ----
 
 
+**TODO:** the remainder assumed a different termination condition of
+Fastsync V2. I guess the fix for the current one consists in adjusting
+timeouts to the rate the blockchain can grow. I suggest to not have
+this fix in the deliverable. I keep it for now
+as the time estimation might be
+interesting for the future.
+
 ### Solution for [FS-ISSUE-NON-TERM]
 
 As discussed above, the advantageous termination requirement is the
@@ -676,13 +683,6 @@ should terminate successfully in case there is at least one correct
 peer in *peerIDs*.
 
 
-
-**TODO:** the remainder assumed a different termination condition of
-Fastsync V2. I guess the fix for the current one consists in adjusting
-timeouts to the rate the blockchain can grow. I suggest to not have
-this fix in the deliverable. I keep it for now
-as the time estimation might be
-interesting for the future.
 
 #### **[FS-SOLUTION-TERM-GOOD]**:
 
