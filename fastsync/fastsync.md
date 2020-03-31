@@ -397,7 +397,8 @@ RPC. When they return, the following functions are called:
   the blocks, and
   executes the transactions of a sound block and updates *state*. 
   
-  
+#### **[FS-V2-TIMEOUT]**:
+
 **Termination:** *Fastsync V2* starts a timeout whenever a block is
 executed (that is, when the height is incremented). If the timeout expires
 before the next block is executed, *Fastsync* terminates.
@@ -500,7 +501,6 @@ func Execute()
 	  receivedBlocks(a.Height) and receivedBlocks(b.Height) not in peerIDs
 	- height is updated height of complete prefix that matches the blockchain
 	- state is the one of the blockchain at height *height*
-	- **[FS-V2-TERM]** if height = TargetHeight: **terminate successfully**
 - Error condition
     - none
 ----
@@ -524,16 +524,14 @@ By [FS-A-PEER] we do not put a restriction on the number
 
 ####  **[FS-ISSUE-NON-TERM]**:
 
-By [FS-A-PEER-IDS], peers may be added to *peerIDs*. By [FS-A-PEER],
-we do not put a restriction on the number of faulty peers, so that it
-is possible that faulty peers are added to *peerIDs* at arbitrary
-rate.  Every time `QueryStatus()` is called, *FS* invokes `Status(n)`
-for a faulty node *n*. This node may return an arbitrary height, in
-particular one that is greater than the current height of the
-blockchain. As a result, it is possible that permanently
-*TargetHeight* is greater than the height of the blockchain, so that
-the termination condition in [FS-V2-TERM] is never reached.
-
+Due to [FS-ISSUE-KILL], from some point on only faulty peers may be in
+*peerIDs*. They can thus control at which rate *Fastsync* gets
+blocks. If the timeout duration from [FS-V2-TIMEOUT] is greater than
+the time it takes to add a block to the blockchain 
+(LTIME in [**[TMBC-SEQ-APPEND-L]**][TMBC-SEQ-APPEND-L-link]), the
+protocol may never terminate and thus violate [FS-VC-TERM].
+This scenario is even possible if a correct peer is always in
+*peerIDs*, but faulty peers are regularly asked for blocks.
 
 ### Consequence
 
@@ -664,6 +662,7 @@ func Execute()
     - there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
 	- state is the one of the blockchain at height *height*
+	- if height = TargetHeight: **terminate successfully**
 - Error condition
     - none 
 ----
@@ -676,20 +675,14 @@ combination of [FS-VC-NONABORT] and [FS-VC-TERM], that is, *Fastsync*
 should terminate successfully in case there is at least one correct
 peer in *peerIDs*.
 
-#### **[FS-SOLUTION-TERM-BOUND]**:
 
-A simple way to achieve this is to assume that there is an a priori
-fixed upper bound *t* on the number of faulty peers. Then, we could
-change the definition of *TargetHeight*: instead of picking the
-maximum received height [FS-FUNC-TARGET], *TargetHeight* could be the
-"fault-tolerant maximum", that is the t+1 largest height reported by
-peers. This ensures that the *TargetHeight* is less than or equal to a
-height reported by a correct peer and the scenario in
-[FS-ISSUE-NON-TERM] can be avoided.
 
-The downside of this is that *t* is "hard-coded" into the solution,
-and if the assumption on *t* is violated liveness also is violated.
-
+**TODO:** the remainder assumed a different termination condition of
+Fastsync V2. I guess the fix for the current one consists in adjusting
+timeouts to the rate the blockchain can grow. I suggest to not have
+this fix in the deliverable. I keep it for now
+as the time estimation might be
+interesting for the future.
 
 #### **[FS-SOLUTION-TERM-GOOD]**:
 
@@ -775,6 +768,8 @@ Arguments:
 [TMBC-FaultyFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-faultyfull
 
 [TMBC-TIME_PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time_params
+
+[TMBC-SEQ-APPEND-L-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq-append-l
 
 [TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-fm-2thirds
 
