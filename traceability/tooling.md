@@ -196,7 +196,7 @@ satisfied](./traceability.md#3-traceability-properties).
 ### Workflow
 At present, researchers and engineers collaborate on specifications, models and
 implementation through GitHub and GitLab. All artifacts are written in
-structured in plain text files.
+structured plain text files.
 
 It would be ideal if we could develop user experiences for all stakeholders that
 keeps to the current workflow as far as possible. Important workflows to be
@@ -275,4 +275,3 @@ collaboration on specifications, we could either:
 [22]: https://doorstop.readthedocs.io/en/latest/
 [23]: https://gitlab.com/groups/gitlab-org/-/epics/2703
 [24]: https://github.github.com/gfm/
-
