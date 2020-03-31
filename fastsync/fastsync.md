@@ -227,10 +227,28 @@ the following relaxation. (Which is sufficient for Tendermint, as the
 consensus reactor then synchronizes from that height.)
 
 #### **[FS-VC-CORR-INV]**:
-Under [FS-CORR-PEER], let *t* be the maximum 
+Under [FS-CORR-PEER], let *maxh* be the maximum 
 height of a correct peer [**[TMBC-CorrFull]**][TMBC-CorrFull-link]
 in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
-successfully, it is at some height *terminationHeight >= t*.
+successfully, it is at some height *terminationHeight >= maxh*.
+
+The above property is independent of how many blocks are added to the
+blockchain (and learned by the peers) while *Fastsync* is running. It
+links the target height to the initial state. If *Fastsync* has to
+catch-up many blocks, it would be better to  link the
+target height to a time close to the termination. This is capture by
+the following specification:
+
+
+#### **[FS-VC-CORR-INV-SYNC]**:
+Under [FS-CORR-PEER], there exists a constant time interval *D*, such
+that if *term* is the time *Fastsync* terminates and
+*maxh* be the maximum height of a correct peer
+[**[TMBC-CorrFull]**][TMBC-CorrFull-link] in *peerIDs* at the time
+*term - D*, then if *FastSync* terminates successfully, it is at
+some height *terminationHeight >= maxh*.
+
+*Remark:* An acceptable value for *D* is in the range of *2 Delta*.
 
 
 #### Liveness
