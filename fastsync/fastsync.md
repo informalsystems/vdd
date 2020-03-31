@@ -134,13 +134,13 @@ The node *FS* executing Fastsync is following the protocol (it is correct).
 We do not put assumptions on the existence of a correct full node
 in *peerIDs*. Under this assumption we cannot guarantee the properties
 described in the sequential specification above. Thus, in the (unreliable)
-distributed setting, we consider two kinds of termination (normal and
-abort) and we will specify below under what (favorable) conditions we
-can ensure to terminate normally, and satisfy the requirements of the
+distributed setting, we consider two kinds of termination (successful and
+failure) and we will specify below under what (favorable) conditions we
+can ensure to terminate successfully, and satisfy the requirements of the
 sequential problem statement:
 
 #### **[FS-DISTR-TERM]**:
-*Fastsync* may *terminate normally* or it  *aborts*.
+*Fastsync* may *terminate successfully* or it  *terminates with failure*.
 
 
 #### Remote Functions
@@ -197,10 +197,10 @@ safety and liveness properties below:
 
 
 #### **[FS-CORR-PEER]**:
-At all times, the set *peerID* contains at least one correct full node.
+Initially, the set *peerIDs* contains at least one correct full node.
 
 #### **[FS-ALL-CORR-PEER]**:
-At all times, the set *peerID* contains only correct full nodes.
+At all times, the set *peerIDs* contains only correct full nodes.
 
 
 #### Safety
@@ -212,20 +212,25 @@ At all times, the set *peerID* contains only correct full nodes.
 
 
 #### **[FS-VC-ALL-CORR-NONABORT]**:
-Under [FS-ALL-CORR-PEER], *Fastsync* never aborts.
+Under [FS-ALL-CORR-PEER], *Fastsync* never terminates with failure.
 
 
 #### **[FS-VC-INV]**:
-If *FastSync* terminates normally at height *terminationHeight*, then the
+If *FastSync* terminates successfully at height *terminationHeight*, then the
 application state is the one that corresponds to the blockchain at
 height *terminationHeight*.
 
+As we do not assume that a correct peer is at the most recent height
+of the blockchain (it might lag behind), the property [FS-Seq-Term]
+cannot be ensured in an unreliable distributed setting. We consider
+the following relaxation. (Which is sufficient for Tendermint, as the
+consensus reactor then synchronizes from that height.)
 
 #### **[FS-VC-CORR-INV]**:
 Under [FS-CORR-PEER], let *t* be the maximum 
 height of a correct peer [**[TMBC-CorrFull]**][TMBC-CorrFull-link]
 in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
-normally, it is at some height *terminationHeight >= t*.
+successfully, it is at some height *terminationHeight >= t*.
 
 
 #### Liveness
@@ -237,7 +242,7 @@ reliable and timely, then something good happens eventually.
 ---->
 
 #### **[FS-VC-ALL-CORR-TERM]**:
-Under [FS-ALL-CORR-PEER], *Fastsync* eventually terminates normally.
+Under [FS-ALL-CORR-PEER], *Fastsync* eventually terminates successfully.
 
 
 <!--
@@ -375,9 +380,9 @@ RPC. When they return, the following functions are called:
   the longest prefix reaches *TargetHeight - 1 * it terminates *Fastsync*.
   
 During execution *peerIDs* may become empty. In this case *Fastsync*
-aborts.
+terminates with failure.
 
-**TODO:** is the above termination condition OK?
+**TODO:** is the above termination condition OK? No, add timeout
 
 ### Details
 
@@ -406,6 +411,7 @@ func OnStatusResponse(addr Address, ht int64)
 ```
 - Comment
     - *ht* is a height
+	- peers can provide the status without being called
 - Expected precondition
     - *peerHeights(addr) <= ht*
 - Expected postcondition
@@ -433,7 +439,7 @@ func CreateRequest
       strategies to balance the load over the peers
     - *pendingblocks(h) = addr*
 - Error condition
-    - if *peerIDs* is empty: no correct peers left;  abort. Not
+    - if *peerIDs* is empty: no correct peers left;  terminate with failure. Not
 	possible under  [FS-CORR-PEER].
 ----
 
@@ -474,7 +480,7 @@ func Execute()
 	  receivedBlocks(a.Height) and receivedBlocks(b.Height) not in peerIDs
 	- height is updated height of complete prefix that matches the blockchain
 	- state is the one of the blockchain at height *height*
-	- **[FS-V2-TERM]** if height = TargetHeight: **terminate normally**
+	- **[FS-V2-TERM]** if height = TargetHeight: **terminate successfully**
 - Error condition
     - none
 ----
@@ -528,11 +534,11 @@ the following two properties:
 
 #### **[FS-VC-NONABORT]**:
 If there is one correct process in *peerIDs* [FS-CORR-PEER],
-*Fastsync* never aborts. (Together with [FS-VC-TERM] below that means
-it will terminate normally.)
+*Fastsync* never terminates with failure. (Together with [FS-VC-TERM] below that means
+it will terminate successfully.)
 
 #### **[FS-VC-TERM]**:
-*Fastsync* eventually terminates normally or it eventually aborts.
+*Fastsync* eventually terminates (successfully or with failure).
 
 
 ### Solution for [FS-ISSUE-KILL]
@@ -638,7 +644,7 @@ func Execute()
     - there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
 	- state is the one of the blockchain at height *height*
-	- if height = TargetHeight: **terminate normally**
+	- if height = TargetHeight: **terminate successfully**
 - Error condition
     - none 
 ----
@@ -648,7 +654,7 @@ func Execute()
 
 As discussed above, the advantageous termination requirement is the
 combination of [FS-VC-NONABORT] and [FS-VC-TERM], that is, *Fastsync*
-should terminate normally in case there is at least one correct
+should terminate successfully in case there is at least one correct
 peer in *peerIDs*.
 
 #### **[FS-SOLUTION-TERM-BOUND]**:
