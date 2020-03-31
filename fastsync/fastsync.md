@@ -395,8 +395,7 @@ RPC. When they return, the following functions are called:
 
 - `Execute()`: Iterates over the *blockstore*.  Checks soundness of
   the blocks, and
-  executes the transactions of a sound block and updates *state*. If
-  the longest prefix reaches *TargetHeight - 1 * it terminates *Fastsync*.
+  executes the transactions of a sound block and updates *state*. 
   
   
 **Termination:** *Fastsync V2* starts a timeout whenever a block is
@@ -462,9 +461,6 @@ func CreateRequest
 	  *Remark:* different implementations may have different
       strategies to balance the load over the peers
     - *pendingblocks(h) = addr*
-- Error condition
-    - if *peerIDs* is empty: no correct peers left;  terminate with failure. Not
-	possible under  [FS-CORR-PEER].
 ----
 
 
@@ -495,8 +491,8 @@ func Execute()
 - Comments
     - none
 - Expected precondition
-	- application state is the one of the blockchain at height *height
-      - 1*
+	- application state is the one of the blockchain at height
+      *height - 1*
 - Expected postcondition
     - **[FS-V2-Verif]** for any two blocks *a* and *b* from *receivedBlocks*, with
 	  *a.Height + 1 = b.Height*: if *VerifyCommit (a,b.Commit) = false*, then
@@ -668,7 +664,6 @@ func Execute()
     - there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
 	- state is the one of the blockchain at height *height*
-	- if height = TargetHeight: **terminate successfully**
 - Error condition
     - none 
 ----
