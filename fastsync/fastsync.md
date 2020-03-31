@@ -137,7 +137,8 @@ in *peerIDs*. Under this assumption we cannot guarantee the properties
 described in the sequential specification above. Thus, in the (unreliable)
 distributed setting, we consider two kinds of termination (normal and
 abort) and we will specify below under what (favorable) conditions we
-can ensure to terminate normally:
+can ensure to terminate normally, and satisfy the requirements of the
+sequential problem statement:
 
 #### **[FS-DISTR-TERM]**:
 *Fastsync* may *terminate normally* or it  *aborts*.
@@ -267,7 +268,7 @@ Some variables, etc.
 - *startState* is the application state of the blockchain at Height *startBlock.Height*.
 
 #### Variables
-- *height*: initially *startBlock.Height*
+- *height*: initially *startBlock.Height + 1*
 - *state*: initially *startState*
 - *peerIDs*: peer addresses
 - *peerHeigts*: stores for each peer the height it reported. initially 0
@@ -286,18 +287,24 @@ Some variables, etc.
 
 #### **[FS-FUNC-MATCH]**:
 
-**TODO:** what is the name of the Golang function that implements
-that?
 
 ```go
-func CommitMatchesBlock(a Block, b Block) Boolean
+func VerifyCommit(b Block, c Commit) Boolean
 ```
+- Comment
+    - Corresponds to `verifyCommit(chainID string, blockID
+     types.BlockID, height int64, commit *types.Commit) error` in the
+     current Golang implementation, which expects blockID and height 
+	 (from the first block) and the
+     corresponding commit from the following block. We use the
+     simplified form for ease in presentation.
+
 - Implementation remark
     - implements the check from
      [**[TMBC-SOUND-DISTR-PossCommit]**][TMBC-SOUND-DISTR-PossCommit--link],
-     that is, that  *b.Commit* is a valid commit for block *a*
+     that is, that  *c* is a valid commit for block *b*
 - Expected precondition
-    - *b.Commit* is a valid commit for block *a*
+    - *c* is a valid commit for block *b*
 - Expected postcondition
     - *true* if precondition holds
 	- *false* if precondition is violated
@@ -305,17 +312,21 @@ func CommitMatchesBlock(a Block, b Block) Boolean
     - none
 ----
 
+
 #### **[FS-VAR-STATE-INV]**:
 It is always the case that *state* corresponds to the application state of the
-blockchain of that height, that is, *state = chain[height].AppState*
+blockchain of that height, that is, *state = chain[height - 1].AppState*
 [**[TMBC-SEQ]**][TMBC-SEQ-link].
 
 #### **[FS-VAR-PEER-INV]**:
 It is always the case that the set *peerIDs* only contains nodes that
 have not yet misbehaved (by sending wrong data or timing out).
 
-
-
+#### **[FS-VAR-BLOCK-INV]**:
+For *startBlock.Height <= i < height - 1*, let *b(i)* be the block with
+height *i* in *blockstore*, it always holds that
+*VerifyCommit(b(i), b(i+1).Commit) = true*. This means that *height*
+can only be incremented if all blocks with lower height have been verified.
 
 
 ## Solution
@@ -362,7 +373,7 @@ RPC. When they return, the following functions are called:
 - `Execute()`: Iterates over the *blockstore*.  Checks soundness of
   the blocks, and
   executes the transactions of a sound block and updates *state*. If
-  the longest prefix reaches *TargetHeight* it terminates *Fastsync*.
+  the longest prefix reaches *TargetHeight - 1 * it terminates *Fastsync*.
   
 During execution *peerIDs* may become empty. In this case *Fastsync*
 aborts.
@@ -455,10 +466,11 @@ func Execute()
 - Comments
     - none
 - Expected precondition
-	- application state is the one of the blockchain at height *height*
+	- application state is the one of the blockchain at height *height
+      - 1*
 - Expected postcondition
     - **[FS-V2-Verif]** for any two blocks *a* and *b* from *receivedBlocks*, with
-	  *a.Height + 1 = b.Height*: if *CommitMatchesBlock (a,b) = false*, then
+	  *a.Height + 1 = b.Height*: if *VerifyCommit (a,b.Commit) = false*, then
 	  *a* and *b* not in *blockstore*; nodes with Address 
 	  receivedBlocks(a.Height) and receivedBlocks(b.Height) not in peerIDs
 	- height is updated height of complete prefix that matches the blockchain
@@ -532,7 +544,7 @@ point a block was created, we assume that more than two thirds of the
 validator nodes are correct until the *trustingPeriod* expires.  Under
 this assumption, assume the trusting period of *startBlock* is not
 expired by the time *FastSync* checks a block *b* with height
-*startBlock.Height + 1*.  Even if *CommitMatchesBlock (startBlock,b) =
+*startBlock.Height + 1*.  Even if *VerifyCommit (startBlock,b.Commit) =
 false*, it is clear that *startBlock* is OK, and the peer *p* that
 provided block *b* is faulty. Only peer *b* should be removed from
 *peerIDs*. That is, if we sequentially verify blocks starting with
@@ -573,7 +585,7 @@ invariant [FS-VAR-TRUST-INV] below:
 Let *b(i)* be the block in *trustedBlockstore*
 with b(i).Height = i. It holds that
 for *startHeight <= i < height*, 
-*CommitMatchesBlock (b(i),b(i+1)) = true*.
+*VerifyCommit (b(i),b(i+1).Commit) = true*.
 
 
 
@@ -586,7 +598,7 @@ func SequentialVerify {
 	for i, bnew range receivedBlocks {
 	    // We assume receivedBlocks is iterates in order of block Heights
 		if bnew.Height == height + 1 {
-		    if CommitMatchesBlock (trustedBlockstore[height], bnew) == true {
+		    if VerifyCommit (trustedBlockstore[height], bnew.Commit) == true {
 			    trustedBlockstore.Add(bnew);
 			    height = bnew.Height;
 			}
