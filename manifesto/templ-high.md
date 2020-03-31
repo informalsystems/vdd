@@ -88,6 +88,10 @@ if details were omitted.
 Possibly giving inductive invariants that can be used to prove the specifications
 of the problem statement 
 
+> In case the specification describes an existing protocol with known issues,
+e.g., liveness bugs, etc. "Correctness Arguments" should be replace by
+a section called "Analysis"
+
 # References
 
 > links to other specifications/ADRs this document refers to
