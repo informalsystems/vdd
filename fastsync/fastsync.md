@@ -334,6 +334,7 @@ func VerifyCommit(b Block, c Commit) Boolean
     - none
 ----
 
+## Algorithm Invariants
 
 #### **[FS-VAR-STATE-INV]**:
 It is always the case that *state* corresponds to the application state of the
@@ -397,10 +398,15 @@ RPC. When they return, the following functions are called:
   executes the transactions of a sound block and updates *state*. If
   the longest prefix reaches *TargetHeight - 1 * it terminates *Fastsync*.
   
-During execution *peerIDs* may become empty. In this case *Fastsync*
-terminates with failure.
+  
+**Termination:** *Fastsync V2* starts a timeout whenever a block is
+executed (that is, when the height is incremented). If the timeout expires
+before the next block is executed, *Fastsync* terminates.
+We say that if *peerIDs* is empty upon termination, then *Fastsync* terminates
+with failure, otherwise it terminates successfully.
 
-**TODO:** is the above termination condition OK? No, add timeout
+**TODO:** is this termination condition OK?
+
 
 ### Details
 
