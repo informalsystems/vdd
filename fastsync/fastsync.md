@@ -122,7 +122,7 @@ The system satisfies [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link] and [**[TMBC-FM-2
 blockchain that satisfies the soundness requirements [**[TMBC-SOUND-?]**][blockchain].
 
 #### **[FS-A-COMM]**:
-Communication between *FS* and all correct peers is reliable and
+Communication between the node *FS* and all correct peers is reliable and
 bounded in time: there is a message end-to-end delay *Delta* such that
 if a message is sent at time *t* by a correct process to a correct
 process, then it will be received and processed by time *t +
