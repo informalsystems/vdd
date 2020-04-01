@@ -107,7 +107,7 @@ We consider a node *FS* that performs *Fastsync*.
 
 #### **[FS-A-PEER-IDS]**:
 *FS* has access to a set *peerIDs* of IDs (public keys) of peers (full
-     nodes). During execution of *Fastsync* another protocol (outside
+     nodes). During the execution of *Fastsync*, another protocol (outside
      of this specification) may add new IDs to *peerIDs*.
 
 
