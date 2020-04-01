@@ -268,13 +268,13 @@ that if *term* is the time *Fastsync* terminates and
 *term - D*, then if *FastSync* terminates successfully, it is at
 some height *terminationHeight >= maxh*.
 
-*Remark:* An acceptable value for *D* is in the range of *2 Delta*. We
-use *term - D* as reference time, as we have to account for
-communication flow between the peer and *FS*. After the peer sent the
-last message to *FS*, the peer and *FS* run concurrently and
+*Remark:* We use *term - D* as reference time, as we have to account
+for communication flow between the peer and *FS*. After the peer sent
+the last message to *FS*, the peer and *FS* run concurrently and
 independently. There is no assumption on the rate at which a peer can
 add blocks (e.g., it might be in the process of catching up itself).
 
+*Remark:* (*D* might depend on timeouts etc. We suggest that an acceptable value for *D* is in the range of *2 Delta*.)
 
 #### Liveness
 
@@ -640,7 +640,7 @@ for *startHeight <= i < height*,
 Then we propose to update the function `Execute`. To do so, we first
 define the following helper function:
 
-
+**TODO:** fix
 ```go
 func SequentialVerify {
 	for i, bnew range receivedBlocks {
