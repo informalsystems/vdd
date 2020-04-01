@@ -215,7 +215,7 @@ we sometimes consider the following (fairness) constraint in the
 safety and liveness properties below:
 
 
-#### **[FS-CORR-PEER]**:
+#### **[FS-SOME-CORR-PEER]**:
 Initially, the set *peerIDs* contains at least one correct full node.
 
 #### **[FS-ALL-CORR-PEER]**:
