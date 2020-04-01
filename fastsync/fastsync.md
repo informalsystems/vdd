@@ -560,7 +560,7 @@ By [FS-A-PEER] we do not put a restriction on the number
 
 ####  **[FS-ISSUE-NON-TERM]**:
 
-Due to [FS-ISSUE-KILL], from some point on only faulty peers may be in
+Due to [**[FS-ISSUE-KILL]**](#fs-issue-kill), from some point on, only faulty peers may be in
 *peerIDs*. They can thus control at which rate *Fastsync* gets
 blocks. If the timeout duration from [FS-V2-TIMEOUT] is greater than
 the time it takes to add a block to the blockchain 
