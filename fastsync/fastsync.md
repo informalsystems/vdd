@@ -63,6 +63,18 @@ When *Fastsync* terminates, it outputs a list of all blocks from
 height *h* to some height *terminationHeight >= bh*,
 [**[TMBC-SEQ]**][TMBC-SEQ-link].
 
+The above property is independent of how many blocks are added to the
+blockchain while Fastsync is running. It links the target height to the
+initial state. If Fastsync has to catch-up many blocks, it would be
+better to link the target height to a time close to the
+termination. This is capture by the following specification:
+
+#### **[FS-Seq-Term-SYNC]**:
+Let *eh* be the height of the blockchain at the time *Fastsync*
+terminates.  There is a constant *D* such that when *Fastsync*
+terminates, it outputs a list of all blocks from height *h* to some
+height *terminationHeight >= eh - D*, [**[TMBC-SEQ]**][TMBC-SEQ-link].
+
 
 
 
@@ -131,13 +143,17 @@ The node *FS* executing Fastsync is following the protocol (it is correct).
 > input/output variables used to define the temporal properties. Most likely they come from an ADR
 ---->
 
-We do not put assumptions on the existence of a correct full node
-in *peerIDs*. Under this assumption we cannot guarantee the properties
-described in the sequential specification above. Thus, in the (unreliable)
-distributed setting, we consider two kinds of termination (successful and
-failure) and we will specify below under what (favorable) conditions we
-can ensure to terminate successfully, and satisfy the requirements of the
-sequential problem statement:
+#### Two Kinds of Termination
+
+We do not put assumptions on the existence of a correct full node in
+*peerIDs*. Under this assumption we cannot guarantee the combination
+of the properties [FS-Seq-Live] and
+[FS-Seq-Term] and [FS-Seq-Term-SYNC] described in the sequential
+specification above. Thus, in the (unreliable) distributed setting, we
+consider two kinds of termination (successful and failure) and we will
+specify below under what (favorable) conditions we can ensure to
+terminate successfully, and satisfy the requirements of the sequential
+problem statement:
 
 #### **[FS-DISTR-TERM]**:
 *Fastsync* may *terminate successfully* or it  *terminates with failure*.
@@ -151,7 +167,8 @@ correct peers (as no assumption is made on internals of faulty
 processes [FS-A-PEER]).
 
 
-*Remark:* we will have asynchronous RPCs
+*Remark:* In this document we describe the communication with peers 
+via asynchronous RPCs.
 
 
 ```go
@@ -192,7 +209,9 @@ func Block(addr Address, height int64) (Block, error)
 
 #### Fairness
 
-We sometimes consider the following (fairness) constraint in the
+As mentioned above, without assumptions on the correctness of some
+peers, no protocol can achieve the required specifications. Therefore, 
+we sometimes consider the following (fairness) constraint in the
 safety and liveness properties below:
 
 
@@ -223,8 +242,9 @@ height *terminationHeight*.
 As we do not assume that a correct peer is at the most recent height
 of the blockchain (it might lag behind), the property [FS-Seq-Term]
 cannot be ensured in an unreliable distributed setting. We consider
-the following relaxation. (Which is sufficient for Tendermint, as the
-consensus reactor then synchronizes from that height.)
+the following relaxation. (Which is typically sufficient for
+Tendermint, as the consensus reactor then synchronizes from that
+height.)
 
 #### **[FS-VC-CORR-INV]**:
 Under [FS-CORR-PEER], let *maxh* be the maximum 
@@ -248,7 +268,12 @@ that if *term* is the time *Fastsync* terminates and
 *term - D*, then if *FastSync* terminates successfully, it is at
 some height *terminationHeight >= maxh*.
 
-*Remark:* An acceptable value for *D* is in the range of *2 Delta*.
+*Remark:* An acceptable value for *D* is in the range of *2 Delta*. We
+use *term - D* as reference time, as we have to account for
+communication flow between the peer and *FS*. After the peer sent the
+last message to *FS*, the peer and *FS* run concurrently and
+independently. There is no assumption on the rate at which a peer can
+add blocks (e.g., it might be in the process of catching up itself).
 
 
 #### Liveness
