@@ -819,6 +819,11 @@ Arguments:
 > links to other specifications/ADRs this document refers to
 ---->
 
+
+[[block]] Specification of the block data structure. 
+
+[[blockchain]] The specification of the Tendermint blockchain. Tags refering to this specification are labeled [TMBC-*].
+
 [block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md
 
 [blockchain]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md
