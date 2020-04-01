@@ -107,13 +107,13 @@ We consider a node *FS* that performs *Fastsync*.
 
 #### **[FS-A-PEER-IDS]**:
 *FS* has access to a set *peerIDs* of IDs (public keys) of peers (full
-     nodes). During execution of *Fastsync* another protocol (outside
+     nodes). During the execution of *Fastsync*, another protocol (outside
      of this specification) may add new IDs to *peerIDs*.
 
 
 
 #### **[FS-A-PEER]**:
-Peers can be faulty, and we do not make any assumption about number or
+Peers can be faulty, and we do not make any assumptions about the number or
 ratio of correct/faulty nodes. Faulty processes may be Byzantine
 according to [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link].
 
@@ -122,7 +122,7 @@ The system satisfies [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link] and [**[TMBC-FM-2
 blockchain that satisfies the soundness requirements [**[TMBC-SOUND-?]**][blockchain].
 
 #### **[FS-A-COMM]**:
-Communication between *FS* and all correct peers is reliable and
+Communication between the node *FS* and all correct peers is reliable and
 bounded in time: there is a message end-to-end delay *Delta* such that
 if a message is sent at time *t* by a correct process to a correct
 process, then it will be received and processed by time *t +
@@ -318,7 +318,7 @@ Some variables, etc.
 - *height*: initially *startBlock.Height + 1*
 - *state*: initially *startState*
 - *peerIDs*: peer addresses
-- *peerHeigts*: stores for each peer the height it reported. initially 0
+- *peerHeights*: stores for each peer the height it reported. initially 0
 - *pendingBlocks*: stores for each height which peer was
   queried. initially nil for each height
 - *receivedBlocks*: stores for each height which peer returned
@@ -550,7 +550,7 @@ blocks and removes the peers that provided these blocks from
 and block b was faulty and provided by a faulty peer, the protocol
 - removes the correct peer *p*, although it might be useful to
   download blocks from it in the future
-- removes *a*, so that a fresh copy of *a* needs to be downloaded
+- removes the block *a*, so that a fresh copy of *a* needs to be downloaded
   again from another peer
   
 By [FS-A-PEER] we do not put a restriction on the number
@@ -560,7 +560,7 @@ By [FS-A-PEER] we do not put a restriction on the number
 
 ####  **[FS-ISSUE-NON-TERM]**:
 
-Due to [FS-ISSUE-KILL], from some point on only faulty peers may be in
+Due to [**[FS-ISSUE-KILL]**](#fs-issue-kill), from some point on, only faulty peers may be in
 *peerIDs*. They can thus control at which rate *Fastsync* gets
 blocks. If the timeout duration from [FS-V2-TIMEOUT] is greater than
 the time it takes to add a block to the blockchain 
@@ -818,6 +818,11 @@ Arguments:
 <!--
 > links to other specifications/ADRs this document refers to
 ---->
+
+
+[[block]] Specification of the block data structure. 
+
+[[blockchain]] The specification of the Tendermint blockchain. Tags refering to this specification are labeled [TMBC-*].
 
 [block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md
 
