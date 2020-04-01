@@ -256,7 +256,7 @@ The above property is independent of how many blocks are added to the
 blockchain (and learned by the peers) while *Fastsync* is running. It
 links the target height to the initial state. If *Fastsync* has to
 catch-up many blocks, it would be better to  link the
-target height to a time close to the termination. This is capture by
+target height to a time close to the termination. This is captured by
 the following specification:
 
 
