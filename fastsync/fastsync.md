@@ -113,7 +113,7 @@ We consider a node *FS* that performs *Fastsync*.
 
 
 #### **[FS-A-PEER]**:
-Peers can be faulty, and we do not make any assumption about number or
+Peers can be faulty, and we do not make any assumptions about the number or
 ratio of correct/faulty nodes. Faulty processes may be Byzantine
 according to [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link].
 
