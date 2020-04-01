@@ -550,7 +550,7 @@ blocks and removes the peers that provided these blocks from
 and block b was faulty and provided by a faulty peer, the protocol
 - removes the correct peer *p*, although it might be useful to
   download blocks from it in the future
-- removes *a*, so that a fresh copy of *a* needs to be downloaded
+- removes the block *a*, so that a fresh copy of *a* needs to be downloaded
   again from another peer
   
 By [FS-A-PEER] we do not put a restriction on the number
