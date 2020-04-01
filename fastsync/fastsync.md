@@ -156,7 +156,7 @@ terminate successfully, and satisfy the requirements of the sequential
 problem statement:
 
 #### **[FS-DISTR-TERM]**:
-*Fastsync* may *terminate successfully* or it  *terminates with failure*.
+*Fastsync* eventually terminates: it either *terminates successfully* or it  *terminates with failure*.
 
 
 #### Remote Functions
@@ -215,7 +215,7 @@ we sometimes consider the following (fairness) constraint in the
 safety and liveness properties below:
 
 
-#### **[FS-CORR-PEER]**:
+#### **[FS-SOME-CORR-PEER]**:
 Initially, the set *peerIDs* contains at least one correct full node.
 
 #### **[FS-ALL-CORR-PEER]**:
@@ -256,7 +256,7 @@ The above property is independent of how many blocks are added to the
 blockchain (and learned by the peers) while *Fastsync* is running. It
 links the target height to the initial state. If *Fastsync* has to
 catch-up many blocks, it would be better to  link the
-target height to a time close to the termination. This is capture by
+target height to a time close to the termination. This is captured by
 the following specification:
 
 
