@@ -326,6 +326,8 @@ Some variables, etc.
 - *blockstore*: stores for each height greater than
     *startBlock.Height*, the block of that height. initially nil for
     all heights
+- *peerTimeStamp*: stores for each peer the last time a block was received
+- *peerRate*: stores for each peer the rate of received data in Bytes/second
 
 #### Auxiliary Functions
 
@@ -422,6 +424,12 @@ RPC. When they return, the following functions are called:
   the blocks, and
   executes the transactions of a sound block and updates *state*. 
   
+#### **[FS-V2-PEER-REMOVE]**:
+Periodically, *peerTimeStamp* and *peerRate* are analyzed. If a peer *p*
+has not provided a block recently (check of *peerTimeStamp[p]*) or it
+has not provided sufficiently many data (check of *peerRate[p]*), then
+*p* is removed from *peerIDs*.
+  
 #### **[FS-V2-TIMEOUT]**:
 
 **Termination:** *Fastsync V2* starts a timeout whenever a block is
@@ -501,6 +509,9 @@ func OnBlockResponse(addr Address, b Block)
     - if function `Execute` has been executed without error
         - *receivedBlocks(b.Height) = addr*
 	    - *blockstore(b.Height) = b*
+		- *peerTimeStamp[addr]* is set to a time between invocation and
+          return of the function.
+		- *peerRate[addr]* is updated according to size of received block
 - Error condition
     - if precondition is violated: *addr* not in *peerIDs*; reset
 	*pendingblocks(b.Height)* to nil;
