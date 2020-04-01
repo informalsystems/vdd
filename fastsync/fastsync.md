@@ -156,7 +156,7 @@ terminate successfully, and satisfy the requirements of the sequential
 problem statement:
 
 #### **[FS-DISTR-TERM]**:
-*Fastsync* may *terminate successfully* or it  *terminates with failure*.
+*Fastsync* eventually terminates: it either *terminates successfully* or it  *terminates with failure*.
 
 
 #### Remote Functions
