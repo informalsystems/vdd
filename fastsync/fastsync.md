@@ -4,6 +4,22 @@
 > Rough outline of what the component is doing and why. 2-3 paragraphs 
 ---->
 
+This document is the English specification of the *Fastsync*
+protocol. It consists of the following parts:
+
+- [Part I](#part-i---outside-view): Informal introduction; high-level (sequential) specification of the problem
+  addressed by *Fastsync*
+  
+- [Part II](#part-ii---protocol-view): Protocol view, 
+    - temporal logic specifications, 
+	- description of Fastsync V2 (the protocol underlying the current Golang
+      implementation)
+	- analysis of Fastsync V2 that highlights several issues that
+      prevent achieving some of the desired fault-tolerance properties
+
+- [Part III](): some suggestions on how to address the issues in the future
+  
+
 # Part I - Outside view
 
 ## Context of this document
@@ -47,11 +63,14 @@ block and then terminates.
 <!--
 > should be English and precise. will be accompanied with a TLA spec.
 ---->
+
 *Fastsync* gets as input a block of height *h* and the corresponding
-application state *s*, and produces as output a list *l* of blocks
-starting at height *h* to some height *terminationHeight*,
-and the application state
-when applying the transaction of the list *l* to *s*.
+application state *s* that corresponds to the block and state of that
+height of the blockchain [**[TMBC-SEQ]**][TMBC-SEQ-link], and produces
+as output a list *L* of blocks starting at height *h* to some height
+*terminationHeight*, and the application state when applying the
+transaction of the list *L* to *s*, and has to satisfy the following
+properties [FS-Seq-?]:
 
 #### **[FS-Seq-Live]**: 
 *Fastsync* eventually terminates.
@@ -379,7 +398,7 @@ height *i* in *blockstore*, it always holds that
 can only be incremented if all blocks with lower height have been verified.
 
 
-## Solution
+## FastSync V2
 
 <!--
 > Basic data structures. Simplified, so that we can focus on the distributed
@@ -541,7 +560,7 @@ func Execute()
     - none
 ----
 
-## Analysis
+## Analysis of Fastsync V2
 
 ####  **[FS-ISSUE-KILL]**:
 If two blocks are not matching, the rule [FS-V2-Verif] dismisses both
@@ -555,7 +574,8 @@ and block b was faulty and provided by a faulty peer, the protocol
   
 By [FS-A-PEER] we do not put a restriction on the number
   of faulty peers, so that faulty peers can make *FS* to remove all
-  correct peers from *peerIDs*
+  correct peers from *peerIDs*. As a result, this version of
+  *Fastsync* violates [FS-VC-CORR-INV-SYNC].
 
 
 ####  **[FS-ISSUE-NON-TERM]**:
@@ -578,7 +598,7 @@ restricted to the case where all peers are correct
 [FS-ALL-CORR-PEER]. In a fault tolerance context this is problematic,
 as it means that faulty peers can prevent *FastSync* from termination.
 
-## Possible Fix
+# Part III - Suggestions for an Improved Fastsync Implementation 
 
 ### Temporal Properties
 
@@ -602,13 +622,18 @@ To avoid [FS-ISSUE-KILL], we observe that
 point a block was created, we assume that more than two thirds of the
 validator nodes are correct until the *trustingPeriod* expires.  Under
 this assumption, assume the trusting period of *startBlock* is not
-expired by the time *FastSync* checks a block *b* with height
-*startBlock.Height + 1*.  Even if *VerifyCommit (startBlock,b.Commit) =
-false*, it is clear that *startBlock* is OK, and the peer *p* that
-provided block *b* is faulty. Only peer *b* should be removed from
-*peerIDs*. That is, if we sequentially verify blocks starting with
-*startBlock*, we will never remove a correct peer from *peerIDs* and
-we will be able to ensure the following invariant:
+expired by the time *FastSync* checks a block *b1* with height
+*startBlock.Height + 1*. To do so we first need to check whether the
+Commit in the block *b2* with *startBlock.Height + 2* contains more
+than 2/3 of the voting power in *startBlock.NextValidators*. If this
+is the case we can check *VerifyCommit (b1,b2.Commit)*.  As it is
+clear that *startBlock* is OK, we know that if the first check fails
+that peer that provided block *b2* is faulty, and if the second check
+fails (and the first one passed) that the block that provided *b1* is
+faulty. Thus we can ensure to only remove faulty peers.  That is, if
+we sequentially verify blocks starting with *startBlock*, we will
+never remove a correct peer from *peerIDs* and we will be able to
+ensure the following invariant:
 
 
 #### **[FS-VAR-PEER-INV]**:
@@ -677,7 +702,7 @@ func SequentialVerify {
 		}
 		if ValidCommit(trustedBlockstore[height - 1].NextValidators, b2.commit) {
 			// we trust b2
-			if hash(b1) == b2.BlockID {
+			if VerifyCommit(b1, b2.commit) {
 				trustedBlockstore.Add(b1);
 				height = height + 1;
 			}
