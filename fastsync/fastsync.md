@@ -17,7 +17,7 @@ protocol. It consists of the following parts:
 	- analysis of Fastsync V2 that highlights several issues that
       prevent achieving some of the desired fault-tolerance properties
 
-- [Part III](): some suggestions on how to address the issues in the future
+- [Part III](#part-iii---suggestions-for-an-improved-fastsync-implementation): some suggestions on how to address the issues in the future
   
 
 # Part I - Outside view
@@ -72,6 +72,7 @@ as output a list *L* of blocks starting at height *h* to some height
 transaction of the list *L* to *s*, and has to satisfy the following
 properties [FS-Seq-?]:
 
+
 #### **[FS-Seq-Live]**: 
 *Fastsync* eventually terminates.
 
@@ -95,13 +96,17 @@ terminates, it outputs a list of all blocks from height *h* to some
 height *terminationHeight >= eh - D*, [**[TMBC-SEQ]**][TMBC-SEQ-link].
 
 
-
-
 #### **[FS-Seq-Inv]**:
 Upon termination, the application state is the one that corresponds to
 the blockchain at height *terminationHeight*.
 
+**TODO:** I guess we need the following clarification. I am not sure
+where is the best spot to put it. Perhaps here?
 
+#### **[FS-Seq-Height]**: 
+The return value *terminationHeight* is the height of the block with the largest
+height that could be verified. In order to do so, *Fastsync* needs the
+Commit of the block at height  *terminationHeight + 1* in the blockchain.
 
 
 # Part II - Protocol view
@@ -253,10 +258,17 @@ At all times, the set *peerIDs* contains only correct full nodes.
 Under [FS-ALL-CORR-PEER], *Fastsync* never terminates with failure.
 
 
-#### **[FS-VC-INV]**:
+#### **[FS-VC-STATE-INV]**:
 If *FastSync* terminates successfully at height *terminationHeight*, then the
 application state is the one that corresponds to the blockchain at
 height *terminationHeight*.
+
+#### **[FS-VC-BLOCKS-INV]**:
+If *FastSync* terminates successfully at height *terminationHeight*, then the
+returned list of blocks  is the one that corresponds to the block of
+the
+blockchain.
+
 
 As we do not assume that a correct peer is at the most recent height
 of the blockchain (it might lag behind), the property [FS-Seq-Term]
@@ -384,7 +396,8 @@ func VerifyCommit(b Block, c Commit) Boolean
 
 #### **[FS-VAR-STATE-INV]**:
 It is always the case that *state* corresponds to the application state of the
-blockchain of that height, that is, *state = chain[height - 1].AppState*
+blockchain of that height, that is, *state = chain[height -
+1].AppState*; *chain* is defined in
 [**[TMBC-SEQ]**][TMBC-SEQ-link].
 
 #### **[FS-VAR-PEER-INV]**:
