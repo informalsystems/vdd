@@ -60,7 +60,7 @@ when applying the transaction of the list *l* to *s*.
 #### **[FS-Seq-Term]**:
 Let *bh* be the height of the blockchain at the time *Fastsync* starts.
 When *Fastsync* terminates, it outputs a list of all blocks from
-height *h* to some height *terminationHeight >= bh*,
+height *h* to some height *terminationHeight >= bh - 1*,
 [**[TMBC-SEQ]**][TMBC-SEQ-link].
 
 The above property is independent of how many blocks are added to the
@@ -250,7 +250,7 @@ height.)
 Under [FS-CORR-PEER], let *maxh* be the maximum 
 height of a correct peer [**[TMBC-CorrFull]**][TMBC-CorrFull-link]
 in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
-successfully, it is at some height *terminationHeight >= maxh*.
+successfully, it is at some height *terminationHeight >= maxh - 1*.
 
 The above property is independent of how many blocks are added to the
 blockchain (and learned by the peers) while *Fastsync* is running. It
