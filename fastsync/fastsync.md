@@ -318,7 +318,7 @@ Some variables, etc.
 - *height*: initially *startBlock.Height + 1*
 - *state*: initially *startState*
 - *peerIDs*: peer addresses
-- *peerHeigts*: stores for each peer the height it reported. initially 0
+- *peerHeights*: stores for each peer the height it reported. initially 0
 - *pendingBlocks*: stores for each height which peer was
   queried. initially nil for each height
 - *receivedBlocks*: stores for each height which peer returned
