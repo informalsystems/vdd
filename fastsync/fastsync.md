@@ -655,7 +655,7 @@ func ValidCommit(VS ValidatorSet, C Commit) Boolean
     - none 
 ----
 
-**TODO:** fix
+
 ```go
 func SequentialVerify {
 	while (true) {
