@@ -164,7 +164,7 @@ The node *FS* executing Fastsync is following the protocol (it is correct).
 
 #### Two Kinds of Termination
 
-We do not put assumptions on the existence of a correct full node in
+We do not assume that there is a correct full node in
 *peerIDs*. Under this assumption we cannot guarantee the combination
 of the properties [FS-Seq-Live] and
 [FS-Seq-Term] and [FS-Seq-Term-SYNC] described in the sequential
@@ -606,12 +606,12 @@ Instead of the limited termination properties [FS-VC-ALL-CORR-TERM]
 and [FS-VC-ALL-CORR-NONABORT], a fault-tolerant solution shall satisfy
 the following two properties:
 
-#### **[FS-VC-NONABORT]**:
+#### **[NewFS-VC-NONABORT]**:
 If there is one correct process in *peerIDs* [FS-SOME-CORR-PEER],
 *Fastsync* never terminates with failure. (Together with [FS-VC-TERM] below that means
 it will terminate successfully.)
 
-#### **[FS-VC-TERM]**:
+#### **[NewFS-VC-TERM]**:
 *Fastsync* eventually terminates (successfully or with failure).
 
 
@@ -636,7 +636,7 @@ never remove a correct peer from *peerIDs* and we will be able to
 ensure the following invariant:
 
 
-#### **[FS-VAR-PEER-INV]**:
+#### **[NewFS-VAR-PEER-INV]**:
 If a peer never misbehaves, it is never removed from *peerIDs*. It
 follows that under [FS-SOME-CORR-PEER], *peerIDs* is always non-empty.
 To perform these checks, we suggest to change the protocol as follows
@@ -646,12 +646,12 @@ To perform these checks, we suggest to change the protocol as follows
 - *trustingPeriod*: a time duration
   [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
 
-[FS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
+[NewFS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
 allow us to use the established trust to understand precisely which
 peer reported an invalid block in order to ensure the
-invariant [FS-VAR-TRUST-INV] below:
+invariant [NewFS-VAR-TRUST-INV] below:
 
-#### **[FS-A-INIT]**:
+#### **[NewFS-A-INIT]**:
 - *startBlock* is from the blockchain, and within *trustingPeriod*
 (possible with some extra margin to ensure termination before
 *trustingPeriod* expired)
@@ -665,7 +665,7 @@ invariant [FS-VAR-TRUST-INV] below:
     contains only *startBlock*
 
 
-#### **[FS-VAR-TRUST-INV]**:
+#### **[NewFS-VAR-TRUST-INV]**:
 Let *b(i)* be the block in *trustedBlockstore*
 with b(i).Height = i. It holds that
 for *startHeight <= i < height*, 
@@ -727,9 +727,9 @@ func SequentialVerify {
 - Comments
     - none
 - Expected precondition
-	- [FS-VAR-TRUST-INV]
+	- [NewFS-VAR-TRUST-INV]
 - Expected postcondition
-    - [FS-VAR-TRUST-INV]
+    - [NewFS-VAR-TRUST-INV]
 	- there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
 - Error condition
@@ -748,14 +748,14 @@ func Execute()
 - Expected precondition
 	- application state is the one of the blockchain at height
       *height*
-	- [FS-NOT-EXP] *trustedBlockstore[height-1].Time > now - trustingPeriod*
+	- [NewFS-NOT-EXP] *trustedBlockstore[height-1].Time > now - trustingPeriod*
 - Expected postcondition
     - there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
 	- state is the one of the blockchain at height *height*
 	- if height = TargetHeight: **terminate successfully**
 - Error condition
-    - fails if [FS-NOT-EXP] is violated
+    - fails if [NewFS-NOT-EXP] is violated
 ----
 
 
@@ -769,20 +769,20 @@ interesting for the future.
 ### Solution for [FS-ISSUE-NON-TERM]
 
 As discussed above, the advantageous termination requirement is the
-combination of [FS-VC-NONABORT] and [FS-VC-TERM], that is, *Fastsync*
+combination of [NewFS-VC-NONABORT] and [NewFS-VC-TERM], that is, *Fastsync*
 should terminate successfully in case there is at least one correct
 peer in *peerIDs*.
 
 
 
-#### **[FS-SOLUTION-TERM-GOOD]**:
+#### **[NewFS-SOLUTION-TERM-GOOD]**:
 
 Here we assume that during a "long enough" finite good period no new
 faulty peers are added to *peerIDs*. Below we will sketch how "long
 enough" can be estimated based on the timing assumption in this
 specification. 
 
-#### **[FS-A-GOOD-PERIOD]**:
+#### **[NewFS-A-GOOD-PERIOD]**:
 
 A time interval *[begin,end]* is *good period* if:
 
