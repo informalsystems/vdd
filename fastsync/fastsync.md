@@ -638,26 +638,54 @@ for *startHeight <= i < height*,
 
 
 Then we propose to update the function `Execute`. To do so, we first
-define the following helper function:
+define the following helper functions:
+
+```go
+func ValidCommit(VS ValidatorSet, C Commit) Boolean
+```
+- Comments
+    - 
+- Expected precondition
+	-  The Validators in *C*
+	     - are a subset of VS
+		 - have more than 2/3 of the voting power in VS
+- Expected postcondition
+    - returns *true* if precondition holds, and *false* otherwise
+- Error condition
+    - none 
+----
 
 **TODO:** fix
 ```go
 func SequentialVerify {
-	for i, bnew range receivedBlocks {
-	    // We assume receivedBlocks is iterates in order of block Heights
-		if bnew.Height == height + 1 {
-		    if VerifyCommit (trustedBlockstore[height], bnew.Commit) == true {
-			    trustedBlockstore.Add(bnew);
-			    height = bnew.Height;
+	while (true) {
+		b1 = blockstore[height];
+		b2 = blockstore[height+1];
+		if b1 == nil or b2 == nil {
+			exit;
+		}
+		if ValidCommit(trustedBlockstore[height - 1].NextValidators, b2.commit) {
+			// we trust b2
+			if hash(b1) == b2.BlockID {
+				trustedBlockstore.Add(b1);
+				height = height + 1;
 			}
 			else {
-			    blockstore.RemoveFromPeer(receivedBlocks(bnew.Height));
+				// as we trust b2, b1 must be faulty
+				blockstore.RemoveFromPeer(receivedBlocks[height]);
 				// we remove all blocks received from the faulty peer
-			    peerIDs.Remove(receivedBlocks(bnew.Height));
+				peerIDs.Remove(receivedBlocks(bnew.Height));
 				exit;
+			
+			}			
+		} else {
+			// b2 is faulty
+			blockstore.RemoveFromPeer(receivedBlocks[height + 1]);
+			// we remove all blocks received from the faulty peer
+		    peerIDs.Remove(receivedBlocks(bnew.Height));
+			exit;
 			}
 		}
-	}
 }
 ```
 - Comments
@@ -669,7 +697,7 @@ func SequentialVerify {
 	- there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
 - Error condition
-    - none 
+    - none
 ----
 
 
@@ -682,14 +710,16 @@ func Execute()
 - Comments
     - first `SequentialVerify` is executed
 - Expected precondition
-	- application state is the one of the blockchain at height *height*
+	- application state is the one of the blockchain at height
+      *height*
+	- [FS-NOT-EXP] *trustedBlockstore[height-1].Time > now - trustingPeriod*
 - Expected postcondition
     - there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
 	- state is the one of the blockchain at height *height*
 	- if height = TargetHeight: **terminate successfully**
 - Error condition
-    - none 
+    - fails if [FS-NOT-EXP] is violated
 ----
 
 
