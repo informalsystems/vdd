@@ -459,7 +459,7 @@ if details were omitted.
 ---->
 
 The protocol is described in terms of functions that are triggered by
-(external) events. The implementation typically uses a scheduler and a
+(external) events. The implementation uses a scheduler and a
 de-multiplexer to deal with communicating with peers and to
 trigger the execution of these functions:
 
@@ -473,6 +473,9 @@ trigger the execution of these functions:
   one from a peer. It does so by calling `Block(n,h)` remotely on one
   peer *n* for a missing height *h*.
   
+> We have left the strategy how peers are selected unspecified, and
+> the currently existing different implementations of Fastsync differ
+> in this aspect. 
 
 The functions `Status` and `Block` are called by asynchronous
 RPC. When they return, the following functions are called:
@@ -488,7 +491,10 @@ RPC. When they return, the following functions are called:
 - `Execute()`: Iterates over the *blockstore*.  Checks soundness of
   the blocks, and
   executes the transactions of a sound block and updates *state*. 
-  
+
+> In addition to the functions above, the following two features are
+> implemented in Fastsync V2
+
 #### **[FS-V2-PEER-REMOVE]**:
 Periodically, *peerTimeStamp* and *peerRate* are analyzed. If a peer *p*
 has not provided a block recently (check of *peerTimeStamp[p]*) or it
@@ -497,7 +503,7 @@ has not provided sufficiently many data (check of *peerRate[p]*), then
   
 #### **[FS-V2-TIMEOUT]**:
 
-**Termination:** *Fastsync V2* starts a timeout whenever a block is
+*Fastsync V2* starts a timeout whenever a block is
 executed (that is, when the height is incremented). If the timeout expires
 before the next block is executed, *Fastsync* terminates.
 We say that if *peerIDs* is empty upon termination, then *Fastsync* terminates
@@ -516,6 +522,8 @@ with failure, otherwise it terminates successfully.
 > - Expected postcondition
 > - Error condition
 ---->
+
+
 
 ```go
 func QueryStatus()
@@ -827,6 +835,11 @@ Here we assume that during a "long enough" finite good period no new
 faulty peers are added to *peerIDs*. Below we will sketch how "long
 enough" can be estimated based on the timing assumption in this
 specification. 
+
+
+#### **[NewFS-A-STATUS-INTERVAL]**:
+Let Sigma be the (upper bound on the)
+time between two calls of `QueryStatus()`.
 
 #### **[NewFS-A-GOOD-PERIOD]**:
 
