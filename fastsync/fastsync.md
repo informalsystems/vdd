@@ -32,6 +32,7 @@ spec. Possible interactions, possible use cases, etc.
 > should give the reader the understanding in what environment this component
 will be used. 
 ---->
+
 Fastsync is a protocol that is used by a full node to catch-up to the
 current state of a Tendermint blockchain. Its typical use case is a
 full node that was disconnected from the system for some time. The
@@ -42,6 +43,12 @@ Tendermint blockchain during the period the full node was
 disconnected. After receiving these blocks, it executes the
 transactions in the blocks in order to catch-up to the current height
 of the blockchain and the corresponding application state.
+
+In practice it is sufficient to catch-up only close to the current
+height: The Tendermint consensus reactor implements a similar
+functionality and can synchronize a node that is approximately 100
+blocks away from the current height of the blockchain. FastSync should
+bring a node within this range.
 
 ## Informal Problem statement
 
@@ -67,9 +74,9 @@ block and then terminates.
 *Fastsync* gets as input a block of height *h* and the corresponding
 application state *s* that corresponds to the block and state of that
 height of the blockchain [**[TMBC-SEQ]**][TMBC-SEQ-link], and produces
-as output a list *L* of blocks starting at height *h* to some height
-*terminationHeight*, and the application state when applying the
-transaction of the list *L* to *s*, and has to satisfy the following
+as output (i) a list *L* of blocks starting at height *h* to some height
+*terminationHeight*, and (ii) the application state when applying the
+transaction of the list *L* to *s*. Fastsync has to satisfy the following
 properties [FS-Seq-?]:
 
 
@@ -83,11 +90,11 @@ When *Fastsync* terminates, it outputs a list of all blocks from
 height *h* to some height *terminationHeight >= bh - 1*,
 [**[TMBC-SEQ]**][TMBC-SEQ-link].
 
-The above property is independent of how many blocks are added to the
-blockchain while Fastsync is running. It links the target height to the
-initial state. If Fastsync has to catch-up many blocks, it would be
-better to link the target height to a time close to the
-termination. This is capture by the following specification:
+> The above property is independent of how many blocks are added to the
+> blockchain while Fastsync is running. It links the target height to the
+> initial state. If Fastsync has to catch-up many blocks, it would be
+> better to link the target height to a time close to the
+> termination. This is capture by the following specification:
 
 #### **[FS-Seq-Term-SYNC]**:
 Let *eh* be the height of the blockchain at the time *Fastsync*
@@ -100,8 +107,10 @@ height *terminationHeight >= eh - D*, [**[TMBC-SEQ]**][TMBC-SEQ-link].
 Upon termination, the application state is the one that corresponds to
 the blockchain at height *terminationHeight*.
 
-**TODO:** I guess we need the following clarification. I am not sure
-where is the best spot to put it. Perhaps here?
+> As the block of height *h + 1* is needed to verify the block of
+> height *h* we highlight th following clarification of the
+> termination height.
+
 
 #### **[FS-Seq-Height]**: 
 The return value *terminationHeight* is the height of the block with the largest
@@ -170,12 +179,12 @@ The node *FS* executing Fastsync is following the protocol (it is correct).
 #### Two Kinds of Termination
 
 We do not assume that there is a correct full node in
-*peerIDs*. Under this assumption we cannot guarantee the combination
+*peerIDs*. Under this assumption no protocol can guarantee the combination
 of the properties [FS-Seq-Live] and
 [FS-Seq-Term] and [FS-Seq-Term-SYNC] described in the sequential
 specification above. Thus, in the (unreliable) distributed setting, we
 consider two kinds of termination (successful and failure) and we will
-specify below under what (favorable) conditions we can ensure to
+specify below under what (favorable) conditions *Fastsync* ensures to
 terminate successfully, and satisfy the requirements of the sequential
 problem statement:
 
@@ -191,7 +200,7 @@ correct peers (as no assumption is made on internals of faulty
 processes [FS-A-PEER]).
 
 
-*Remark:* In this document we describe the communication with peers 
+> In this document we describe the communication with peers 
 via asynchronous RPCs.
 
 
@@ -242,6 +251,12 @@ safety and liveness properties below:
 #### **[FS-SOME-CORR-PEER]**:
 Initially, the set *peerIDs* contains at least one correct full node.
 
+> While in principle the above condition can be part of a sufficient
+> condition to solve [FS-Seq-Live] and
+> [FS-Seq-Term] and [FS-Seq-Term-SYNC], we will see below that the
+> current implementation of Fastsync (V2) requires the following (much
+> stronger) requirement
+
 #### **[FS-ALL-CORR-PEER]**:
 At all times, the set *peerIDs* contains only correct full nodes.
 
@@ -270,42 +285,47 @@ the
 blockchain.
 
 
-As we do not assume that a correct peer is at the most recent height
-of the blockchain (it might lag behind), the property [FS-Seq-Term]
-cannot be ensured in an unreliable distributed setting. We consider
-the following relaxation. (Which is typically sufficient for
-Tendermint, as the consensus reactor then synchronizes from that
-height.)
+> As this specification does
+> not assume that a correct peer is at the most recent height
+> of the blockchain (it might lag behind), the property [FS-Seq-Term]
+> cannot be ensured in an unreliable distributed setting. We consider
+> the following relaxation. (Which is typically sufficient for
+> Tendermint, as the consensus reactor then synchronizes from that
+> height.)
 
 #### **[FS-VC-CORR-INV]**:
-Under [FS-SOME-CORR-PEER], let *maxh* be the maximum 
+Under [FS-ALL-CORR-PEER], let *maxh* be the maximum 
 height of a correct peer [**[TMBC-CorrFull]**][TMBC-CorrFull-link]
 in *peerIDs* at the time *Fastsync* starts. If *FastSync* terminates
 successfully, it is at some height *terminationHeight >= maxh - 1*.
 
-The above property is independent of how many blocks are added to the
-blockchain (and learned by the peers) while *Fastsync* is running. It
-links the target height to the initial state. If *Fastsync* has to
-catch-up many blocks, it would be better to  link the
-target height to a time close to the termination. This is captured by
-the following specification:
+> The above property is independent of how many blocks are added to the
+> blockchain (and learned by the peers) while *Fastsync* is running. It
+> links the target height to the initial state. If *Fastsync* has to
+> catch-up many blocks, it would be better to  link the
+> target height to a time close to the termination. This is captured by
+> the following specification:
 
 
 #### **[FS-VC-CORR-INV-SYNC]**:
-Under [FS-SOME-CORR-PEER], there exists a constant time interval *D*, such
+Under [FS-ALL-CORR-PEER], there exists a constant time interval *D*, such
 that if *term* is the time *Fastsync* terminates and
 *maxh* be the maximum height of a correct peer
 [**[TMBC-CorrFull]**][TMBC-CorrFull-link] in *peerIDs* at the time
 *term - D*, then if *FastSync* terminates successfully, it is at
 some height *terminationHeight >= maxh*.
 
-*Remark:* We use *term - D* as reference time, as we have to account
-for communication flow between the peer and *FS*. After the peer sent
-the last message to *FS*, the peer and *FS* run concurrently and
-independently. There is no assumption on the rate at which a peer can
-add blocks (e.g., it might be in the process of catching up itself).
+> We use *term - D* as reference time, as we have to account
+> for communication delay between the peer and *FS*. After the peer sent
+> the last message to *FS*, the peer and *FS* run concurrently and
+> independently. There is no assumption on the rate at which a peer can
+> add blocks (e.g., it might be in the process of catching up itself).
 
-*Remark:* (*D* might depend on timeouts etc. We suggest that an acceptable value for *D* is in the range of *2 Delta*.)
+>  (*D* might depend on timeouts etc. We suggest that an acceptable 
+> value for *D* is in the range of *2 Delta*.)
+
+
+
 
 #### Liveness
 
@@ -325,6 +345,13 @@ Simulation, implementation, etc. relations
 ---->
 
 
+> We observe that all specifications that impose successful
+> termination at an acceptable height are all conditional under
+> [FS-ALL-CORR-PEER], that is, large parts of the current
+> implementations of FastSync (V2) are not fault-tolerant. We will
+> discuss this, and suggestions how to solve this after the
+> description of the current protocol.
+
 ## Definitions
 
 <!--
@@ -335,7 +362,7 @@ Simulation, implementation, etc. relations
 Some variables, etc. 
 ---->
 
-
+> We now introduce variables and auxiliary functions used by the protocol.
 
 #### Inputs
 - *startBlock*: the block Fastsync starts from
@@ -347,8 +374,9 @@ Some variables, etc.
 
 #### Variables
 - *height*: initially *startBlock.Height + 1*
+  > height should be thought of the "height of the next blook we need to download"
 - *state*: initially *startState*
-- *peerIDs*: peer addresses
+- *peerIDs*: peer addresses [FS-A-PEER-IDS](#fs-a-peer-ids)
 - *peerHeights*: stores for each peer the height it reported. initially 0
 - *pendingBlocks*: stores for each height which peer was
   queried. initially nil for each height
@@ -393,6 +421,11 @@ func VerifyCommit(b Block, c Commit) Boolean
 ----
 
 ## Algorithm Invariants
+
+> In contrast to the temporal properties above that define the problem
+> statement, the following are invariants on the solution to the
+> problem, that is on the algorithm. These invariants are useful for
+> the verification, but can also guide the implementation.
 
 #### **[FS-VAR-STATE-INV]**:
 It is always the case that *state* corresponds to the application state of the
