@@ -639,7 +639,7 @@ Due to [**[FS-ISSUE-KILL]**](#fs-issue-kill), from some point on, only
 faulty peers may be in *peerIDs*. They can thus control at which rate
 *Fastsync* gets blocks. If the timeout duration from [FS-V2-TIMEOUT]
 is greater than the time it takes to add a block to the blockchain
-(LTIME in [**[TMBC-SEQ-APPEND-L]**][TMBC-SEQ-APPEND-L-link]), the
+(LTIME in [**[TMBC-SEQ-APPEND-E]**][TMBC-SEQ-APPEND-E-link]), the
 protocol may never terminate and thus violate [FS-VC-TERM].  This
 scenario is even possible if a correct peer is always in *peerIDs*,
 but faulty peers are regularly asked for blocks.
@@ -827,28 +827,34 @@ func Execute()
 ----
 
 
-**TODO:** the remainder assumed a different termination condition of
-Fastsync V2. I guess the fix for the current one consists in adjusting
-timeouts to the rate the blockchain can grow. I suggest to not have
-this fix in the deliverable. I keep it for now
-as the time estimation might be
-interesting for the future.
+
 
 ### Solution for [FS-ISSUE-NON-TERM]
 
 As discussed above, the advantageous termination requirement is the
 combination of [NewFS-VC-NONABORT] and [NewFS-VC-TERM], that is, *Fastsync*
 should terminate successfully in case there is at least one correct
-peer in *peerIDs*.
+peer in *peerIDs*. For this we have to ensure that faulty processes
+cannot slow us down and provide blocks at a lower rate than the
+blockchain may grow. To ensure that we will have to add an assumption
+on message delays.
+
+#### **[NewFS-A-DELTA]**:
+
+*2 Delta < ETIME*; cf. [**[TMBC-SEQ-APPEND-E]**][TMBC-SEQ-APPEND-E-link].
+
+> This assumption implies that the timeouts for `OnBlockResponse` and
+> `OnStatusResponse` are such that a faulty peer that tries to respond
+> slower than *2 Delta* will be removed. In the following we will
+> provide a rough estimate on termination time in a fault-prone
+> scenario.
 
 
-
-#### **[NewFS-SOLUTION-TERM-GOOD]**:
-
-Here we assume that during a "long enough" finite good period no new
-faulty peers are added to *peerIDs*. Below we will sketch how "long
-enough" can be estimated based on the timing assumption in this
-specification. 
+> In the following
+> we assume that during a "long enough" finite good period no new
+> faulty peers are added to *peerIDs*. Below we will sketch how "long
+> enough" can be estimated based on the timing assumption in this
+> specification. 
 
 
 #### **[NewFS-A-STATUS-INTERVAL]**:
@@ -938,7 +944,7 @@ Arguments:
 
 [TMBC-TIME_PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time_params
 
-[TMBC-SEQ-APPEND-L-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq-append-l
+[TMBC-SEQ-APPEND-E-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq-append-e
 
 [TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-fm-2thirds
 
