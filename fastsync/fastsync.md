@@ -308,21 +308,32 @@ successfully, it is at some height *terminationHeight >= maxh - 1*.
 
 
 #### **[FS-VC-CORR-INV-SYNC]**:
-Under [FS-ALL-CORR-PEER], there exists a constant time interval *D*, such
+Under [FS-ALL-CORR-PEER], there exists a constant time interval *TD*, such
 that if *term* is the time *Fastsync* terminates and
 *maxh* be the maximum height of a correct peer
 [**[TMBC-CorrFull]**][TMBC-CorrFull-link] in *peerIDs* at the time
-*term - D*, then if *FastSync* terminates successfully, it is at
+*term - TD*, then if *FastSync* terminates successfully, it is at
 some height *terminationHeight >= maxh*.
 
-> We use *term - D* as reference time, as we have to account
+> We use *term - TD* as reference time, as we have to account
 > for communication delay between the peer and *FS*. After the peer sent
 > the last message to *FS*, the peer and *FS* run concurrently and
 > independently. There is no assumption on the rate at which a peer can
 > add blocks (e.g., it might be in the process of catching up itself).
 
->  (*D* might depend on timeouts etc. We suggest that an acceptable 
-> value for *D* is in the range of *2 Delta*.)
+>  (*TD* might depend on timeouts etc. We suggest that an acceptable 
+> value for *TD* is in the range of *2 Delta*.)
+
+**TODO:** I have put the following as a comment, because "synchronized
+with the blockchain" is not cleanly defined. Should we do that?
+
+> Under [FS-ALL-CORR-PEER], if *peerIDs* contains a full node that is
+> "synchronized with the blockchain", and *blockchainheight* is the height
+> of the blockchain at time *term*, then  *terminationHeight* may even
+> achieve
+> blockchainheight - TD / ETIME*;
+> cf. [**[TMBC-SEQ-APPEND-E]**][TMBC-SEQ-APPEND-E-link]. 
+
 
 
 
