@@ -602,6 +602,7 @@ func Execute()
 - Expected precondition
 	- application state is the one of the blockchain at height
       *height - 1*
+	- blocks of heights *height* and *height + 1* in *receivedBlocks*
 	- **[FS-V2-Verif]** for any two blocks *a* and *b* from
 	*receivedBlocks*: if
 	  *a.Height + 1 = b.Height* then *VerifyCommit (a,b.Commit) = true*
@@ -712,7 +713,7 @@ follows that under [FS-SOME-CORR-PEER], *peerIDs* is always non-empty.
 
 #### Fastsync has the following configuration parameters:
 - *trustingPeriod*: a time duration
-  [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
+  [**[TMBC-TIME-PARAMS]**][TMBC-TIME-PARAMS-link].
 
 > [NewFS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
 > allow us to use the established trust to understand precisely which
@@ -942,7 +943,7 @@ Arguments:
 
 [TMBC-FaultyFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-faultyfull
 
-[TMBC-TIME_PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time_params
+[TMBC-TIME-PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time-params
 
 [TMBC-SEQ-APPEND-E-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq-append-e
 
