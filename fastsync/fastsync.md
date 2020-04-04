@@ -113,7 +113,7 @@ the blockchain at height *terminationHeight*.
 
 
 #### **[FS-Seq-Height]**: 
-The return value *terminationHeight* is the height of the block with the largest
+The returned value *terminationHeight* is the height of the block with the largest
 height that could be verified. In order to do so, *Fastsync* needs the
 Commit of the block at height  *terminationHeight + 1* in the blockchain.
 
@@ -227,7 +227,7 @@ func Block(addr Address, height int64) (Block, error)
 - Implementation remark
    - RPC to full node *addr*
 - Expected precondition
-  - header of `height` is less than or equal to height of the peer
+  - 'height` is less than or equal to height of the peer
 - Expected postcondition
   - if *addr* is correct: Returns the block of height `height`
   from the blockchain. [FS-A-COMM]
@@ -280,7 +280,7 @@ height *terminationHeight*.
 
 #### **[FS-VC-BLOCKS-INV]**:
 If *FastSync* terminates successfully at height *terminationHeight*, then the
-returned list of blocks  is the one that corresponds to the block of
+returned list of blocks  is the one that corresponds to the blocks of
 the
 blockchain.
 
