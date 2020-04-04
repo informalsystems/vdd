@@ -577,7 +577,6 @@ func OnBlockResponse(addr Address, b Block)
 - Expected precondition
     - *pendingblocks(b.Height) = addr*
 	- *b* satisfies basic soundness  
-	**TODO:** should this be checked here?
 - Expected postcondition
     - if function `Execute` has been executed without error
         - *receivedBlocks(b.Height) = addr*
@@ -603,13 +602,15 @@ func Execute()
 - Expected precondition
 	- application state is the one of the blockchain at height
       *height - 1*
+	- **[FS-V2-Verif]** for any two blocks *a* and *b* from
+	*receivedBlocks*: if
+	  *a.Height + 1 = b.Height* then *VerifyCommit (a,b.Commit) = true*
 - Expected postcondition
-    - **[FS-V2-Verif]** for any two blocks *a* and *b* from *receivedBlocks*, with
-	  *a.Height + 1 = b.Height*: if *VerifyCommit (a,b.Commit) = false*, then
+    - Any two blocks *a* and *b* violating [FS-V2-Verif]:
 	  *a* and *b* not in *blockstore*; nodes with Address 
 	  receivedBlocks(a.Height) and receivedBlocks(b.Height) not in peerIDs
 	- height is updated height of complete prefix that matches the blockchain
-	- state is the one of the blockchain at height *height*
+	- state is the one of the blockchain at height *height - 1*
 - Error condition
     - none
 ----
@@ -617,7 +618,7 @@ func Execute()
 ## Analysis of Fastsync V2
 
 ####  **[FS-ISSUE-KILL]**:
-If two blocks are not matching, the rule [FS-V2-Verif] dismisses both
+If two blocks are not matching [FS-V2-Verif], `Execute` dismisses both
 blocks and removes the peers that provided these blocks from
 *peerIDs*. If block *a* was correct and provided by a correct peer *p*,
 and block b was faulty and provided by a faulty peer, the protocol
@@ -634,23 +635,28 @@ By [FS-A-PEER] we do not put a restriction on the number
 
 ####  **[FS-ISSUE-NON-TERM]**:
 
-Due to [**[FS-ISSUE-KILL]**](#fs-issue-kill), from some point on, only faulty peers may be in
-*peerIDs*. They can thus control at which rate *Fastsync* gets
-blocks. If the timeout duration from [FS-V2-TIMEOUT] is greater than
-the time it takes to add a block to the blockchain 
+Due to [**[FS-ISSUE-KILL]**](#fs-issue-kill), from some point on, only
+faulty peers may be in *peerIDs*. They can thus control at which rate
+*Fastsync* gets blocks. If the timeout duration from [FS-V2-TIMEOUT]
+is greater than the time it takes to add a block to the blockchain
 (LTIME in [**[TMBC-SEQ-APPEND-L]**][TMBC-SEQ-APPEND-L-link]), the
-protocol may never terminate and thus violate [FS-VC-TERM].
-This scenario is even possible if a correct peer is always in
-*peerIDs*, but faulty peers are regularly asked for blocks.
+protocol may never terminate and thus violate [FS-VC-TERM].  This
+scenario is even possible if a correct peer is always in *peerIDs*,
+but faulty peers are regularly asked for blocks.
 
 ### Consequence
 
-Due to [FS-ISSUE-KILL] and [FS-ISSUE-NON-TERM], the temporal
-properties that are relevant for termination, namely, 
+The issues [FS-ISSUE-KILL] and [FS-ISSUE-NON-TERM] explain why the
+temporal properties that are relevant for termination, namely,
 [FS-VC-ALL-CORR-TERM] and [FS-VC-ALL-CORR-NONABORT], need to be
 restricted to the case where all peers are correct
 [FS-ALL-CORR-PEER]. In a fault tolerance context this is problematic,
 as it means that faulty peers can prevent *FastSync* from termination.
+
+Similarly, [FS-VC-CORR-INV-SYNC] and [FS-VC-CORR-INV] needed to be
+restricted to [FS-ALL-CORR-PEER]. Again, if faults would be considered,
+this would imply that if *Fastsync* terminates, it cannot be
+guaranteed that a "reasonable" target height will be reached.
 
 # Part III - Suggestions for an Improved Fastsync Implementation 
 
@@ -677,14 +683,21 @@ point a block was created, we assume that more than two thirds of the
 validator nodes are correct until the *trustingPeriod* expires.  Under
 this assumption, assume the trusting period of *startBlock* is not
 expired by the time *FastSync* checks a block *b1* with height
-*startBlock.Height + 1*. To do so we first need to check whether the
+*startBlock.Height + 1*. To do so, we first need to check whether the
 Commit in the block *b2* with *startBlock.Height + 2* contains more
 than 2/3 of the voting power in *startBlock.NextValidators*. If this
-is the case we can check *VerifyCommit (b1,b2.Commit)*.  As it is
-clear that *startBlock* is OK, we know that if the first check fails
-that peer that provided block *b2* is faulty, and if the second check
-fails (and the first one passed) that the block that provided *b1* is
-faulty. Thus we can ensure to only remove faulty peers.  That is, if
+is the case we can check *VerifyCommit (b1,b2.Commit)*. If we perform
+checks in this order we observe:
+  - By assumption, *startBlock* is OK, 
+  - If the first check (2/3 of voting power) fails,
+    the peer that provided block *b2* is faulty, 
+  - If the first check passes and the second check
+    fails (*VerifyCommit*), then the pwwe that provided *b1* is
+    faulty.
+  - If both checks pass, the can trust *b1*
+
+Based on this reasoning, we can ensure to only remove faulty peers
+from *peerIDs*.  That is, if
 we sequentially verify blocks starting with *startBlock*, we will
 never remove a correct peer from *peerIDs* and we will be able to
 ensure the following invariant:
@@ -693,17 +706,18 @@ ensure the following invariant:
 #### **[NewFS-VAR-PEER-INV]**:
 If a peer never misbehaves, it is never removed from *peerIDs*. It
 follows that under [FS-SOME-CORR-PEER], *peerIDs* is always non-empty.
-To perform these checks, we suggest to change the protocol as follows
+
+> To perform these checks, we suggest to change the protocol as follows
 
 
 #### Fastsync has the following configuration parameters:
 - *trustingPeriod*: a time duration
   [**[TMBC-TIME_PARAMS]**](TMBC-TIME_PARAMS-link).
 
-[NewFS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
-allow us to use the established trust to understand precisely which
-peer reported an invalid block in order to ensure the
-invariant [NewFS-VAR-TRUST-INV] below:
+> [NewFS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
+> allow us to use the established trust to understand precisely which
+> peer reported an invalid block in order to ensure the
+> invariant [NewFS-VAR-TRUST-INV] below:
 
 #### **[NewFS-A-INIT]**:
 - *startBlock* is from the blockchain, and within *trustingPeriod*
@@ -714,7 +728,7 @@ invariant [NewFS-VAR-TRUST-INV] below:
 - *startHeight = startBlock.Height*
 
 #### Additional Variables
-- *trustedBlockstore*: stores for each height greater than
+- *trustedBlockstore*: stores for each height greater than or equal to
     *startBlock.Height*, the block of that height. Initially it
     contains only *startBlock*
 
@@ -722,19 +736,19 @@ invariant [NewFS-VAR-TRUST-INV] below:
 #### **[NewFS-VAR-TRUST-INV]**:
 Let *b(i)* be the block in *trustedBlockstore*
 with b(i).Height = i. It holds that
-for *startHeight <= i < height*, 
+for *startHeight < i < height - 1*, 
 *VerifyCommit (b(i),b(i+1).Commit) = true*.
 
 
 
-Then we propose to update the function `Execute`. To do so, we first
-define the following helper functions:
+> We propose to update the function `Execute`. To do so, we first
+> define the following helper functions:
 
 ```go
 func ValidCommit(VS ValidatorSet, C Commit) Boolean
 ```
 - Comments
-    - 
+    - checks validator set based in [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]
 - Expected precondition
 	-  The Validators in *C*
 	     - are a subset of VS
@@ -791,8 +805,8 @@ func SequentialVerify {
 ----
 
 
-Then `Execute` just consists in calling `SequentialVerify` and then
-updating the application state to the (new) height.
+> Then `Execute` just consists in calling `SequentialVerify` and then
+> updating the application state to the (new) height.
 
 ```go
 func Execute()
@@ -801,12 +815,12 @@ func Execute()
     - first `SequentialVerify` is executed
 - Expected precondition
 	- application state is the one of the blockchain at height
-      *height*
+      *height - 1*
 	- [NewFS-NOT-EXP] *trustedBlockstore[height-1].Time > now - trustingPeriod*
 - Expected postcondition
     - there is no block *bnew* with *bnew.Height = height + 1* in
       *blockstore*
-	- state is the one of the blockchain at height *height*
+	- state is the one of the blockchain at height *height - 1*
 	- if height = TargetHeight: **terminate successfully**
 - Error condition
     - fails if [NewFS-NOT-EXP] is violated
