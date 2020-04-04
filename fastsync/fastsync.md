@@ -227,7 +227,7 @@ func Block(addr Address, height int64) (Block, error)
 - Implementation remark
    - RPC to full node *addr*
 - Expected precondition
-  - header of `height` is less than or equal to height of the peer
+  - 'height` is less than or equal to height of the peer
 - Expected postcondition
   - if *addr* is correct: Returns the block of height `height`
   from the blockchain. [FS-A-COMM]
