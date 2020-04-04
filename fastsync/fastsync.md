@@ -321,8 +321,9 @@ some height *terminationHeight >= maxh*.
 > independently. There is no assumption on the rate at which a peer can
 > add blocks (e.g., it might be in the process of catching up itself).
 
->  (*TD* might depend on timeouts etc. We suggest that an acceptable 
-> value for *TD* is in the range of *2 Delta*.)
+>  (*TD* might depend on timeouts etc. We suggest that an acceptable
+>  value for *TD* is in the range of apporx. 10 sec., that is the
+>  intervall between two calls `QueryStatus()`; see below.
 
 **TODO:** I have put the following as a comment, because "synchronized
 with the blockchain" is not cleanly defined. Should we do that?
@@ -881,6 +882,15 @@ A time interval *[begin,end]* is *good period* if:
 - *end >= begin + 2 Delta (fmax + 3)*
 - no faulty peer is added before time *end*
 
+> In the analysis below we assume that the termination condition of
+> *Fastsync* V2 [FS-V2-TIMEOUT] (that is, termination when the height is not incremented for
+> some time), is replaced by the termination condition
+> *height = TargetHeight* in the postcondition of
+> `Execute`. Therefore, [NewFS-A-STATUS-INTERVAL] does not interfere
+> with in analysis. If a correct peer reports a new height "shortly
+> before termination" this leads to an additional round trip to
+> request and add the new block. Then [NewFS-A-DELTA] ensures that
+> *Fastsync* catches up.
 
 Arguments: 
 
