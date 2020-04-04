@@ -280,7 +280,7 @@ height *terminationHeight*.
 
 #### **[FS-VC-BLOCKS-INV]**:
 If *FastSync* terminates successfully at height *terminationHeight*, then the
-returned list of blocks  is the one that corresponds to the block of
+returned list of blocks  is the one that corresponds to the blocks of
 the
 blockchain.
 
