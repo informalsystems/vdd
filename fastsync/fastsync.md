@@ -586,16 +586,20 @@ func CreateRequest
 ```go
 func OnBlockResponse(addr Address, b Block)
 ```
+- Comment
+    - if after adding block *b*, blocks of heights *height* and
+      *height + 1* are in *blockstore*, then `Execute` is called
 - Expected precondition
     - *pendingblocks(b.Height) = addr*
 	- *b* satisfies basic soundness  
 - Expected postcondition
-    - if function `Execute` has been executed without error
+    - if function `Execute` has been executed without error or was not executed:
         - *receivedBlocks(b.Height) = addr*
 	    - *blockstore(b.Height) = b*
 		- *peerTimeStamp[addr]* is set to a time between invocation and
           return of the function.
-		- *peerRate[addr]* is updated according to size of received block
+		- *peerRate[addr]* is updated according to size of received
+          block
 - Error condition
     - if precondition is violated: *addr* not in *peerIDs*; reset
 	*pendingblocks(b.Height)* to nil;
@@ -614,7 +618,6 @@ func Execute()
 - Expected precondition
 	- application state is the one of the blockchain at height
       *height - 1*
-	- blocks of heights *height* and *height + 1* in *receivedBlocks*
 	- **[FS-V2-Verif]** for any two blocks *a* and *b* from
 	*receivedBlocks*: if
 	  *a.Height + 1 = b.Height* then *VerifyCommit (a,b.Commit) = true*
