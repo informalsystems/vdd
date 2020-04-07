@@ -403,8 +403,6 @@ some height *terminationHeight >= maxh*.
 >  value for *TD* is in the range of apporx. 10 sec., that is the
 >  intervall between two calls `QueryStatus()`; see below.
 
-**TODO:** I have put the following as a comment, because "synchronized
-with the blockchain" is not cleanly defined. Should we do that?
 
 > Under [FS-ALL-CORR-PEER], if *peerIDs* contains a full node that is
 > "synchronized with the blockchain", and *blockchainheight* is the height
@@ -600,7 +598,7 @@ before the next block is executed, *Fastsync* terminates.
 We say that if *peerIDs* is empty upon termination, then *Fastsync* terminates
 with failure, otherwise it terminates successfully.
 
-**TODO:** is this termination condition OK?
+
 
 
 ### Details
