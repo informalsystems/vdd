@@ -52,9 +52,9 @@ bring a node within this range.
 
 ### Blockchain
 
-> As the properties *Fastsync* satisfied make only sense in the
-> presence of a blockchain, we will briefly list some of the notions
-> of blockchains as required for this specification.
+> We will briefly list some of the notions
+> of blockchains as required for this specification. More details can
+> be found  [here][block].
 
 #### **[TMBC-HEADER]**:
 A set of blockchain transactions is stored in a data structure called
@@ -105,6 +105,11 @@ time point.
 The predicate *correctUntil(n, t)* is true if and only if the node *n* 
 follows all the protocols (at least) until time *t*.
 
+#### **[TMBC-TIME-PARAMS]**:
+A blockchain has the following configuration parameters:
+ - *unbondingPeriod*: a time duration.
+ - *trustingPeriod*: a time duration smaller than *unbondingPeriod*.
+
 #### **[TMBC-FM-2THIRDS]**:
 If a block *h* is in the chain,
 then there exists a subset *CorrV*
@@ -115,7 +120,7 @@ of *h.NextValidators*, such that:
     h.Time + trustingPeriod)*.
 
 #### **[TMBC-CorrFull]**: 
-Every correct Tendermint full node locally stores a prefix of the
+Every correct full node locally stores a prefix of the
 current list of headers from [**[TMBC-SEQ]**](TMBC-SEQ-link).
 
 
