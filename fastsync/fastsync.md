@@ -47,8 +47,85 @@ of the blockchain and the corresponding application state.
 In practice it is sufficient to catch-up only close to the current
 height: The Tendermint consensus reactor implements a similar
 functionality and can synchronize a node that is approximately 100
-blocks away from the current height of the blockchain. FastSync should
+blocks away from the current height of the blockchain. Fastsync should
 bring a node within this range.
+
+### Blockchain
+
+> We will briefly list some of the notions
+> of blockchains as required for this specification. More details can
+> be found  [here][block].
+
+#### **[TMBC-HEADER]**:
+A set of blockchain transactions is stored in a data structure called
+*block*, which contains a field called *header*. (The data structure
+*block* is defined [here][block]).  As the header contains hashes to
+the relevant fields of the block, for the purpose of this
+specification, we will assume that the blockchain is a list of
+headers, rather than a list of blocks. 
+
+#### **[TMBC-SEQ]**:
+
+The Tendermint blockchain is a list *chain* of headers. 
+
+#### **[TMBC-SEQ-GROW]**: 
+
+During operation, new headers may be appended to the list one by one.
+
+
+> In the following, *ETIME* is a lower bound
+> on the time interval between the times at which two
+> successor blocks are added. 
+
+#### **[TMBC-SEQ-APPEND-E]**: 
+If a header is appended at time *t* then no additional header will be
+appended before time *t + ETIME*.
+
+
+#### **[TMBC-Auth-Byz]**:
+The authenticated Byzantine model assumes that no node (faulty or
+correct) may break digital signatures and in addition to this, no
+assumption is made about the internal behavior of faulty full
+nodes. That is, faulty nodes are limited in that they cannot forge
+messages.
+
+<!-- The authenticated Byzantine model assumes [TMBC-Sign-NoForge] and -->
+<!-- [TMBC-FaultyFull], that is, faulty nodes are limited in that they -->
+<!-- cannot forge messages [TMBC-Sign-NoForge]. -->
+
+#### **[TMBC-VALIDATOR-Set]**:
+
+A *validator set* is a set of validator pairs. For a validator set
+*vs*, we write *TotalVotingPower(vs)* for the sum of the voting powers
+of its validator pairs.
+
+#### **[TMBC-CORRECT]**:
+We define a predicate *correctUntil(n, t)*, where *n* is a node and *t* is a 
+time point. 
+The predicate *correctUntil(n, t)* is true if and only if the node *n* 
+follows all the protocols (at least) until time *t*.
+
+#### **[TMBC-TIME-PARAMS]**:
+A blockchain has the following configuration parameters:
+ - *unbondingPeriod*: a time duration.
+ - *trustingPeriod*: a time duration smaller than *unbondingPeriod*.
+
+#### **[TMBC-FM-2THIRDS]**:
+If a block *h* is in the chain,
+then there exists a subset *CorrV*
+of *h.NextValidators*, such that:
+  - *TotalVotingPower(CorrV) > 2/3
+    TotalVotingPower(h.NextValidators)*; 
+  - For every validator pair *(n,p)* in *CorrV*, it holds *correctUntil(n,
+    h.Time + trustingPeriod)*.
+
+#### **[TMBC-CorrFull]**: 
+Every correct full node locally stores a prefix of the
+current list of headers from [**[TMBC-SEQ]**](TMBC-SEQ-link).
+
+
+
+
 
 ## Informal Problem statement
 
@@ -152,7 +229,8 @@ according to [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link].
 
 #### **[FS-A-VAL]**:
 The system satisfies [**[TMBC-Auth-Byz]**][TMBC-Auth-Byz-link] and [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]. Thus, there is a
-blockchain that satisfies the soundness requirements [**[TMBC-SOUND-?]**][blockchain].
+blockchain that satisfies the soundness requirements (that is, the
+validation rules in [[block]]).
 
 #### **[FS-A-COMM]**:
 Communication between the node *FS* and all correct peers is reliable and
@@ -325,8 +403,6 @@ some height *terminationHeight >= maxh*.
 >  value for *TD* is in the range of apporx. 10 sec., that is the
 >  intervall between two calls `QueryStatus()`; see below.
 
-**TODO:** I have put the following as a comment, because "synchronized
-with the blockchain" is not cleanly defined. Should we do that?
 
 > Under [FS-ALL-CORR-PEER], if *peerIDs* contains a full node that is
 > "synchronized with the blockchain", and *blockchainheight* is the height
@@ -386,7 +462,7 @@ Some variables, etc.
 
 #### Variables
 - *height*: initially *startBlock.Height + 1*
-  > height should be thought of the "height of the next blook we need to download"
+  > height should be thought of the "height of the next block we need to download"
 - *state*: initially *startState*
 - *peerIDs*: peer addresses [FS-A-PEER-IDS](#fs-a-peer-ids)
 - *peerHeights*: stores for each peer the height it reported. initially 0
@@ -420,9 +496,10 @@ func VerifyCommit(b Block, c Commit) Boolean
      simplified form for ease in presentation.
 
 - Implementation remark
-    - implements the check from
-     [**[TMBC-SOUND-DISTR-PossCommit]**][TMBC-SOUND-DISTR-PossCommit--link],
-     that is, that  *c* is a valid commit for block *b*
+    <!-- - implements the check from -->
+    <!--  [**[TMBC-SOUND-DISTR-PossCommit]**][TMBC-SOUND-DISTR-PossCommit--link], -->
+    <!--  that is, that  *c* is a valid commit for block *b* -->
+	- implements the check that  *c* is a valid commit for block *b*
 - Expected precondition
     - *c* is a valid commit for block *b*
 - Expected postcondition
@@ -477,7 +554,7 @@ trigger the execution of these functions:
 
 - `QueryStatus()`: regularly (currently every 10sec; necessarily
   interval greater than *2 Delta*) queries all peers from *peerIDs*
-  for their current height [TMBC-LOCAL-CHAIN]. It does so
+  for their current height [TMBC-CorrFull]. It does so
   by calling `Status(n)` remotely on all peers *n*.
   
 - `CreateRequest`: regularly checks whether certain blocks have no
@@ -521,7 +598,7 @@ before the next block is executed, *Fastsync* terminates.
 We say that if *peerIDs* is empty upon termination, then *Fastsync* terminates
 with failure, otherwise it terminates successfully.
 
-**TODO:** is this termination condition OK?
+
 
 
 ### Details
@@ -708,7 +785,7 @@ checks in this order we observe:
   - If the first check (2/3 of voting power) fails,
     the peer that provided block *b2* is faulty, 
   - If the first check passes and the second check
-    fails (*VerifyCommit*), then the pwwe that provided *b1* is
+    fails (*VerifyCommit*), then the peer that provided *b1* is
     faulty.
   - If both checks pass, the can trust *b1*
 
@@ -727,7 +804,7 @@ follows that under [FS-SOME-CORR-PEER], *peerIDs* is always non-empty.
 
 
 #### Fastsync has the following configuration parameters:
-- *trustingPeriod*: a time duration
+- *trustingPeriod*: a time duration; cf.
   [**[TMBC-TIME-PARAMS]**][TMBC-TIME-PARAMS-link].
 
 > [NewFS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
@@ -764,9 +841,9 @@ for *startHeight < i < height - 1*,
 func ValidCommit(VS ValidatorSet, C Commit) Boolean
 ```
 - Comments
-    - checks validator set based in [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]
+    - checks validator set based on [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]
 - Expected precondition
-	-  The Validators in *C*
+	-  The validators in *C*
 	     - are a subset of VS
 		 - have more than 2/3 of the voting power in VS
 - Expected postcondition
@@ -951,35 +1028,61 @@ Arguments:
 
 [[block]] Specification of the block data structure. 
 
-[[blockchain]] The specification of the Tendermint blockchain. Tags refering to this specification are labeled [TMBC-*].
+<!-- [[blockchain]] The specification of the Tendermint blockchain. Tags refering to this specification are labeled [TMBC-*]. -->
 
 [block]: https://github.com/tendermint/spec/blob/master/spec/blockchain/blockchain.md
 
-[blockchain]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md
+<!-- [blockchain]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md -->
 
-[TMBC-HEADER-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-header
+[TMBC-HEADER-link]: #tmbc-header
 
-[TMBC-SEQ-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq
+[TMBC-SEQ-link]: #tmbc-seq
 
-[TMBC-CorrFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-corrfull
+[TMBC-CorrFull-link]: #tmbc-corrfull
 
-[TMBC-Sign-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-sign
+[TMBC-CORRECT-link]: #tmbc-correct
 
-[TMBC-FaultyFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-faultyfull
+[TMBC-Sign-link]: #tmbc-sign
 
-[TMBC-TIME-PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time-params
+[TMBC-FaultyFull-link]: #tmbc-faultyfull
 
-[TMBC-SEQ-APPEND-E-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq-append-e
+[TMBC-TIME-PARAMS-link]: #tmbc-time-params
 
-[TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-fm-2thirds
+[TMBC-SEQ-APPEND-E-link]: #tmbc-seq-append-e
 
-[TMBC-Auth-Byz-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-auth-byz
+[TMBC-FM-2THIRDS-link]: #tmbc-fm-2thirds
 
-[TMBC-INV-SIGN-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-sign
+[TMBC-Auth-Byz-link]: #tmbc-auth-byz
 
-[TMBC-SOUND-DISTR-PossCommit--link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-sound-distr-posscommit
+[TMBC-INV-SIGN-link]: #tmbc-inv-sign
 
-[TMBC-INV-VALID-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-valid
+[TMBC-SOUND-DISTR-PossCommit--link]: #tmbc-sound-distr-posscommit
+
+[TMBC-INV-VALID-link]: #tmbc-inv-valid
+
+<!-- [TMBC-HEADER-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-header -->
+
+<!-- [TMBC-SEQ-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq -->
+
+<!-- [TMBC-CorrFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-corrfull -->
+
+<!-- [TMBC-Sign-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-sign -->
+
+<!-- [TMBC-FaultyFull-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-faultyfull -->
+
+<!-- [TMBC-TIME-PARAMS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-time-params -->
+
+<!-- [TMBC-SEQ-APPEND-E-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-seq-append-e -->
+
+<!-- [TMBC-FM-2THIRDS-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-fm-2thirds -->
+
+<!-- [TMBC-Auth-Byz-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-auth-byz -->
+
+<!-- [TMBC-INV-SIGN-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-sign -->
+
+<!-- [TMBC-SOUND-DISTR-PossCommit--link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-sound-distr-posscommit -->
+
+<!-- [TMBC-INV-VALID-link]: https://github.com/informalsystems/VDD/tree/master/blockchain/blockchain.md#tmbc-inv-valid -->
 
 [LCV-VC-LIVE-link]: https://github.com/informalsystems/VDD/tree/master/lightclient/verification.md#lcv-vc-live
 
