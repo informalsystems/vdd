@@ -47,7 +47,7 @@ of the blockchain and the corresponding application state.
 In practice it is sufficient to catch-up only close to the current
 height: The Tendermint consensus reactor implements a similar
 functionality and can synchronize a node that is approximately 100
-blocks away from the current height of the blockchain. FastSync should
+blocks away from the current height of the blockchain. Fastsync should
 bring a node within this range.
 
 ### Blockchain
@@ -462,7 +462,7 @@ Some variables, etc.
 
 #### Variables
 - *height*: initially *startBlock.Height + 1*
-  > height should be thought of the "height of the next blook we need to download"
+  > height should be thought of the "height of the next block we need to download"
 - *state*: initially *startState*
 - *peerIDs*: peer addresses [FS-A-PEER-IDS](#fs-a-peer-ids)
 - *peerHeights*: stores for each peer the height it reported. initially 0
@@ -843,7 +843,7 @@ func ValidCommit(VS ValidatorSet, C Commit) Boolean
 - Comments
     - checks validator set based on [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]
 - Expected precondition
-	-  The Validators in *C*
+	-  The validators in *C*
 	     - are a subset of VS
 		 - have more than 2/3 of the voting power in VS
 - Expected postcondition
