@@ -785,7 +785,7 @@ checks in this order we observe:
   - If the first check (2/3 of voting power) fails,
     the peer that provided block *b2* is faulty, 
   - If the first check passes and the second check
-    fails (*VerifyCommit*), then the pwwe that provided *b1* is
+    fails (*VerifyCommit*), then the peer that provided *b1* is
     faulty.
   - If both checks pass, the can trust *b1*
 
@@ -804,8 +804,8 @@ follows that under [FS-SOME-CORR-PEER], *peerIDs* is always non-empty.
 
 
 #### Fastsync has the following configuration parameters:
-- *trustingPeriod*: a time duration
-  <!-- [**[TMBC-TIME-PARAMS]**][TMBC-TIME-PARAMS-link]. -->
+- *trustingPeriod*: a time duration; cf.
+  [**[TMBC-TIME-PARAMS]**][TMBC-TIME-PARAMS-link].
 
 > [NewFS-A-INIT] is the suggested replacement of [FS-A-V2-INIT]. This will
 > allow us to use the established trust to understand precisely which
@@ -841,7 +841,7 @@ for *startHeight < i < height - 1*,
 func ValidCommit(VS ValidatorSet, C Commit) Boolean
 ```
 - Comments
-    - checks validator set based in [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]
+    - checks validator set based on [**[TMBC-FM-2THIRDS]**][TMBC-FM-2THIRDS-link]
 - Expected precondition
 	-  The Validators in *C*
 	     - are a subset of VS
