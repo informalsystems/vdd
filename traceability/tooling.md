@@ -246,10 +246,34 @@ If we make use of GitHub as our primary platform for development and
 collaboration on specifications, we could either:
 
 1. Write out specifications in [GitHub-Flavored Markdown][24].
-2. Write out specifications in a different format that meets our criteria and
-   then separate the means by which we write the specifications (i.e. by way of
-   collaborative editing on GitHub) from how we read them (e.g. by way of a
-   static site, or pre-produced PDF files).
+2. Write out specifications in a different format that meets our criteria
+   (perhaps an extension of Markdown) and then separate the means by which we
+   write the specifications (i.e. by way of collaborative editing on GitHub)
+   from how we read them (e.g. by way of a static site, or pre-produced PDF
+   files).
+
+The most versatile approach that would lend itself to both usability and
+extension would probably be option (2) above.
+
+### Recommended Architecture
+
+The recommended architecture for our implementation is very similar to a static
+web site generator, which operates on a set of plain text input files to produce
+a rich, hyperlinked static web site.
+
+![Recommended architecture](./tooling_arch.png)
+
+The configuration input in the diagram above would potentially allow us to
+control a variety of the aspects of how the output is produced.
+
+The output we want for our stakeholders will be an easily navigable static web
+site consisting of two major components:
+
+1. A rich, navigable catalogue of all of the related specifications, models,
+   code and tests.
+2. Rich summary reports that detail things like implementation coverage (i.e.
+   how much of the specification has been implemented), amongst other important
+   metrics.
 
 [1]: https://en.wikipedia.org/wiki/Requirements_management
 [2]: https://en.wikipedia.org/wiki/ISO/IEC_12207
