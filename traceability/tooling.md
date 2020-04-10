@@ -255,6 +255,21 @@ collaboration on specifications, we could either:
 The most versatile approach that would lend itself to both usability and
 extension would probably be option (2) above.
 
+### Artifact Types
+
+It is clear from our [domain](#domain) that we have distinct artifact **types**
+as inputs to our tooling:
+
+* Natural language specifications
+* Models
+* Code
+* Defects
+* Configuration
+
+It is not clear yet whether dividing components (e.g. the natural language
+specifications and code) into sub-types would provide benefits, but we must be
+open to this possibility.
+
 ### Recommended Architecture
 
 The recommended architecture for our implementation is very similar to a static
@@ -263,17 +278,51 @@ a rich, hyperlinked static web site.
 
 ![Recommended architecture](./tooling_arch.png)
 
-The configuration input in the diagram above would potentially allow us to
-control a variety of the aspects of how the output is produced.
+There are two logical applications (which could, practically, be the same
+application, or they could be two separate applications) in the recommended
+architecture above:
 
-The output we want for our stakeholders will be an easily navigable static web
-site consisting of two major components:
+1. A **traceability compiler**, which takes as input all of the text of the
+   specifications, models, code, GitHub/GitLab issues (specifically those
+   labelled as "defects") and some configuration. The primary output of this
+   compiler is an *intermediate representation*. It is recommended here to use
+   [JSON-LD](https://json-ld.org/).
+2. A **static web site generator**, which takes as input the *intermediate
+   representation* as well as some configuration. The output of this would be a
+   static web site comprising:
+   1. A rich, navigable catalogue of all of the related specifications, models,
+      code and tests.
+   2. Rich summary reports that detail things like implementation coverage (i.e.
+      how much of the specification has been implemented), amongst other
+      important metrics.
 
-1. A rich, navigable catalogue of all of the related specifications, models,
-   code and tests.
-2. Rich summary reports that detail things like implementation coverage (i.e.
-   how much of the specification has been implemented), amongst other important
-   metrics.
+### Execution Environment Configuration
+
+The inputs for the recommended tooling are most likely going to be spread across
+multiple Git repositories. Artifacts (i.e. the intermediate representation and
+static web site) will probably need to be produced in two environments:
+
+1. Locally, as one is making modifications to one or more of the various
+   repositories.
+2. In CI, as changes are pushed and merged to different branches.
+
+Naturally, the locations of repositories will differ between the two
+environments. In the case of local execution, the locations of the repositories
+on the local machine will also potentially vary from machine to machine
+depending on personal user preferences.
+
+For each project, we therefore need two types of configuration:
+
+1. Per-repository configuration. In this case, the repository in which the
+   specification(s) live could act as the primary entrypoint for the tooling to
+   discover related repositories and to be able to interpret the different input
+   artifacts according to their [type](#artifact-types). Depending on the nature
+   of the project, one could have all inputs co-located in the same repository,
+   but this need not be the case.
+2. Local, mapping specific directories to Git remotes. As an optimization here
+   we may employ a convention where, if repositories are organized in a
+   particular way, the tooling will automatically discover all of the necessary
+   repositories to be able to produce the output artifacts.
 
 [1]: https://en.wikipedia.org/wiki/Requirements_management
 [2]: https://en.wikipedia.org/wiki/ISO/IEC_12207
