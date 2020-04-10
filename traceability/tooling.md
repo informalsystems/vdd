@@ -10,7 +10,7 @@ Proposal](./traceability.md) for Informal Systems.
 [Requirements management][1] is a broad and deep area of interest in software
 engineering. This breadth and depth is most clearly evident in safety-critical
 software engineering efforts, such as in aerospace and military application
-development, where mistakes can unnecessarily cost lives.
+development, where mistakes can cost lives.
 
 Notable examples of systems engineering standardization efforts that include
 requirements management:
