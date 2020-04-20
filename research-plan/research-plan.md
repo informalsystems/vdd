@@ -25,51 +25,89 @@ need to make precise what is expected by a validator (what does it mean to execu
 5. External visibility. Dissemination of our results at scientific venues.
 
 ## Research Areas
-- DA: Distributed Algorithms (consensus, gossip, fork accountability, light client)
-- Verif: Automated Verification (current codebase, research to be able to verify all core protocols or eventually the complete implementation)
-- MD: Mechanism Design (do the protocols incentivize “correct behavior”)
-- DB: Database Research (AVL trees, Merkle trees)
-- Sys: Systems Research (new protocols, efficiency)
-- Impl:Implementation (improve quality, testability, etc.)
-- Sec: Security and Crypto
+- **DA**: Distributed Algorithms (consensus, gossip, fork accountability, light client)
+- **Verif**: Automated Verification (current codebase, research to be able to verify all core protocols or eventually the complete implementation)
+- **MD**: Mechanism Design (do the protocols incentivize “correct behavior”)
+- **DB**: Database Research (AVL trees, Merkle trees)
+- **Sys**: Systems Research (new protocols, efficiency)
+- **Impl**:Implementation (improve quality, testability, etc.)
+- **Sec**: Security and Crypto
 
-The Sec area is currently covered by funding external projects at
+The Sec area is currently covered by ICF funding external projects at
 Berkeley and Stanford. The other areas we will cover internally and
 with collaboration. 
 
-Questions for...
+**TODO:** Questions for
 Ethan: provide content on the Crypto research for Sec so that we have a complete picture here
-All: We are happy about comments and feedback.
+
 
 ## People
 
+**TODO:** In the following I have added the people from the
+Collaborations task (in the goal tracking notion). Should we also mention engineers / research
+engineers here?
+
 ### Informal
 
-| Name |  Interests |
+| Name | Interests |
 |-----|-------------------------|
 | Zarko (ZM) | |
 | Ethan (EB) | |
-| Josef (JW) | |
-| Igor | |
-| Adi | |
-| Cezara (soon) | ||
+| Josef (JW) | DA, Verif |
+| Igor (IK) | |
+| Adi (AS) | |
+| Romain (RR) ||
+| Cezara (CD soon) | ||
 
-**TODO:** should we also mention engineers / research engineers here?
+
 
 
 ### External Collaborators 
 
-| Name | Position |  Interests |
-|-----|-----------|------------|
-| Daniel Cason | PostDoc Lugano  |(DC) |
-| Jovan Komatovic | PhD EPFL from July 1st | (JK) |
-| Fernando | Prof. Lugano |, (FP) 
+| Name | Position |  Interests | Supported by ICF | period |
+|-----|-----------|------------|---------------|
+| Daniel Cason (DC) | PostDoc Lugano  | |
+| Jovan Komatovic  (JK) | PhD EPFL from July 1st | |
+| Fernando Pedone (FP) | Prof. Lugano | |
 | Gianmarco Fraccaroli | Master student at USI | |
 | Sara Tucci? | CEA (game theory, mechanism design) | |
-| Nathalie Bertrand | DR Inria Rennes | |
-| Bastien Thomas | PhD Student Inria Rennes |  (Verification of Randomized Distributed Algorithms, Informal Collaboration) |
-|  Jure Kukovec | PhD Student TU Wien | (APALACHE model checker) |
+| Cezara Dragoi | CR, Inria Paris / ENS | Verif. | yes | 2019 - now |
+| Patrizio Inzaghi | PhD student, Inria Paris | " | " | 2019 - now |
+| Nathalie Bertrand | DR Inria Rennes | Verification of Randomized Distributed Algorithms | no | 2019 - now |
+| Bastien Thomas | PhD Student Inria Rennes | "  | " |  2019 - now |
+| Jure Kukovec (JK) | PhD Student TU Wien | (APALACHE model checker) | no |  2019 - now |
+| Giuliono Losa | Galois | verif. | yes |  2020 - now ||
 
+
+### Who works with whom
+
+
+|    | ZM | EB | JW | IK | AS | RR |
+|----|----|----|----|----|----|----|
+| DC |    |    |    |    |    |    |
+| CD |    |    | C1 |    |    |    |
+| JK |    |    |    | C2 |    |    |
+| GL |    |    |    | C3 |    |    ||
+
+
+### C1
+
+See T2 below.
+
+### C2
+
+See T3 below.
+
+
+
+----
+
+
+
+
+# Old task descriptions
+
+**TODO:** This is what we planned at summer/fall 2019.
 
 ## Who does what in 2019?
 
