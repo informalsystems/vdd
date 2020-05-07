@@ -1,4 +1,4 @@
-# Verification-Driven Development: An Informal Manifesto
+# Verification-Driven Development: An Informal Guide
 
 **Abstract.** Software bugs can be increasingly costly, e.g., blockchain
 technology. At the same time, modern software stacks are quite complex.
