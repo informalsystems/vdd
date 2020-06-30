@@ -53,6 +53,6 @@ Verification Draft --> Verification Proposal --> Verified
   verifies it, it should move to `Verified`.
 
 - All drafts live in branches
-- Proposals live in PRs
-- Reviewed, Validated, Verified, live in the main branch
-- There should be an additional stage `Withdrawn`
+- All proposals live in PRs
+- `Reviewed`, `Validated`, `Verified` live in the main branch
+
