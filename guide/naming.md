@@ -16,13 +16,14 @@ Draft --> Proposal --> Reviewed
 ```
 
 
-- Draft should live in auxiliary branches
-- Proposal should live in a PR
-- Reviewed, Published, Withdrawn should live in the main
+- There should be an additional stage `Withdrawn`, for the uncommon
+  outcome that at some point we find the specification useless
+- `Draft` should live in auxiliary branches
+- `Proposal` should live in a PR
+- `Reviewed`, `Published`, `Withdrawn` should live in the main
   (f.k.a. master) branch
 - From any stage, if updates need to be made, we first transition back
   to Draft.
-- There should be an additional stage `Withdrawn`
   
   
 Whenever the stage changes for a English specification, the version
@@ -34,19 +35,22 @@ Published.6
 
 ## TLA+ Spec
 
+```
 Draft --> Proposal --> Reviewed --> 
 Validation Draft --> Validation Proposal --> Validated --> 
 Verification Draft --> Verification Proposal --> Verified
+```
 
-**TODO** there should also be a withdrawn
 
-- Draft, Proposal, Reviewed work similar to the English spec
-- when simple invariants and type checks are added the spec should
-  transition to Validation Draft, and when it passes model checking it
-  should be called Validated
-- if we go towards full verification (to be defined; parameterized?)
-  we go towards verification draft, and when the model checker
-  verifies it, it should move to verified.
+- There should be an additional stage `Withdrawn`, for the uncommon
+  outcome that at some point we find the specification useless
+- `Draft`, `Proposal`, `Reviewed` work similar to the English spec
+- When simple invariants and type checks are added the spec should
+  transition to `Validation Draft`, and when it passes model checking it
+  should be called `Validated`.
+- If we go towards full verification (to be defined; parameterized?)
+  we go towards `Verification Draft`, and when the model checker
+  verifies it, it should move to `Verified`.
 
 - All drafts live in branches
 - Proposals live in PRs
