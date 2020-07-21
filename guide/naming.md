@@ -6,7 +6,7 @@ the state of a given document, we use the following convention:
 
 ## English Spec
 
-As part of the version, each English specification should have one
+As part of the version, the file name and title of each English specification should include reference to one
 of the following stages:
 
 ```
@@ -55,4 +55,3 @@ Verification Draft --> Verification Proposal --> Verified
 - All drafts live in branches
 - All proposals live in PRs
 - `Reviewed`, `Validated`, `Verified` live in the main branch
-
