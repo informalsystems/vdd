@@ -1,4 +1,4 @@
-# VDD Naming Convetions / Semantic Versioning
+# VDD Naming Conventions / Semantic Versioning
 
 In order to facilitate tracability over several iterations of English
 and TLA+ specifications, and to make clear to external readers what is
