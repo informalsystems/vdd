@@ -55,3 +55,11 @@ Verification Draft --> Verification Proposal --> Verified
 - All drafts live in branches
 - All proposals live in PRs
 - `Reviewed`, `Validated`, `Verified` live in the main branch
+
+## Filenames and version control
+
+The specification files should be named in a consistent way, e.g., `MySpec_003_Reviewed.md` and `MySpec_006_Validated.tla`.
+We consider it a good practice to keep the files for the varying versions in the repository, that is, `MySpec_001_Draft.tla`,
+`MySpec_002_Proposal.md`, `MySpec_003_Reviewed.md`, etc. should be all kept in the same branch. By doing so, we avoid broken links,
+can easily compare different versions and immediately see, if a software component is referring an outdated spec.
+
