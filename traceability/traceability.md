@@ -99,8 +99,8 @@ We need a solution that satisfies the following properties:
 
 |TRC-TAG.1::SYNTAX.1|
 : We propose a simple naming scheme for tags. We start with the tags for
-  top-level requirements and then proceed with the tags of the logical units that
-  implement higher-level requirements.
+  top-level requirements and then proceed with the tags of the logical units
+  that implement lower-level requirements.
 
   **Zero-level requirement tags.** These are the tags of the requirements that
   do not implement any requirement but are the zero-level requirements
