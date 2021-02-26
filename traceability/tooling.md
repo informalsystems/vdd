@@ -326,71 +326,73 @@ For each project, we therefore need two types of configuration:
 
 ### Sample Referencing Approach
 
-The following sample outlines a trivial example of how one could facilitate
-traceability from specifications through to code.
+The following outlines a trivial example of how one could capture the trances
+between specifications and implementation, using [TRC-IMPL.1::PREFIX.1][].
 
 #### Sample Specification
 
 ```markdown
 # Hello World
 
+|HW.1|
+: A program to great the world.
+
 ## User Input
 
-|HW-INPUT.1::ASKNAME.1|
-: The software must ask the user for their name.
+|HW.1.::INPUT.1|
+: The software must be able to handle specified forms of input.
+
+|HW.1::INPUT.1::ASKNAME.1|
+: The software must ask the user for their name, and receive the input given in
+  resonse.
 
 ## Output
 
-|HW-OUTPUT.1::HELLO.1|
+|HW.1::OUTPUT.1|
+: The software must produce certain outputs, based on the [HW.1::INPUT.1].
+
+|HW.1::OUTPUT.1::HELLO.1|
 : Once the software has asked for the user's name, it must print the text
   "Hello {user name}!".
 
   The `{user name}` part of the output string must be replaced with the name of
-  the user obtained in [HW-INPUT.1::ASKNAME.1].
+  the user obtained in [HW.1::INPUT.1::ASKNAME.1].
 
-|HW-OUTPUT.1::FOUNDHIM.1|
+|HW.1::OUTPUT.1::FOUNDHIM.1|
 : If the user's name is "Waldo", in addition to saying hello to the user as per
-  [HW-OUTPUT.1::HELLO.1], print the text: "We found you!".
+  [HW.1::OUTPUT.1::HELLO.1], print the text: "We found you!".
 ```
-
-This specification would be parsed into the following requirements:
-
-* `HW-INPUT.1::ASKNAME.1` - The software must ask the user for their name.
-* `HW-OUTPUT.1::HELLO.1` - Once the software has asked for the user's name, it
-  must print the text "Hello {user name}!".
-
-  The `{user name}` part of the output string must be replaced with the name of
-  the user obtained in `HW-INPUT.1::ASKNAME.1`.
-* `HW-OUTPUT.1::FOUNDHIM.1` - If the user's name is "Waldo", in addition to
-  saying hello to the user as per `[HW-OUTPUT.1::HELLO.1]`, print the text: "We
-  found you!".
 
 #### Sample Code
 
 ```rust
 use std::io;
 
-/**
- * Checks whether the specified name is "Waldo". Implements
- * [HW-OUTPUT.1::FOUNDHIM.1]. This tag applies to the whole function.
- */
+/// Checks whether the specified name is "Waldo". 
+/// 
+/// This tag applies to the whole function.
+///
+/// |HW.1::OUTPUT.1::FOUNDHIM.1:::CHECK.1|
 fn check_for_waldo(name: &str) {
     if name == "Waldo" {
         println!("We found you!");
     }
 }
 
+/// |HW.1::MAIN.1|
 fn main() {
     let mut name = String::new();
 
     // The following tag applies only to the line directly underneath it.
-    // [HW-INPUT.1::ASKNAME.1]
+    //
+    // |HW.1::INPUT.1::ASKNAME.1::IMP.1|
     println!("Hi there! What's your name?");
 
+    // |HW.1.::INPUT.1::READ-LINE.1|
     match io::stdin().read_line(&mut name) {
         Ok(_) => {
             let name_trimmed = name.trim();
-            // [HW-OUTPUT.1::HELLO.1]
+            // |HW.1::OUTPUT.1::HELLO.1::IMP.1|
             println!("Hello {}!", name_trimmed);
             check_for_waldo(name_trimmed);
         },
@@ -423,3 +425,5 @@ fn main() {
 [22]: https://doorstop.readthedocs.io/en/latest/
 [23]: https://gitlab.com/groups/gitlab-org/-/epics/2703
 [24]: https://github.github.com/gfm/
+
+[TRC-IMPL.1::PREFIX.1]: ./traceability.md#TRC-IMPL.1::PREFIX.1
