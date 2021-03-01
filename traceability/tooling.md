@@ -326,7 +326,7 @@ For each project, we therefore need two types of configuration:
 
 ### Sample Referencing Approach
 
-The following outlines a trivial example of how one could capture the trances
+The following outlines a trivial example of how one could capture the traces
 between specifications and implementation, using [TRC-IMPL.1::PREFIX.1][].
 
 #### Sample Specification
