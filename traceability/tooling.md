@@ -335,7 +335,7 @@ between specifications and implementation, using [TRC-IMPL.1::PREFIX.1][].
 # Hello World
 
 |HW.1|
-: A program to great the world.
+: A program to greet the world.
 
 ## User Input
 
