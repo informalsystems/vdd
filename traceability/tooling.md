@@ -344,7 +344,7 @@ between specifications and implementation, using [TRC-IMPL.1::PREFIX.1][].
 
 |HW.1::INPUT.1::ASKNAME.1|
 : The software must ask the user for their name, and receive the input given in
-  resonse.
+  response.
 
 ## Output
 
