@@ -164,7 +164,7 @@ We need a solution that satisfies the following properties:
 
 ### 4.4. Implementing logical units
 
-|TRC-IMPL.1::PREFIX.1|
+<a id="TRC-IMPL.1::PREFIX.1">|TRC-IMPL.1::PREFIX.1|</a>
 : The fact that a logical unit implements another logical unit is reflected by
   the tag naming scheme. The name of a tag of level `k` has the form
   `<PARENT>::<NAME>.<REVISION>`. The name indicates that the logical unit
