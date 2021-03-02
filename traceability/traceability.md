@@ -139,7 +139,7 @@ We need a solution that satisfies the following properties:
 Example: The previous logical unit implements both [TRC-TAG.1::SYNTAX.1] and
 [TRC-IMPL.1]. As a result, it is tagged with both
 [TRC-TAG.1::SYNTAX.1::SYNONYMY.1] and [TRC-IMPL.1::SYNONYMY.1], and so these two
-tags are synonymous. However, it also bears the univocal leaf tag `SYNONYMY.1`
+tags are synonymous. However, all its tags end with the single leaf tag `SYNONYMY.1`
 
 |{TRC-TAG.1::SYNTAX.1,TRC-IMPL.1}::SYNONYMY.1::BRACE-EXPANSION.1|
 : [brace expansion][] is used for a concise designation of synonyms: ancestor
