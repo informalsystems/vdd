@@ -131,7 +131,7 @@ We need a solution that satisfies the following properties:
   ancestor logical units. This gives rise to "synonyms tags". However, logical
   units with synonymous tags should always terminate with the same leaf tag.
 
-  A logical unit is tagged with synonymous tags by separating the synonymous
+  A logical unit is tagged with synonymous tags by separating the synonyms
   with a space. Given a unit with the leaf tag `T` that implements `n` ancestor
   units with paths `path[0]...path[n]`, the unit is tagged with `|path[0]::T|
   |path[1]::T| ... |path[n]::T|`.
