@@ -129,7 +129,7 @@ We need a solution that satisfies the following properties:
 |TRC-TAG.1::SYNTAX.1::SYNONYMY.1| |TRC-IMPL.1::SYNONYMY.1|
 : A logical unit may bear multiple tags, as a result of implementing multiple
   ancestor logical units. This gives rise to "synonyms tags". However, logical
-  units with synonymous tags should always have a unique leaf tag.
+  units with synonymous tags should always terminate with the same leaf tag.
 
   A logical unit is tagged with synonymous tags by separating the synonymous
   with a space. Given a unit with the leaf tag `T` that implements `n` ancestor
