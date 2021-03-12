@@ -99,8 +99,8 @@ We need a solution that satisfies the following properties:
 
 |TRC-TAG.1::SYNTAX.1|
 : We propose a simple naming scheme for tags. We start with the tags for
-  top-level requirements and then proceed with the tags of the logical units that
-  implement higher-level requirements.
+  top-level requirements and then proceed with the tags of the logical units
+  that implement lower-level requirements.
 
   **Zero-level requirement tags.** These are the tags of the requirements that
   do not implement any requirement but are the zero-level requirements
@@ -125,6 +125,43 @@ We need a solution that satisfies the following properties:
   Remark: We choose `::` as a tag separator, as it is familiar to Rust and C++
   programmers. There is no danger of confusing a Rust package name with a tag,
   as the tags always come with revision numbers.
+
+|TRC-TAG.1::SYNTAX.1::SYNONYMY.1| |TRC-IMPL.1::SYNONYMY.1|
+: Non-zero-level requirement tags (described above) record the "ancestry" of the
+  higher level units they implement. When a logical unit implements multiple
+  units from a higher level, it has multiple parents, multiple lines of
+  ancestry, and, consequently, multiple valid tags. In such  cases, we end up
+  with two or more tags which refer to the same logical unit. These tags are
+  *synonymous* (in terms of reference, but not sense) so we refer to this as
+  "tag synonymy".
+
+  A logical unit is tagged with synonymous tags by separating the synonyms with
+  spaces. Given a unit designated by the leaf tag `T` that implements `n`
+  ancestor units with paths `path[0]...path[n]`, the unit is tagged with
+  `|path[0]::T| |path[1]::T| ... |path[n]::T|`.
+
+Example: The previous logical unit implements both [TRC-TAG.1::SYNTAX.1] and
+[TRC-IMPL.1]. As a result, it is tagged with both
+[TRC-TAG.1::SYNTAX.1::SYNONYMY.1] and [TRC-IMPL.1::SYNONYMY.1], and so these two
+tags are synonymous. However, all its tags end with the single leaf tag `SYNONYMY.1`
+
+|{TRC-TAG.1::SYNTAX.1,TRC-IMPL.1}::SYNONYMY.1::BRACE-EXPANSION.1|
+: [brace expansion][] is used for a concise designation of synonyms: ancestor
+  tag paths are separated by commas and surrounded in curly braces. Given a unit
+  with the leaf tag `T` that implements `n` ancestor  units with paths
+  `path[0]...path[n]`, the unit is tagged with
+  `|{path[0],path[1],...,path[n]}::T|`. This is equivalent to the concatenation
+  of all tag synonyms, as specified in [TRC-TAG.1::SYNTAX.1::SYNONYMY.1].
+
+Example: The previous unit implements both [TRC-TAG.1::SYNTAX.1::SYNONYMY.1]
+and [TRC-IMPL.1::SYNONYMY.1], and has the leaf tag `BRACE-EXPANSION.1`. It is
+tagged using the brace expansion syntax
+`|{TRC-TAG.1::SYNTAX.1,TRC-IMPL.1}::SYNONYMY.1::BRACE-EXPANSION.1|`, which is
+equivalent to the sequence of tags
+`|TRC-TAG.1::SYNTAX.1::SYNONYMY.1::BRACE-EXPANSION.1|
+|TRC-IMPL.1::SYNONYMY.1::BRACE-EXPANSION.1|`.
+
+[brace expansion]: www.gnu.org/software/bash/manual/html_node/Brace-Expansion.html
 
 ### 4.2. Tagging logical units
 
@@ -281,4 +318,3 @@ their tags consistent.
   and thus are uniquely defined.
 
 [php-mde-deflist]: https://michelf.ca/projects/php-markdown/extra/#def-list
-
