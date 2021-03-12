@@ -127,14 +127,18 @@ We need a solution that satisfies the following properties:
   as the tags always come with revision numbers.
 
 |TRC-TAG.1::SYNTAX.1::SYNONYMY.1| |TRC-IMPL.1::SYNONYMY.1|
-: A logical unit may bear multiple tags, as a result of implementing multiple
-  ancestor logical units. This gives rise to "synonyms tags". However, logical
-  units with synonymous tags should always terminate with the same leaf tag.
+: Non-zero-level requirement tags (described above) record the "ancestry" of the
+  higher level units they implement. When a logical unit implements multiple
+  units from a higher level, it has multiple parents, multiple lines of
+  ancestry, and, consequently, multiple valid tags. In such  cases, we end up
+  with two or more tags which refer to the same logical unit. These tags are
+  *synonymous* (in terms of reference, but not sense) so we refer to this as
+  "tag synonymy".
 
-  A logical unit is tagged with synonymous tags by separating the synonyms
-  with a space. Given a unit with the leaf tag `T` that implements `n` ancestor
-  units with paths `path[0]...path[n]`, the unit is tagged with `|path[0]::T|
-  |path[1]::T| ... |path[n]::T|`.
+  A logical unit is tagged with synonymous tags by separating the synonyms with
+  spaces. Given a unit designated by the leaf tag `T` that implements `n`
+  ancestor units with paths `path[0]...path[n]`, the unit is tagged with
+  `|path[0]::T| |path[1]::T| ... |path[n]::T|`.
 
 Example: The previous logical unit implements both [TRC-TAG.1::SYNTAX.1] and
 [TRC-IMPL.1]. As a result, it is tagged with both
