@@ -186,8 +186,8 @@ equivalent to the sequence of tags
 
   Note that several lower-level requirements may implement the same higher-level
   requirement.  For instance, the requirements labelled with
-  **[TRC-TAG.1::SCHEME.1]** and **[TRC-TAG.1::DEF.2]** implement the requirement
-  **[TRC-TAG.1]**.
+  [TRC-TAG.1::SCHEME.1] and [TRC-TAG.1::DEF.2] implement the requirement
+  [TRC-TAG.1].
 
 ### 4.3. Referring to logical units
 
@@ -196,7 +196,7 @@ equivalent to the sequence of tags
   is, `[TAG]`. The tag syntax is sufficiently unique to automatically identify a
   tag in text or in code.
 
-  Example: **[TRC-TAG.1::SYNTAX.2]** is a reference to the tag for this
+  Example: [TRC-TAG.1::SYNTAX.2] is a reference to the tag for this
   requirement.
 
 ### 4.4. Implementing logical units
@@ -209,7 +209,7 @@ equivalent to the sequence of tags
   tag `<PARENT>`.
 
   Example: the requirement described in this previous paragraph has the tag
-  **[TRC-IMPL.1::PREFIX.1]** that implements the requirement **[TRC-IMPL.1]**.
+  [TRC-IMPL.1::PREFIX.1] that implements the requirement [TRC-IMPL.1].
 
 ### 4.5. Revising logical units
 
@@ -231,7 +231,7 @@ their tags consistent.
   traceability graph. One has to check out all repositories that contain English
   specifications, TLA+ specifications, and the implementation code. Once it is
   done, the source files should be grepped for the regular expression that
-  defines a tag, see **[TRC-TAG.1::DEF.2]** and **[TRC-TAG.1::SYNTAX.2]**.
+  defines a tag, see [TRC-TAG.1::DEF.2] and [TRC-TAG.1::SYNTAX.2].
   Having extracted the tags, we can immediately build the graph, as the
   non-zero-level tags contain the names of the parent tags.  (Due to that, the
   graph edges do not have to be built at all.)
@@ -258,7 +258,7 @@ their tags consistent.
   tools.
 
 |TRC-MISS.1::ANALYSIS.1|
-: Once we have collected the database of tags (see **[TRC-GRAPH.1::BUILD.1]**),
+: Once we have collected the database of tags (see [TRC-GRAPH.1::BUILD.1]),
   we can identify the tags that have the following properties:
 
   1. The tags of the form `PARENT::NAME.REVISION` that do not have the
@@ -280,7 +280,7 @@ their tags consistent.
   report that the function `bar()` implements the outdated requirement `FOO.1`.
 
 |TRC-GITHUB-REF.1::IMPL.1|
-: When collecting the tags in the process of **[TRC-GRAPH.1::BUILD.1]**, we can
+: When collecting the tags in the process of [TRC-GRAPH.1::BUILD.1], we can
   record the source location of every tag.  Having the source locations, it is
   easy to replace a reference to every tag with a hyperlink (yeah!) to the
   source location.
@@ -292,9 +292,9 @@ their tags consistent.
   source locations of their definitions.
 
 |TRC-UNIQ.1::DUPS.1|
-: Again, when collecting the tags in **[TRC-GRAPH.1::BUILD.1]**, we can check
+: Again, when collecting the tags in [TRC-GRAPH.1::BUILD.1], we can check
   that every tag is defined only once. The continuous integration tool should
-  report the violations of **[TRC-UNIQ.1]**.
+  report the violations of [TRC-UNIQ.1].
 
 |TRC-REV.1::INC.1::TOOL.1|
 : In order to manage change, the tool should check whether the content
@@ -310,7 +310,7 @@ their tags consistent.
   already in the repo, but we should make it easily accessible.
 
 |TRC-UNIQ.1::BRANCHES.1|
-: The approach of **[TRC-UNIQ.1::DUPS.1]** will report false positives, if a git
+: The approach of [TRC-UNIQ.1::DUPS.1] will report false positives, if a git
   repository contains multiple branches. Indeed, multiple branches may contain
   the definitions of the same tag that is defined in a common git commit.  In
   this case, the tag analyser should analyse the commit history. By doing so the
